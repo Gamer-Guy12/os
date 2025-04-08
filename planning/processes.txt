@@ -1,0 +1,2 @@
+Each process will have its on l4 page table
+Each one will have a pointer to the core l3 page table

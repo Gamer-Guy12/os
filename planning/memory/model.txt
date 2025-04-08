@@ -1,0 +1,42 @@
+Memory Model:
+
+Virtual memory is divided into two halfs:
+- Lower memory is for the process
+    - Lower memory starts at 0x0
+- Upper memory is for the system
+    - Upper memory starts at 0x800000000000
+
+Lower memory (mostly worry about it later cuz im still in loading the kernel and stuff):
+- Program is loaded to 0x100000
+
+Upper memory:
+- Multiboot data is loaded at 0x800000000000
+- Kernel is loaded at 0x800000200000
+- Page tables will be loaded to 8F0000000000
+    - The first 1mb bytes will be taken by the level 4 page table for the kernel and 255 other processes
+    - The next 1 MB is used by the 2048 upper level 3 page table entries
+    - This means that from that address, skip add 101000 to get to the base
+    - After that are the page tables
+
+Paging:
+- One global level 4 page table is used
+- All page tables for every process is stored in the upper half of memory
+- They share the same upper pages
+
+3 initial l3 page tables are needed:
+the first one is at the beginning and is used for the identity mapping of the first 4gb
+the second one is the 256th and it is used for the kernel and multiboot mapping
+the last one is the 286th and it is used for the paging
+
+Instead of identity mapping?
+find the multiboot structure first, map it to the start of the upper half
+and then map the rest of the kernel and above (may include duplicate table)
+
+memory map of initial page table virtual space
+----------------------------
+| 1 mb | 1 mb | 
+----------------------------
+
+First mb is used for the l4 pages tables
+second mb is used for all the l3 page tables for the kernel
+the first mb can hold 256 processes
