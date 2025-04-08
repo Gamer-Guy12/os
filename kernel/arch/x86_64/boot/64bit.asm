@@ -1,12 +1,13 @@
 BITS 64
 
 global start64
+extern kernel_main
 
 section .text
 
 start64:
 
-mov dword [0xb8000], 0x0f4b0f4f
+call kernel_main
 
 stop:
     cli
