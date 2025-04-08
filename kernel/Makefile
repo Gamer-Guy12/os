@@ -1,5 +1,7 @@
+ARCH?=x86_64
+
 CC := x86_64-elf-gcc
-CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles
+CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c
 
 ASM := nasm
 ASMFLAGS := -felf64
@@ -9,42 +11,35 @@ ifeq ($(ARCH), x86_64)
 LDFLAGS=-T targets/x86_64/linker.ld
 endif
 
-ARCH?=x86_64
+kernel-c-srcs := $(shell find kernel -name "*.c")
+kernel-c-objs := $(patsubst kernel/%, kernel/obj/%.o, $(kernel-c-srcs))
 
-kernel-x86_64-asm-srcs=$(wildcard kernel/arch/x86_64/boot/*.asm)
-kernel-x86_64-asm-objs=$(patsubst kernel/arch/x86_64/boot/%, kernel/obj/%.o, $(kernel-x86_64-asm-srcs))
-
-kernel-c-srcs=$(wildcard kernel/*.c)
-kernel-c-objs=$(patsubst kernel/%, kernel/obj/%.o, $(kernel-c-srcs))
-
-kernel-x86_64-objs = $(kernel-x86_64-asm-objs) $(kernel-c-objs)
-
-.PHONY: kernel-all
-kernel-all: build/bin/kernel.bin
+kernel-objs = $(kernel-c-objs)
 
 ifeq ($(ARCH), x86_64)
+kernel-asm-srcs := $(shell find kernel -name "*.asm")
+kernel-asm-objs := $(patsubst kernel/%, kernel/obj/%.o, $(kernel-asm-srcs))
 
-kernel/obj/%.asm.o: kernel/arch/x86_64/boot/%.asm
-	@mkdir -p kernel/obj
+kernel-objs += $(kernel-asm-objs)
+
+build/bin/kernel.bin: $(kernel-objs)
+	@mkdir -p build/bin
+	@$(LD) $(LDFLAGS) $(kernel-objs) -o $@
+	@echo LD $(kernel-objs)
+
+kernel/obj/%.asm.o: kernel/%.asm
+	@mkdir -p $(dir $@)
 	@$(ASM) $(ASMFLAGS) -o $@ $<
-	@echo ASM $@ to $<
+	@echo ASM $< $@
 
 kernel/obj/%.c.o: kernel/%.c
-	@mkdir -p kernel/obj
-	@$(CC) $(CFLAGS) -c -o $@ $<
-	@echo CC $@ to $<
-
-build/bin/kernel.bin: $(kernel-x86_64-objs)
-	@$(LD) -o $@ $(LDFLAGS) $(kernel-x86_64-objs)
-	@echo Linked kernel
-
-else
-
-$(error Target $(ARCH) is not supported)
-
+	@mkdir -p $(dir $@)
+	@$(CC) $(CFLAGS) -o $@ $<
+	@echo CC $< $@
+	
 endif
 
-.PHONY: kernel-clean
-kernel-clean:
+.PHONY: clean-kernel
+clean-kernel:
 	@rm -rf kernel/obj
-	@echo Cleaned kernel output
+	@echo Cleaned kernel
