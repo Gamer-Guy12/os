@@ -1,7 +1,11 @@
 #include <stdint.h>
+#include <libk/kio.h>
+#include <libk/vga.h>
 
-void kernel_main() {
-    uint16_t* vga = (uint16_t*) (0xb8000);
-    *vga = 0x0f4b;
-    vga[1] = 0x0f4f;
+char* message = "Hello Kernel World!";
+
+void kernel_main(uint8_t* multiboot) {
+    // kio_putchar('H');
+    // vga_putcharat(0, 0, 'H');
+    kio_puts(message);
 }

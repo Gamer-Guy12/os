@@ -1,0 +1,23 @@
+Graphics Drivers and Graphics:
+
+Every driver returns a graphics config struct which contains info
+
+struct Graphics config
+- Flags (uint16_t)
+    - offset 0: available (1 true, 0 false)
+    - offset 1: text (1 text, 0 no text)
+    - offset 2: graphics (1 graphics, 0 no graphics)
+- Width (uint16_t)
+    - For graphics its based on pixels
+    - For text its based on amount of chars
+- Height (uint16_t)
+    - Same as width
+- Reserved (uint16_t)
+- Configure Text (void (*configText)(uint8_t, uint8_t)) (64 bit)
+    - first param: Foreground Color
+    - second param: Background Color
+    - There will be an enum for text colors
+- Put Char At (void (*putcharat)(uint16_t, uint16_t, char)) (64 bit)
+    - First Param: x pos
+    - second Param: y pos
+    - third param: char to put

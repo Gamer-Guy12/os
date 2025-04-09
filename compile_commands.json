@@ -1,0 +1,22 @@
+[
+  {
+    "arguments": [
+      "/root/opt/cross/bin/x86_64-elf-gcc",
+      "-Wall",
+      "-Werror",
+      "-Wpedantic",
+      "-O3",
+      "-ffreestanding",
+      "-c",
+      "-I",
+      "kernel/include",
+      "-std=c11",
+      "-o",
+      "kernel/obj/kernel.c.o",
+      "kernel/kernel.c"
+    ],
+    "directory": "/home/dev/os",
+    "file": "/home/dev/os/kernel/kernel.c",
+    "output": "/home/dev/os/kernel/obj/kernel.c.o"
+  }
+]

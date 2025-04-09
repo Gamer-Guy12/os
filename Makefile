@@ -3,6 +3,8 @@ ARCH?=x86_64
 .PHONY: all
 all: build/bin/kernel.bin build/os.iso
 
+kernel-libs=
+
 ifeq ($(ARCH), x86_64)
 build/os.iso: build/bin/kernel.bin
 	@mkdir -p build/iso/boot/grub

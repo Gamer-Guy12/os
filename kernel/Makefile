@@ -1,7 +1,8 @@
 ARCH?=x86_64
 
 CC := x86_64-elf-gcc
-CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c
+INCLUDE := kernel/include
+CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c -I $(INCLUDE) -std=c11
 
 ASM := nasm
 ASMFLAGS := -felf64
@@ -22,9 +23,14 @@ kernel-asm-objs := $(patsubst kernel/%, kernel/obj/%.o, $(kernel-asm-srcs))
 
 kernel-objs += $(kernel-asm-objs)
 
-build/bin/kernel.bin: $(kernel-objs)
+LD:=ld
+ifeq ($(ARCH), x86_64)
+LDFLAGS=-T targets/x86_64/linker.ld
+endif
+
+build/bin/kernel.bin: $(kernel-objs) $(kernel-libs)
 	@mkdir -p build/bin
-	@$(LD) $(LDFLAGS) $(kernel-objs) -o $@
+	@$(LD) $(LDFLAGS) $(kernel-objs) $(kernel-libs) -o $@
 	@echo LD $(kernel-objs)
 
 kernel/obj/%.asm.o: kernel/%.asm

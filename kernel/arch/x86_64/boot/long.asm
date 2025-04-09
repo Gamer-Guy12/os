@@ -61,8 +61,8 @@ after_paging:
     or edx, (1 << 31)
     mov cr0, edx
 
-BITS 64
-    jmp start64
+    lgdt [gdt64.pointer]
+    jmp gdt64.segmen:start64
 
 BITS 32
 no_long:
@@ -80,3 +80,12 @@ align 16
 stack_bottom:
     resb 16384
 stack_top:
+
+section .rodata
+gdt64:
+    dq 0
+.segmen: equ $ - gdt64
+    dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53)
+.pointer:
+    dw $ - gdt64 -1
+    dq gdt64
