@@ -7,5 +7,6 @@
 
 void kio_putchar(char c);
 void kio_puts(char* c);
+void kio_printf(const char* format, ...);
 
 #endif

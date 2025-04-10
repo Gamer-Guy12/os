@@ -28,12 +28,14 @@ void kio_putchar(char c) {
         return;
     }
 
-    if (curX >= VGA_WIDTH - 1) {
+    if (curX >= VGA_WIDTH) {
         curY++;
+        curX = 0;
     }
 
-    if (curY >= VGA_HEIGHT - 1) {
+    if (curY >= VGA_HEIGHT) {
         vga_scroll();
+        curY--;
         curY--;
         curX = 0;
     }

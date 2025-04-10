@@ -29,6 +29,8 @@ LDFLAGS=-T targets/x86_64/linker.ld
 endif
 
 build/bin/kernel.bin: $(kernel-objs) $(kernel-libs)
+	@echo The Kernel does not yet support many things for floating point numbers
+	@echo The types exist but not the declerations backing them
 	@mkdir -p build/bin
 	@$(LD) $(LDFLAGS) $(kernel-objs) $(kernel-libs) -o $@
 	@echo LD $(kernel-objs)
