@@ -10,15 +10,13 @@ void vga_scroll(void) {
         for (uint16_t j = 0; j < VGA_WIDTH; j++) {
             uint16_t curInd = getIndexFromPos(j, i);
 
-            if (i == VGA_HEIGHT - 1) {
-                terminalBuffer[curInd] = 0x00;
-
-                continue;
-            }
-
             uint16_t prevLineInd = curInd - VGA_WIDTH;
 
             terminalBuffer[prevLineInd] = terminalBuffer[curInd];
+
+            if (i == VGA_HEIGHT - 1) {
+                terminalBuffer[curInd] = 0x00;
+            }
         }
     }
 }

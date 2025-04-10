@@ -36,7 +36,6 @@ void kio_putchar(char c) {
     if (curY >= VGA_HEIGHT) {
         vga_scroll();
         curY--;
-        curY--;
         curX = 0;
     }
 

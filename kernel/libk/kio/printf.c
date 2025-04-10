@@ -29,10 +29,10 @@ void kio_printf(const char* format, ...) {
                     uint64_t valu = va_arg(args, uint64_t);
                     string_utos64(valu, str);
                     break;
-                case 'f':;
-                    double valf = va_arg(args, double);
-                    string_ftos64(valf, str);
-                    break;
+                // case 'f':;
+                //     double valf = va_arg(args, double);
+                //     string_ftos64(valf, str);
+                //     break;
                 case 'x':;
                     uint64_t valx = va_arg(args, uint64_t);
                     string_utohs64(valx, str);
