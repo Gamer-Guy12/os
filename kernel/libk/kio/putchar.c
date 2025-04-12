@@ -1,3 +1,4 @@
+#include <libk/lock.h>
 #include <libk/kio.h>
 #include <libk/kgfx.h>
 
@@ -6,7 +7,10 @@ static uint16_t curY = 0;
 static uint16_t width = 0;
 static uint16_t height = 0;
 
+static lock_t charLock;
+
 void kio_putchar(char c) {
+    lock_acquire(&charLock);
     KGFXProperties props = kgfx_getproperties();
     width = props.width;
     height = props.height;
@@ -14,23 +18,35 @@ void kio_putchar(char c) {
     if (c == '\n') {
         curX = 0;
         curY++;
+
+        lock_release(&charLock);
         return;
     } else if (c == '\r') {
         curX = 0;
+
+        lock_release(&charLock);
         return;
     } else if (c == '\b') {
         if (curX == 0) {
+
+            lock_release(&charLock);
             return;
         }
 
         curX--;
+
+        lock_release(&charLock);
         return;
     } else if (c == '\t') {
         if (curX >= width - 1) {
+
+            lock_release(&charLock);
             return;
         }
 
         curX++;
+
+        lock_release(&charLock);
         return;
     }
 
@@ -47,4 +63,6 @@ void kio_putchar(char c) {
 
     kgfx_putcharat(curX, curY, c);
     curX++;
+
+    lock_release(&charLock);
 }

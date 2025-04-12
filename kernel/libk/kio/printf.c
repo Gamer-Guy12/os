@@ -1,13 +1,17 @@
+#include "libk/lock.h"
 #include "libk/string.h"
 #include <libk/kio.h>
 #include <stdarg.h>
 #include <stdint.h>
 
+static lock_t printLock;
+
 /// This is a cut down version of printf
 /// The format specifiers that you can use are:
 /// %d (assumed to be 64 bit), %u (assumed to be 64 bit), %x, %f (not yet) (assumes double), %c, %s, %%
 void kio_printf(const char* format, ...) {
-
+    lock_acquire(&printLock);
+    
     uint16_t index = 0;
     va_list args;
     va_start(args, format);
@@ -56,4 +60,5 @@ void kio_printf(const char* format, ...) {
     }
 
     va_end(args);
+    lock_release(&printLock);
 }

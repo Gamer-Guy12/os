@@ -1,0 +1,4 @@
+These are the things to do before kernel main (in no particular order):
+Create locking system
+Create Physical Memory Manager
+Initialize all the cores
