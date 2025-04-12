@@ -1,7 +1,7 @@
 BITS 64
 
 global start64
-extern kernel_main
+extern kernel_start
 
 section .text
 
@@ -16,7 +16,7 @@ mov gs, ax
 
 mov rdi, rbx
 
-call kernel_main
+call kernel_start
 
 stop:
     cli

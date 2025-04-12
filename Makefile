@@ -16,6 +16,7 @@ $(error The architecture $(ARCH) is not supported)
 endif
 
 include kernel/Makefile
+include targets/$(ARCH)/Makefile
 
 .PHONY: clean
 clean: clean-kernel

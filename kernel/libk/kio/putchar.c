@@ -1,10 +1,16 @@
 #include <libk/kio.h>
-#include <libk/vga.h>
+#include <libk/kgfx.h>
 
 static uint16_t curX = 0;
 static uint16_t curY = 0;
+static uint16_t width = 0;
+static uint16_t height = 0;
 
 void kio_putchar(char c) {
+    KGFXProperties props = kgfx_getproperties();
+    width = props.width;
+    height = props.height;
+
     if (c == '\n') {
         curX = 0;
         curY++;
@@ -20,7 +26,7 @@ void kio_putchar(char c) {
         curX--;
         return;
     } else if (c == '\t') {
-        if (curX >= VGA_WIDTH - 1) {
+        if (curX >= width - 1) {
             return;
         }
 
@@ -28,17 +34,17 @@ void kio_putchar(char c) {
         return;
     }
 
-    if (curX >= VGA_WIDTH) {
+    if (curX >= width) {
         curY++;
         curX = 0;
     }
 
-    if (curY >= VGA_HEIGHT) {
-        vga_scroll();
+    if (curY >= height) {
+        kgfx_scroll();
         curY--;
         curX = 0;
     }
 
-    vga_putcharat(curX, curY, c);
+    kgfx_putcharat(curX, curY, c);
     curX++;
 }

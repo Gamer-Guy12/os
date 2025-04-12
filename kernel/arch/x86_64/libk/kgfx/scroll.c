@@ -1,9 +1,9 @@
-#include <libk/vga.h>
+#include <libk/kgfx.h>
 #include "./vga.h"
 
 static volatile uint16_t* terminalBuffer = (volatile uint16_t*) (0xB8000);
 
-void vga_scroll(void) {
+void kgfx_scroll(void) {
     for (uint16_t i = 0; i < VGA_HEIGHT; i++) {
         if (i == 0) continue;
 

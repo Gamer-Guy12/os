@@ -1,15 +1,15 @@
 ARCH?=x86_64
 
-CC := x86_64-elf-gcc
+ifeq ($(ARCH), x86_64)
+CC?=x86_64-elf-gcc
 INCLUDE := kernel/include
 CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c -I $(INCLUDE) -std=c11
 
 ASM := nasm
-ASMFLAGS := -felf64
+ASMFLAGS?=-felf64
 
 LD:=ld
-ifeq ($(ARCH), x86_64)
-LDFLAGS=-T targets/x86_64/linker.ld
+LDFLAGS=-T targets/x86_64/linker.ld -z noexecstack
 endif
 
 kernel-c-srcs := $(shell find kernel -name "*.c")
@@ -22,11 +22,6 @@ kernel-asm-srcs := $(shell find kernel -name "*.asm")
 kernel-asm-objs := $(patsubst kernel/%, kernel/obj/%.o, $(kernel-asm-srcs))
 
 kernel-objs += $(kernel-asm-objs)
-
-LD:=ld
-ifeq ($(ARCH), x86_64)
-LDFLAGS=-T targets/x86_64/linker.ld
-endif
 
 build/bin/kernel.bin: $(kernel-objs) $(kernel-libs)
 	@echo The Kernel does not yet support many things for floating point numbers

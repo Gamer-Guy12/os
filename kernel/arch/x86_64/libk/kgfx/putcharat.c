@@ -1,9 +1,9 @@
-#include <libk/vga.h>
+#include <libk/kgfx.h>
 #include "./vga.h"
 
 static volatile uint16_t* terminalBuffer = (volatile uint16_t*) (0xb8000);
 
-void vga_putcharat(uint16_t x, uint16_t y, char c) {
+void kgfx_putcharat(uint16_t x, uint16_t y, char c) {
 
     if (x >= VGA_WIDTH || y >= VGA_HEIGHT || x < 0 || y < 0) return;
     

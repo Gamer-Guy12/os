@@ -10,6 +10,7 @@ SECTIONS {
 		
 		. = 0x200000;
 
+		*(.startup)
 		*(.text)
     }
 
@@ -20,6 +21,11 @@ SECTIONS {
 
 	.data BLOCK(4K) : ALIGN(4K)
 	{
+		__init_array_start = .;
+  		KEEP(*( .init_array ));
+  		KEEP(*(SORT_BY_INIT_PRIORITY( .init_array.* )));
+  		__init_array_end = .;
+
 		*(.data)
 	}
 
