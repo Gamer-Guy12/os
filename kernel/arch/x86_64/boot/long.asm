@@ -7,9 +7,12 @@ extern enable_paging
 global after_paging
 extern start64
 extern l4_page_table
+global multiboot_ptr
 
 section .loading
 _start:
+
+    mov [multiboot_ptr], ebx
 
     ; This checks if long mode is supported
     mov eax, 0x80000001
@@ -76,6 +79,7 @@ stop:
     jmp stop
 
 section .bss
+
 align 16
 stack_bottom:
     resb 16384
@@ -89,3 +93,7 @@ gdt64:
 .pointer:
     dw $ - gdt64 -1
     dq gdt64
+
+section .data
+multiboot_ptr:
+    dq 0

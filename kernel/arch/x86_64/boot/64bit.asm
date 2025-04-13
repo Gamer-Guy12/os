@@ -2,6 +2,7 @@ BITS 64
 
 global start64
 extern kernel_start
+extern multiboot_ptr
 
 section .text
 
@@ -14,7 +15,7 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
-mov rdi, rbx
+mov rdi, qword [multiboot_ptr]
 
 call kernel_start
 
