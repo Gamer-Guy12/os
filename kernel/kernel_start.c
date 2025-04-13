@@ -4,6 +4,7 @@
 #include <libk/string.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <pmm.h>
 
 // Code thanks to nullplan from the osdev wiki
 // https://forum.osdev.org/viewtopic.php?t=57103 This code calls the global
