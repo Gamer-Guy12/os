@@ -1,4 +1,5 @@
-These are the things to do before kernel main (in no particular order):
-Create locking system
+These are the things that should run before kernel main (in no particular order):
+Create locking system (done)
+Create IDT
 Create Physical Memory Manager
-Initialize all the cores
+Initialize all the cores (do last)

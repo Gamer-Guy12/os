@@ -3,6 +3,7 @@
 #include <libk/kio.h>
 #include <libk/string.h>
 #include <libk/lock.h>
+#include <kernel.h>
 
 // Code thanks to nullplan from the osdev wiki https://forum.osdev.org/viewtopic.php?t=57103
 // This code calls the global constructors
@@ -18,8 +19,6 @@ static void handle_init_array(void) {
 #pragma endregion
 
 __attribute__ ((section(".startup"))) void kernel_start(uint8_t* multiboot) {
-    handle_init_array();
-    for (uint64_t i = 0; i < 32; i++) {
-      kio_printf("Hello Loop %x\n", i);
-    }
+  handle_init_array();
+  start_cores();
 }
