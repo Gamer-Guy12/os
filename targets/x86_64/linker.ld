@@ -35,4 +35,5 @@ SECTIONS {
 	}
 
 	end_kernel = .;
+	. = 0x1000000;
 }

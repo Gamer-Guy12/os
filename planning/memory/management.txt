@@ -8,5 +8,9 @@ Three managers
 - Malloc or something similar
     - Gets pages from memory and uses them to give small chunks to programs
 
+Keeping track of physical pages:
+- The allocator has a list of memory regions
+    - When it becomes empty it is released
+    - When all others are full it will find a new one
 
 Temporary 16 kilobyte heap will be used 

@@ -4,7 +4,7 @@
 
 typedef struct {
     uint8_t* start;
-    size_t length;
+    size_t free_pages;
     size_t pages_used;
 } used_mem_region_t;
 
