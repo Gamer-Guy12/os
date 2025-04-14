@@ -11,5 +11,6 @@ typedef uint8_t* pageframe_t;
 pageframe_t allocate_page_frame(void);
 /// By default this will allocate above 16 MB
 pageframe_t allocate_page_frames(uint64_t count);
+void free_page_frame(pageframe_t* page);
 
 #endif

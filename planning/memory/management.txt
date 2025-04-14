@@ -1,0 +1,12 @@
+Memory Management:
+
+Three managers
+- Page Manager
+    - Frees and allocates physical pages
+- Virtual Manager
+    - Maps and Unmaps pages into Memory
+- Malloc or something similar
+    - Gets pages from memory and uses them to give small chunks to programs
+
+
+Temporary 16 kilobyte heap will be used 

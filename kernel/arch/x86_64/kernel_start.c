@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <pmm.h>
+#include <libk/kgfx.h>
 
 // Code thanks to nullplan from the osdev wiki
 // https://forum.osdev.org/viewtopic.php?t=57103 This code calls the global
@@ -30,6 +31,7 @@ void print_multiboot_size(uint8_t *multiboot) {
 
 __attribute__((section(".startup"))) void kernel_start(uint8_t* multiboot) {
   handle_init_array();
+  kgfx_clear();
   print_multiboot_size(multiboot);
   start_cores();
 }

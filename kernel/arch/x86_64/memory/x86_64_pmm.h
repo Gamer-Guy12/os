@@ -24,5 +24,6 @@ typedef enum {
 } memory_type_t;
 
 memory_map_t get_memory_map(uint8_t* multiboot);
+uint64_t get_memory_size(memory_map_t map);
 
 #endif
