@@ -37,7 +37,7 @@ kernel/obj/%.asm.o: kernel/%.asm
 
 kernel/obj/%.c.o: kernel/%.c
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -o $@ $<
+	@$(CC) $(CFLAGS) -I kernel/arch/x86_64/include -o $@ $<
 	@echo CC $< $@
 	
 endif

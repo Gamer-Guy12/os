@@ -1,7 +1,7 @@
 [
   {
     "arguments": [
-      "/root/opt/cross/bin/x86_64-elf-gcc",
+      "/usr/bin/cc",
       "-Wall",
       "-Werror",
       "-Wpedantic",
@@ -11,12 +11,14 @@
       "-I",
       "kernel/include",
       "-std=c11",
+      "-I",
+      "kernel/arch/x86_64/include",
       "-o",
-      "kernel/obj/kernel.c.o",
-      "kernel/kernel.c"
+      "kernel/obj/arch/x86_64/heap.c.o",
+      "kernel/arch/x86_64/heap.c"
     ],
     "directory": "/home/dev/os",
-    "file": "/home/dev/os/kernel/kernel.c",
-    "output": "/home/dev/os/kernel/obj/kernel.c.o"
+    "file": "/home/dev/os/kernel/arch/x86_64/heap.c",
+    "output": "/home/dev/os/kernel/obj/arch/x86_64/heap.c.o"
   }
 ]
