@@ -42,11 +42,11 @@ memory_map_t get_memory_map(uint8_t *multiboot) {
 }
 
 uint64_t get_memory_size(memory_map_t map) {
-    uint64_t size = 0;
-    
-    for (uint64_t i = 0; i < map.entryCount; i++) {
-        size += map.ptr[i].length;
-    }
+  uint64_t size = 0;
 
-    return size;
+  for (uint64_t i = 0; i < map.entryCount; i++) {
+    size += map.ptr[i].length;
+  }
+
+  return size;
 }

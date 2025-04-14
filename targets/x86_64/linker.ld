@@ -36,4 +36,9 @@ SECTIONS {
 
 	end_kernel = .;
 	. = 0x1000000;
+	kernel_mem_end = .;
+
+	page_bitmap_start = .;
+	. = 0x2000000;
+	page_bitmap_end = .;
 }
