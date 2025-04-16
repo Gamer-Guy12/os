@@ -36,21 +36,5 @@ __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   kgfx_clear();
   print_multiboot_size(multiboot);
   setup_page_frame_allocation(multiboot);
-  pageframe_t frame = allocate_page_frame();
-  uint64_t *bigPtr = (uint64_t *)frame;
-  *bigPtr = 54;
-  kio_printf("The value stored is %u\n", *bigPtr);
-  pageframe_t frame2 = allocate_page_frame();
-  uint64_t *bigPtr2 = (uint64_t *)frame2;
-  *bigPtr2 = 485;
-  kio_printf("The value stored again is %u\n", *bigPtr2);
-  kio_printf("The value stored is %u\n", *bigPtr);
-  free_page_frame(&frame);
-  free_page_frame(&frame2);
-  frame = allocate_page_frame();
-  bigPtr = (uint64_t *)frame;
-  *bigPtr = 54;
-  kio_printf("The value stored is %u\n", *bigPtr);
-
   start_cores();
 }

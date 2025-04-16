@@ -1,7 +1,11 @@
 #ifndef X86_64_PMM_H
 #define X86_64_PMM_H
 
+#include <libk/lock.h>
 #include <stdint.h>
+
+extern uint8_t *page_bitmap_start;
+extern uint8_t *page_bitmap_end;
 
 typedef struct {
   uint8_t *base_addr;
@@ -25,5 +29,6 @@ typedef enum {
 
 memory_map_t get_memory_map(uint8_t *multiboot);
 uint64_t get_memory_size(memory_map_t map);
+lock_t *get_mem_lock(void);
 
 #endif
