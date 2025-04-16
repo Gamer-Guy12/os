@@ -1,0 +1,2 @@
+- Make the page allocator safe (Like prolly just rewrite it)
+- Check the ACPI RSDP Checksum

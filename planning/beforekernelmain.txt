@@ -2,5 +2,5 @@ These are the things that should run before kernel main (in order):
 Create locking system (done)
 Create IDT
 Create Physical Memory Manager (done)
-Initialize all the cores 
+Initialize all the cores (The physical memory manager will be the one used to allocate pages for dynamic memory when starting up cores if needed (hopefully no))
 Create their page tables
