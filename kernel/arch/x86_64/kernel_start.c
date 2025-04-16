@@ -36,5 +36,4 @@ __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   kgfx_clear();
   print_multiboot_size(multiboot);
   setup_page_frame_allocation(multiboot);
-  start_cores();
 }
