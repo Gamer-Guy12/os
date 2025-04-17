@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-bool check_for_type(uint8_t *multiboot, uint32_t desiredType) {
+static bool check_for_type(uint8_t *multiboot, uint32_t desiredType) {
   uint32_t type = *((uint32_t *)multiboot);
 
   return type == desiredType;
@@ -18,7 +18,8 @@ uint8_t *move_to_memory_map(uint8_t *multiboot) {
   multiboot += 8;
   while (!check_for_type(multiboot, 6)) {
     uint32_t size = ((uint32_t *)multiboot)[1];
-    size += (8 - (size % 8));
+    if (size % 8 != 0)
+      size += (8 - (size % 8));
 
     multiboot += size;
   }

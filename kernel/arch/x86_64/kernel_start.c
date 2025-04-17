@@ -1,4 +1,5 @@
-#include <kernel.h>
+#include "acpi.h"
+#include <acpi.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/lock.h>
@@ -6,6 +7,7 @@
 #include <pmm.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <x86_64.h>
 
 // Code thanks to nullplan from the osdev wiki
 // https://forum.osdev.org/viewtopic.php?t=57103 This code calls the global
@@ -31,9 +33,39 @@ void print_multiboot_size(uint8_t *multiboot) {
       size, size, reserved);
 }
 
+void print_xsdp(uint8_t *multiboot) {
+  XSDP_t *xsdp = find_xsdp(multiboot);
+  kio_printf("The XSDP:\n");
+  kio_printf("Signature: ");
+  for (size_t i = 0; i < 8; i++) {
+    kio_putchar(xsdp->signature[i]);
+  }
+  kio_putchar('\n');
+  kio_printf("Checksum: %u\n", (uint64_t)xsdp->checksum);
+  kio_printf("OEMID: ");
+  for (size_t i = 0; i < 6; i++) {
+    kio_putchar(xsdp->OEMID[i]);
+  }
+  kio_putchar('\n');
+  kio_printf("Revision: %u\n", (uint64_t)xsdp->revision);
+  kio_printf("RSDT Addr: %u\n", (uint64_t)xsdp->rsdt_addr);
+  kio_printf("Length: %u\n", (uint64_t)xsdp->length);
+  kio_printf("XSDT Addr: %u\n", (uint64_t)xsdp->xsdt_addr);
+  kio_printf("Extended Checksum: %u\n", (uint64_t)xsdp->extended_checksum);
+  kio_printf("Reserved: ");
+  for (size_t i = 0; i < 3; i++) {
+    kio_printf("%u", (uint64_t)xsdp->reserved[i]);
+  }
+  kio_printf("\n");
+}
+
 __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   handle_init_array();
   kgfx_clear();
   print_multiboot_size(multiboot);
   setup_page_frame_allocation(multiboot);
+  print_xsdp(multiboot);
+  // find_xsdp(multiboot);
+
+  find_madt(find_xsdt(find_xsdp(multiboot)));
 }
