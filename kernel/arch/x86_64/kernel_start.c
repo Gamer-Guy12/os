@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <x86_64.h>
 
+extern void kernel_main(void);
+
 // Code thanks to nullplan from the osdev wiki
 // https://forum.osdev.org/viewtopic.php?t=57103 This code calls the global
 // constructors
@@ -16,7 +18,7 @@
 typedef void initfunc_t(void);
 extern initfunc_t *__init_array_start[], *__init_array_end[];
 
-static void handle_init_array(void) {
+__attribute__((section(".startup"))) static void handle_init_array(void) {
   size_t nfunc = ((uintptr_t)__init_array_end - (uintptr_t)__init_array_start) /
                  sizeof(initfunc_t *);
   for (initfunc_t **p = __init_array_start; p < __init_array_start + nfunc; p++)
@@ -67,5 +69,15 @@ __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   print_xsdp(multiboot);
   // find_xsdp(multiboot);
 
-  find_madt(find_xsdt(find_xsdp(multiboot)));
+  XSDP_t *xsdp = find_xsdp(multiboot);
+  kio_printf("Got XSDP\n");
+  XSDT_t *xsdt = find_xsdt(xsdp);
+  kio_printf("Got XSDT\n");
+  MADT_t *madt = find_madt(xsdt);
+  kio_printf("Got MADT\n");
+  madt += madt - madt;
+  uint16_t core_count = get_cores(NULL, madt);
+  kio_printf("Got Cores\n");
+  kio_printf("%u\n", core_count);
+  kernel_main();
 }

@@ -6,7 +6,8 @@
 #include <stdint.h>
 
 void kio_putchar(char c);
-void kio_puts(char* c);
-void kio_printf(const char* format, ...);
+void kio_puts(char *c);
+void kio_printf(const char *format, ...);
+void kio_clear(void);
 
 #endif

@@ -42,11 +42,15 @@ typedef struct {
   SDT_header_t header;
   uint32_t lapic_addr;
   uint32_t flags;
-  uint8_t *entries;
+  uint8_t entries[];
 } __attribute__((packed)) MADT_t;
 
 XSDP_t *find_xsdp(uint8_t *multiboot);
 XSDT_t *find_xsdt(XSDP_t *xsdp);
 MADT_t *find_madt(XSDT_t *xsdt);
+/// Returns the amount of cores there are and takes in a buffer on where to put
+/// the apic ids.
+/// Set cores to NULL to just get the count.
+uint16_t get_cores(uint8_t *cores, MADT_t *madt);
 
 #endif
