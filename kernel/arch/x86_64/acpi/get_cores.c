@@ -1,3 +1,4 @@
+#include "libk/bit.h"
 #include <acpi.h>
 #include <stddef.h>
 
@@ -10,9 +11,12 @@ uint16_t get_cores(uint8_t *cores, MADT_t *madt) {
   while (size_left > 0) {
     size_t size = madt->entries[curIndex + 1];
     if (madt->entries[curIndex] == 0) {
-      if (cores != NULL)
-        cores[core_count] = madt->entries[curIndex + 3];
-      core_count++;
+      if (check_bit(madt->entries[curIndex + 4], 0) ||
+          check_bit(madt->entries[curIndex + 4], 1)) {
+        if (cores != NULL)
+          cores[core_count] = madt->entries[curIndex + 3];
+        core_count++;
+      }
     }
 
     size_left -= size;
