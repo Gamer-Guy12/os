@@ -6,10 +6,9 @@ all: build/bin/kernel.bin build/os.iso
 kernel-libs=
 
 ifeq ($(ARCH), x86_64)
-build/os.iso: build/bin/kernel.bin
+build/os.iso: install-kernel
 	@mkdir -p build/iso/boot/grub
 	@cp targets/$(ARCH)/grub.cfg build/iso/boot/grub
-	@cp build/bin/kernel.bin build/iso/boot
 	@grub-mkrescue -o $@ build/iso
 else
 $(error The architecture $(ARCH) is not supported)

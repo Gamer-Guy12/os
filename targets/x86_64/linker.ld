@@ -5,7 +5,8 @@ SECTIONS {
 	. = 0x100000;
 
     .text BLOCK(4k) : ALIGN(4k) {
-        *(.multiboot)
+        _text = .;
+		*(.multiboot)
         *(.loading)
 		
 		. = 0x200000;
@@ -16,11 +17,14 @@ SECTIONS {
 
     .rodata BLOCK(4K) : ALIGN(4K)
 	{
+		_rodata = .;
 		*(.rodata)
 	}
 
 	.data BLOCK(4K) : ALIGN(4K)
 	{
+		_data = .;
+
 		__init_array_start = .;
   		KEEP(*( .init_array ));
   		KEEP(*(SORT_BY_INIT_PRIORITY( .init_array.* )));
@@ -29,9 +33,17 @@ SECTIONS {
 		*(.data)
 	}
 
+	.eh_frame BLOCK(4K) : ALIGN(4K) {
+		_ehframe = .;
+		*(.eh_frame)
+	}
+
 	.bss BLOCK(4K) : ALIGN(4K)
 	{
+		_bss = .;
 		*(.bss)
+
+		*(COMMON)
 	}
 
 	end_kernel = .;
