@@ -1,10 +1,11 @@
 #include "acpi.h"
+#include "arch/hal.h"
 #include <acpi.h>
+#include <arch/pmm.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/lock.h>
 #include <libk/string.h>
-#include <pmm.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <x86_64.h>
@@ -66,6 +67,10 @@ __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   kgfx_clear();
   print_multiboot_size(multiboot);
   setup_page_frame_allocation(multiboot);
+
+  /// Inits xsdp too so important dont delete
+  /// Do this before initing hal
+  find_xsdp(multiboot);
   print_xsdp(multiboot);
   // find_xsdp(multiboot);
 
@@ -79,6 +84,7 @@ __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   uint16_t core_count = get_cores(NULL, madt);
   kio_printf("Got Cores\n");
   kio_printf("%u\n", core_count);
+  init_hal();
   start_cores(multiboot);
   // kernel_main();
 }

@@ -12,6 +12,10 @@ static bool check_for_type(uint8_t *multiboot, uint32_t desiredType) {
   return type == desiredType;
 }
 
+static XSDP_t *xsdp;
+
+XSDP_t *get_xsdp(void) { return xsdp; }
+
 XSDP_t *find_xsdp(uint8_t *multiboot) {
   uint8_t *rsdp = NULL;
   // Increment the pointer to skip over until you get to the start of the RSDP
@@ -42,5 +46,6 @@ XSDP_t *find_xsdp(uint8_t *multiboot) {
   // Skip over the header part of the struct
   multiboot += 8;
 
+  xsdp = (XSDP_t *)multiboot;
   return (XSDP_t *)multiboot;
 }

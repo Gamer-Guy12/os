@@ -1,5 +1,5 @@
-#ifndef ACPI_H
-#define ACPI_H
+#ifndef X86_64_ACPI_H
+#define X86_64_ACPI_H
 
 #include <stdint.h>
 
@@ -45,6 +45,7 @@ typedef struct {
   uint8_t entries[];
 } __attribute__((packed)) MADT_t;
 
+/// Also inits it
 XSDP_t *find_xsdp(uint8_t *multiboot);
 XSDT_t *find_xsdt(XSDP_t *xsdp);
 MADT_t *find_madt(XSDT_t *xsdt);
@@ -52,5 +53,8 @@ MADT_t *find_madt(XSDT_t *xsdt);
 /// the apic ids.
 /// Set cores to NULL to just get the count.
 uint16_t get_cores(uint8_t *cores, MADT_t *madt);
+
+/// Like find xsdp but it like alr like has it saved
+XSDP_t *get_xsdp(void);
 
 #endif

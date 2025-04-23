@@ -1,5 +1,5 @@
-#ifndef KERNEL_H
-#define KERNEL_H
+#ifndef X86_64_KERNEL_H
+#define X86_64_KERNEL_H
 
 #include <stdint.h>
 

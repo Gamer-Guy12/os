@@ -1,5 +1,5 @@
 #include <acpi.h>
-#include <io.h>
+#include <asm.h>
 #include <libk/bit.h>
 #include <libk/kio.h>
 #include <libk/lock.h>
@@ -33,7 +33,8 @@ void start_cores(uint8_t *multiboot) {
 
   lock_acquire(&starting_cores);
 
-  
+  // Pause a second to stop clangd from complaining about uncalled function
+  wait_ms(1000);
 
   lock_release(&starting_cores);
 }
