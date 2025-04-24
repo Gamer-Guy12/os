@@ -1,6 +1,6 @@
 BITS 64
 
-global lock_acquire
+global lock_acquire:function
 
 section .text
 lock_acquire:

@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 
+/// Hardware interupts will start at 40
+/// IRQ 1 is at handler 40
 typedef struct {
-  void (*register_interupt)(void *, uint16_t);
+  void (*register_interupt)(void (*handler)(void), uint8_t);
 } hal_interupt;
 
 typedef struct {

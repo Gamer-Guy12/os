@@ -1,6 +1,6 @@
 BITS 64
 
-global lock_release
+global lock_release:function
 
 section .text
 lock_release:

@@ -42,6 +42,8 @@ void init_hal_interupts(void) {
   }
 }
 
+static void register_interupt(void (*handler)(void), uint8_t intNum) {}
+
 static hal_interupt interupt;
 
 void init_xapic(void) {
@@ -61,6 +63,7 @@ void init_xapic(void) {
 
   // I hope i did the above things right
   // Idk
+  interupt.register_interupt = register_interupt;
 }
 
 hal_interupt get_hal_interupt(void) { return interupt; }

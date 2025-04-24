@@ -64,9 +64,9 @@ void print_xsdp(uint8_t *multiboot) {
 
 __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   handle_init_array();
+  setup_page_frame_allocation(multiboot);
   kgfx_clear();
   print_multiboot_size(multiboot);
-  setup_page_frame_allocation(multiboot);
 
   /// Inits xsdp too so important dont delete
   /// Do this before initing hal

@@ -1,8 +1,8 @@
 #include "./x86_64_pmm.h"
 #include "libk/lock.h"
+#include <arch/pmm.h>
 #include <libk/bit.h>
 #include <libk/mem.h>
-#include <pmm.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -12,7 +12,7 @@
 
 void setup_page_frame_allocation(uint8_t *multiboot) {
   lock_acquire(get_mem_lock());
-  memset(page_bitmap_start, 0xFF, page_bitmap_end - page_bitmap_start);
+  memset(kernel_gp, 0xFF, kernel_gp_end - kernel_gp);
   memory_map_t map = get_memory_map(multiboot);
 
   for (size_t i = 0; i < map.entryCount; i++) {
@@ -25,8 +25,8 @@ void setup_page_frame_allocation(uint8_t *multiboot) {
       uint64_t pageIndex = GET_INDEX(map.ptr[i].base_addr + j * 4096);
       pageIndex = pageIndex - 1 + 1;
       if (map.ptr[i].type == 1 &&
-          map.ptr[i].base_addr + j * 4096 >= page_bitmap_end)
-        page_bitmap_start[GET_ADDR(pageIndex)] ^= 1 << GET_OFFSET(pageIndex);
+          map.ptr[i].base_addr + j * 4096 >= kernel_gp_end)
+        kernel_gp[GET_ADDR(pageIndex)] ^= 1 << GET_OFFSET(pageIndex);
     }
   }
 

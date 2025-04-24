@@ -4,8 +4,8 @@
 #include <libk/lock.h>
 #include <stdint.h>
 
-extern uint8_t *page_bitmap_start;
-extern uint8_t *page_bitmap_end;
+extern uint8_t *kernel_gp;
+extern uint8_t *kernel_gp_end;
 
 typedef struct {
   uint8_t *base_addr;
