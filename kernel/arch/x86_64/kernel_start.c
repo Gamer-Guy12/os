@@ -85,6 +85,6 @@ __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   kio_printf("Got Cores\n");
   kio_printf("%u\n", core_count);
   init_hal();
-  start_cores(multiboot);
+  start_cores();
   // kernel_main();
 }

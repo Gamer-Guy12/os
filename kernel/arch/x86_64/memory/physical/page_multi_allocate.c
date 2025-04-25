@@ -1,5 +1,5 @@
+#include <arch/pmm.h>
 #include <libk/bit.h>
-#include <pmm.h>
 #include <stddef.h>
 
 void allocate_page_frames(pageframe_t *pages, uint64_t count) {

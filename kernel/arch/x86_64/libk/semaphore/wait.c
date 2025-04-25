@@ -12,7 +12,7 @@ void semaphore_wait(semaphore_t *semaphore) {
     lock_release(&semaphore->lock);
 
     while (semaphore->val < 1) {
-      __asm__ volatile("pause" : : :);
+      __asm__ volatile("pause" : : : "memory");
     }
 
     semaphore_wait(semaphore);

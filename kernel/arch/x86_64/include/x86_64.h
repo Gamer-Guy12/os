@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-void start_cores(uint8_t *multiboot);
+void start_cores(void);
 
 #endif

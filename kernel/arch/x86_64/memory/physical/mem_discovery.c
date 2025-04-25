@@ -1,7 +1,7 @@
 /// Here the memory map is discovered
 
 #include "x86_64_pmm.h"
-#include <pmm.h>
+#include <arch/pmm.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

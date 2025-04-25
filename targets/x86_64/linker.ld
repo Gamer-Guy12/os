@@ -50,6 +50,7 @@ SECTIONS {
 	. = 0x1000000;
 	kernel_mem_end = .;
 
+ 	/* This is general purpose kernel memory, on x86_64 this is just used for the physical memory allocator and maybe later virtual memory allocator */
 	kernel_gp = .;
 	. = 0x2000000;
 	kernel_gp_end = .;
