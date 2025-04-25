@@ -1,4 +1,5 @@
 ARCH?=x86_64
+DECLS?=
 
 .PHONY: all
 all: build/bin/kernel.bin build/os.iso

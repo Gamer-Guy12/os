@@ -4,5 +4,6 @@
 #include <stdint.h>
 
 void start_cores(void);
+void init_apic(void);
 
 #endif

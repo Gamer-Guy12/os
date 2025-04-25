@@ -63,9 +63,7 @@ void issue_ipi(uint8_t core, uint8_t ipi_type, bool deassert,
   // Set destination
   lapic_addr[0x310] = core << 24;
   // Set info into 0x300 ICR
-  lapic_addr[0x300] =
-      /* Preserve reserved */ (lapic_addr[0x300] & 0xfff00000) | (1 << 14) |
-      ((ipi_type & 0x3) << 8) | or_with;
+  lapic_addr[0x300] = (1 << 14) | ((ipi_type & 0x7) << 8) | or_with;
   do {
     __asm__ volatile("pause" : : : "memory");
   } while (lapic_addr[0x300] & (1 << 12));
@@ -75,10 +73,9 @@ void issue_ipi(uint8_t core, uint8_t ipi_type, bool deassert,
 
   if (deassert) {
     lapic_addr[0x280] = 0;
-    lapic_addr[0x310] = core << 24;
+    (lapic_addr[0x310]) = core << 24;
     lapic_addr[0x300] =
-        /* Preserve reserved */ (lapic_addr[0x300] & 0xfff00000) | (0 << 14) |
-        ((ipi_type & 0x3) << 8);
+        (lapic_addr[300] & 0xfff00000) | (0 << 14) | ((ipi_type & 0x7) << 8);
 
     do {
       __asm__ volatile("pause" : : : "memory");
@@ -117,13 +114,13 @@ void start_cores(void) {
     if (cores[i] == bspid)
       continue;
 
-    // IPI Type 101 is an INIT IPI
-    issue_ipi(cores[i], 101, true, 0, 8);
+    // IPI Type 5 is an INIT IPI
+    issue_ipi(cores[i], 5, true, 0, 0);
     wait_ms(10);
 
     for (size_t j = 0; j < 2; j++) {
-      // IPI Type 110 is startup
-      issue_ipi(cores[i], 110, false, 200, 0);
+      // IPI Type 6 is startup
+      issue_ipi(cores[i], 6, false, 200, 8);
     }
   }
 

@@ -1,4 +1,5 @@
 ARCH?=x86_64
+DECLS?=
 
 ifeq ($(ARCH), x86_64)
 CC=x86_64-elf-gcc
@@ -37,7 +38,7 @@ kernel/obj/%.asm.o: kernel/%.asm
 
 kernel/obj/%.c.o: kernel/%.c
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -I kernel/arch/x86_64/include -o $@ $<
+	@$(CC) $(CFLAGS) -I kernel/arch/x86_64/include $(addprefix -D , $(DECLS)) -o $@ $<
 	@echo CC $< $@
 	
 endif
