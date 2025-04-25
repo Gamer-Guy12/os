@@ -1,13 +1,18 @@
 #include "libk/lock.h"
 #include <libk/semaphore.h>
+#include <stdint.h>
 
-void semaphore_wait(semaphore_t *semaphore) {
+uint32_t semaphore_wait(semaphore_t *semaphore) {
   lock_acquire(&semaphore->lock);
 
   if (semaphore->val > 0) {
     semaphore->val--;
 
+    uint32_t ret = semaphore->val;
+
     lock_release(&semaphore->lock);
+
+    return ret;
   } else {
     lock_release(&semaphore->lock);
 
@@ -15,6 +20,6 @@ void semaphore_wait(semaphore_t *semaphore) {
       __asm__ volatile("pause" : : : "memory");
     }
 
-    semaphore_wait(semaphore);
+    return semaphore_wait(semaphore);
   }
 }
