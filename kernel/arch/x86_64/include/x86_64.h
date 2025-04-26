@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 void start_cores(void);
-void init_apic(void);
+
+void init_multiboot(uint8_t *multiboot);
+uint8_t *get_multiboot(void);
 
 #endif

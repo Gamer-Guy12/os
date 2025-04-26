@@ -25,5 +25,6 @@ __attribute__((section(".startup"))) static void handle_init_array(void) {
 
 __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   handle_init_array();
+  init_multiboot(multiboot);
   kgfx_clear();
 }
