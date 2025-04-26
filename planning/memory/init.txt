@@ -1,0 +1,6 @@
+The init should:
+- Relocate the kernel to higher half along with multiboot and other
+- Remap the first megabyte of space into the higher half
+- Allocate memory for memory allocation
+
+Memory should be allocated where there is a list of contiguous sections that are all free or all used or all reserved

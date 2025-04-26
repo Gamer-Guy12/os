@@ -19,9 +19,13 @@ acpi interface:
 - get MADT
 
 hal interface:
-- init hal
+- init hal (architecture specific)
     - calls init on other subsystems of the hal
     - all subsystems return a struct containg global things
 - get Memory
     - mmap
     - munmap
+    - res_phys_addr
+        - reserves a certain amount of pages to be unallocatable (physically)
+    - res_virt_addr
+        - same but for virtual
