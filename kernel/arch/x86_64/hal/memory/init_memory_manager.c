@@ -61,6 +61,7 @@ void init_memory_manager(void) {
 
   // How many pages does it take
   size_t entry_page_count = entry_mem_size / 4096;
+  entry_page_count = entry_page_count + 1;
 
   // Move the physical memory regions into the general purpose memory to be
   // mapped into virtual memory
@@ -68,6 +69,7 @@ void init_memory_manager(void) {
 
   // How many page tables did i make?
   size_t page_table_count = 0;
+  page_table_count = page_table_count + 1;
 
   lock_release(get_mem_lock());
 }

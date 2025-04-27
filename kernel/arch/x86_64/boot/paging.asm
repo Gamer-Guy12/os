@@ -11,7 +11,9 @@ enable_paging:
     ; The l3 page table used for identity mapping the first 4 gigabytes
     mov eax, l3_page_table
     or eax, 3
-    mov [l4_page_table], eax
+    ; This shifts everything into the higher half
+    ; Essential evverything is identitiy mapped into the higher half and then more paging form there
+    mov [l4_page_table + 2048*8], eax
 
     ; Loop to put all the l2 page tables in the l3 page table
     mov ecx, 0

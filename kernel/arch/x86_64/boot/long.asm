@@ -59,12 +59,13 @@ after_paging:
     or eax, (1 << 8)
     wrmsr
 
+    lgdt [gdt64.pointer]
+
     ; Enable paging again
     mov edx, cr0
     or edx, (1 << 31)
     mov cr0, edx
 
-    lgdt [gdt64.pointer]
     jmp gdt64.segmen:start64
 
 BITS 32

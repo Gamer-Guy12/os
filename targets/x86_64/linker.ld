@@ -4,10 +4,19 @@ OUTPUT_FORMAT(elf64-x86-64)
 SECTIONS {
 	. = 0x100000;
 
-    .text BLOCK(4k) : ALIGN(4k) {
-        _text = .;
+	.loading : ALIGN(4K) 
+	{
+		_loading = .;
+
 		*(.multiboot)
         *(.loading)
+	}
+
+	. += 0xFFFFFFFF80000000;
+
+    .text ALIGN(4k) : AT(ADDR(.text) - 0xFFFFFFFF80000000)
+	{
+        _text = .;
 		
 		. = 0x200000;
 
@@ -15,13 +24,13 @@ SECTIONS {
 		*(.text)
     }
 
-    .rodata BLOCK(4K) : ALIGN(4K)
+    .rodata ALIGN(4k) : AT(ADDR(.rodata) - 0xFFFFFFFF80000000)
 	{
 		_rodata = .;
 		*(.rodata)
 	}
 
-	.data BLOCK(4K) : ALIGN(4K)
+	.data ALIGN(4k) : AT(ADDR(.data) - 0xFFFFFFFF80000000)
 	{
 		_data = .;
 
@@ -33,12 +42,13 @@ SECTIONS {
 		*(.data)
 	}
 
-	.eh_frame BLOCK(4K) : ALIGN(4K) {
+	.eh_frame ALIGN(4k) : AT(ADDR(.eh_frame) - 0xFFFFFFFF80000000)
+	{
 		_ehframe = .;
 		*(.eh_frame)
 	}
 
-	.bss BLOCK(4K) : ALIGN(4K)
+	.bss ALIGN(4k) : AT(ADDR(.bss) - 0xFFFFFFFF80000000)
 	{
 		_bss = .;
 		*(.bss)
@@ -47,7 +57,7 @@ SECTIONS {
 	}
 
 	end_kernel = .;
-	. = 0x1000000;
+	. = 0x1000000 + 0xFFFFFFFF80000000;
 	kernel_mem_end = .;
 
  	/* This is general purpose kernel memory, on x86_64 this is just used for the physical memory allocator and maybe later virtual memory allocator */
@@ -55,6 +65,6 @@ SECTIONS {
 	/* This is just here to clear some space and provide consistent addressing */
 	/* Can and should be allocated over in physical memory */
 	kernel_gp = .;
-	. = 0x2000000;
+	. = 0x2000000 + 0xFFFFFFFF80000000;
 	kernel_gp_end = .;
 }
