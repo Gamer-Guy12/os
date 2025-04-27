@@ -24,8 +24,17 @@ hal interface:
     - all subsystems return a struct containg global things
 - get Memory
     - mmap
+        - maps a page into address space
     - munmap
+        - unmaps a page from address space
     - res_phys_addr
-        - reserves a certain amount of pages to be unallocatable (physically)
+        - reserves a certain amount of pages to be unallocatable and unfreeable (physically)
+        - sets them to phys_reserved
     - res_virt_addr
         - same but for virtual
+    - mem_enable_perms
+        - enable certain perms for a page
+        - Just make it a bitmask that then u can use libk/bits to set
+    - mem_disable_perms
+        - disable certain perms for a page
+        

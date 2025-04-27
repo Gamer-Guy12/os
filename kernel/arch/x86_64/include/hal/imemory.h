@@ -5,15 +5,20 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#define PAGING_NOT_EXECUTABLE 1 << 63;
+#define PAGING_PRESENT 1;
+#define PAGING_READ_WRITE 1 << 1;
+
 extern void *kernel_gp;
 extern void *kernel_gp_end;
 
 lock_t *get_mem_lock(void);
 
-void *phys_map(size_t page_count, bool contiguous);
+void *phys_map(void);
+void *phys_map_contig(size_t page_count);
 void phys_unmap(void *page, size_t page_count);
 
-void init_memory_manager(uint8_t *multiboot);
+void init_memory_manager(void);
 
 typedef enum {
   phys_reserved = 0,

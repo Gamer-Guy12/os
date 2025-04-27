@@ -17,4 +17,7 @@ inline uint8_t find_zero8(uint8_t num) {
 
 inline bool check_bit(uint8_t num, uint8_t pos) { return (num & 1 << pos) > 0; }
 
+inline uint64_t set_bits(uint64_t num, uint64_t bits) { return num | bits; }
+inline uint64_t unset_bits(uint64_t num, uint64_t bits) { return num & ~bits; }
+
 #endif

@@ -1,3 +1,4 @@
+#include "hal/imemory.h"
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/lock.h>
@@ -27,4 +28,5 @@ __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   handle_init_array();
   init_multiboot(multiboot);
   kgfx_clear();
+  init_memory_manager();
 }
