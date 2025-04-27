@@ -4,10 +4,12 @@
 #include <libk/lock.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #define PAGING_NOT_EXECUTABLE 1 << 63;
 #define PAGING_PRESENT 1;
 #define PAGING_READ_WRITE 1 << 1;
+#define PAGING_USER_MODE 1 << 2;
 
 extern void *kernel_gp;
 extern void *kernel_gp_end;
@@ -26,10 +28,13 @@ typedef enum {
   phys_used = 2
 } phys_mem_region_type_t;
 
-typedef struct {
+struct phys_mem_region_struct {
   void *start_addr;
   size_t length;
   phys_mem_region_type_t type;
-} phys_mem_region_t;
+  struct phys_mem_region_struct *next;
+};
+
+typedef struct phys_mem_region_struct phys_mem_region_t;
 
 #endif

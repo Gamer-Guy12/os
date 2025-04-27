@@ -1,0 +1,4 @@
+segments of different types of memory are used
+
+when a new thing is allocated it is split into its own segment with the correct type
+adjacent segments with the same type are merged
