@@ -11,6 +11,7 @@ dd ARCH
 dd LENGTH
 dd -(LENGTH + ARCH + MAGIC)
 
+; End tag
 dw 0
 dw 0
 dd 8

@@ -10,6 +10,34 @@ SECTIONS {
 
 		*(.multiboot)
         *(.loading)
+
+		*(.loading_rodata)
+		*(.loading_data)
+	}
+
+	/* All these page tables will be replaced later on */
+	.page_tables (NOLOAD) : ALIGN(4K) 
+	{
+		_page_tables = .;
+		_l4_page = .;
+		. = _page_tables + 4K;
+		_l3_page = .;
+		. = _l3_page + 8K;
+		_l2_page = .;
+		. = _l2_page + 16k;
+		_l1_page = .;
+		. = _l1_page + 8M;
+		_higher_l2_page = .;
+		/* There is a maximum of 2 gb */
+		. = _higher_l2_page + 8k;
+		_higher_l1_page = .;
+		. = _higher_l1_page + 4M;
+	}
+
+	.bootstrap_stack (NOLOAD) : ALIGN(4k) {
+		_bs_stack_bottom = .;
+		. = _bs_stack_bottom + 16K;
+		_bs_stack_top = .;
 	}
 
 	. += 0xFFFFFFFF80000000;

@@ -6,7 +6,7 @@ global _start
 extern enable_paging
 global after_paging
 extern start64
-extern l4_page_table
+extern _l4_page
 global multiboot_ptr
 
 section .loading
@@ -28,9 +28,6 @@ _start:
     xor edx, (1 << 31)
     mov cr0, edx
 
-    mov esp, stack_top
-    mov ebp, esp
-
     ; Enables PAE (Physical Adress Extension)
     mov edx, cr4
     or edx, (1 << 5)
@@ -50,7 +47,7 @@ _start:
     jmp enable_paging
 after_paging:
 
-    mov ecx, l4_page_table
+    mov ecx, _l4_page
     mov cr3, ecx
 
     ; Enable long mode
@@ -79,14 +76,7 @@ stop:
     hlt
     jmp stop
 
-section .bss
-
-align 16
-stack_bottom:
-    resb 16384
-stack_top:
-
-section .rodata
+section .loading_rodata
 gdt64:
     dq 0
 .segmen: equ $ - gdt64
@@ -95,6 +85,6 @@ gdt64:
     dw $ - gdt64 -1
     dq gdt64
 
-section .data
+section .loading_data
 multiboot_ptr:
     dq 0
