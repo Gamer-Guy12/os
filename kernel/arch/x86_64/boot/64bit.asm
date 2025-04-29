@@ -27,59 +27,50 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
-; Fill the last two entries in the l3 page table for the last two gigabytes
 mov rcx, 510
 .l2_loop:
-
-    ; Put the address into rdx
-    ; multiply the size of a page by the rcx
-    mov rdx, _higher_l2_page
+    
     mov rax, 4096
-    mul rcx
-    add rax, rdx
+    mov rdx, rcx
+    sub rdx, 510
+    mul rdx
+    add rax, _higher_l2_page
     or rax, 3
-    ; The plus 4096 moves u into the second table
     mov [_l3_page + 4096 + rcx * 8], rax
 
     inc rcx
     cmp rcx, 512
     jne .l2_loop
 
-; Calculate the size of the kernel
-; Everything is gaurneteed to be aligned to 2 MB boundries
 mov rax, kernel_gp_end
-; Get rid of higher half
-sub rax, 0xFFFFFFFF80000000
-; Divide by 2 MB
+mov rbx, 0xffffffff80000000
+sub rax, rbx
 mov rcx, 0x200000
 div rcx
-; put the size into r8
-; Yay for the new registers so i dont have to work with the other
+
 mov r8, rax
 
-
-    ; 512 entries per a big table
-mov rax, 512
-mul r8
-mov r8, rax
-
-; Start counter
 mov rcx, 0
 .l1_loop:
 
-    ; See .l2_loop for the logic
-    mov rdx, _higher_l1_page
     mov rax, 4096
     mul rcx
-    add rax, rdx
+    add rax, _higher_l1_page
     or rax, 3
     mov [_higher_l2_page + rcx * 8], rax
-    
+
     inc rcx
-    cmp rcx, r8
+    mov rax, r8
+    cmp rcx, rax
     jne .l1_loop
+
+mov rax, r8
+mov rdx, 512
+mul rdx
+mov r8, rax
+
 mov rcx, 0
-.l1_fill_loop:
+.l1_fill:
 
     mov rax, 4096
     mul rcx
@@ -87,8 +78,10 @@ mov rcx, 0
     mov [_higher_l1_page + rcx * 8], rax
 
     inc rcx
-    cmp rcx, r8
-    jne .l1_fill_loop
+    mov rax, r8
+    cmp rcx, rax
+    jne .l1_fill
+
 ; Set the higher half l3 page table
 mov rax, _l3_page
 ; We want the second one
@@ -109,14 +102,10 @@ stop:
 section .startup
 kernel_early_start:
 
-    mov word [0xb8000], 0x0f31
-
-    jmp stop
     mov rsp, stack_top
     mov rbp, rsp
 
     mov rdi, qword [multiboot_ptr]
-
     call kernel_start
 
 .stop:
