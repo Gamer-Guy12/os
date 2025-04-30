@@ -1,0 +1,40 @@
+The HAL has architecture specific parts and general purpose parts:
+
+architecture specific:
+- PCIe
+- clock
+- Some graphics as in the VGA driver
+- Memory
+- Threading
+
+general purpose:
+- Graphics
+
+Other things are abstracted though not part of the hal:
+- ACPI (Exposes the SDT tables but not the XSDP/RSDP or XSDT/RSDT)
+    - MADT
+
+acpi interface:
+- inititialize acpi
+- get MADT
+
+hal interface:
+- init hal (architecture specific)
+    - calls init on other subsystems of the hal
+    - all subsystems return a struct containg global things
+- get Memory
+    - mmap
+        - maps a page into address space
+    - munmap
+        - unmaps a page from address space
+    - res_phys_addr
+        - reserves a certain amount of pages to be unallocatable and unfreeable (physically)
+        - sets them to phys_reserved
+    - res_virt_addr
+        - same but for virtual
+    - mem_enable_perms
+        - enable certain perms for a page
+        - Just make it a bitmask that then u can use libk/bits to set
+    - mem_disable_perms
+        - disable certain perms for a page
+        

@@ -1,0 +1,14 @@
+Map of kernel memory (higher half):
+
+All addresses are relative to the higher half
+
+--------------------------------------------------------------------------------------------
+| 1 MB | Kernel Size | Until 0x8000000000 | Page Tables | Until 0x10000000000 | Memory Map |
+--------------------------------------------------------------------------------------------
+
+Section 1: Memory mapping the first megabyte which contains a whole load of bios things and stuff
+Section 2: Mapping the kernel to 0x100000 in upper half which is right after the first mb
+Section 3: Empty
+Section 4: Page tables
+Section 5: Empty
+Section 6: Memory Map

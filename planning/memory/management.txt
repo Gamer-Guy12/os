@@ -1,0 +1,28 @@
+Memory Management:
+
+Three managers
+- Page Manager
+    - Frees and allocates physical pages
+- Virtual Manager
+    - Maps and Unmaps pages into Memory
+- Malloc or something similar
+    - Gets pages from memory and uses them to give small chunks to programs
+
+Scrap this
+Keeping track of physical pages:
+- The allocator has a list of memory regions
+    - When it becomes empty it is released (1 element which is a free list)
+    - When all others are full it will find a new one
+    - These are meant to match the regions given in the memory map by multiboot
+    - Points to page list
+- Page list
+    - Each element contains the amount of pages it contains
+    - A pointer to the next element in the list
+    - A pointer to the next free section
+    - A pointer to the previous element in the list
+    - When a page is allocated
+        - The page is removed from that element and put either into the previous, next or a new page list element
+    - Adjacent elements are merged if they are the same type
+
+Kernel gets to hog all the memory before 16 mb but gets none after (well technically 15 because of the mb is taken by bios and memory stuff)
+Bitmaps hog the next 16 mb (64 gb of ram supported by 16 mb)

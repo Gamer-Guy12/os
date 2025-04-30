@@ -1,0 +1,2 @@
+each architecture must initialize everything and then call kernel_main
+kernel_main assumes its running in a multicore system so will use locks and stuff

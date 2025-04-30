@@ -1,0 +1,1 @@
+Each SDT table has its own header for all the stuff in it which also contains the function to get that

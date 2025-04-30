@@ -1,0 +1,10 @@
+Each folder represents a different part of the os (ignoring targets and build)
+There is a top level makefile which includes the lower level makefiles
+Folder contains its own makefile on how to build it
+
+Each lower level makefile compiles to object files in their own obj folder
+then they build a binary that is put into build/bin
+
+Including:
+When folders need to communicate, the top level include folder is used
+When Different sections of each folder need to communicate, the include folder inside is used

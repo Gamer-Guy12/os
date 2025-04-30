@@ -1,0 +1,11 @@
+Each page table contains 512, 8byte entries
+
+4 tables:
+pml4
+- 512 entries * 8 bytes = 4 kb
+pdpt
+- 512 tables * 512 entries * 8 bytes
+pdt
+- 512 * 512 * 512 * 8 bytes
+pt
+- 512

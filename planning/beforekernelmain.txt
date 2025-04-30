@@ -1,0 +1,6 @@
+These are the things that should run before kernel main (in order):
+Create locking system (done)
+Create IDT
+Create Physical Memory Manager (done)
+Initialize all the cores 
+Create their page tables
