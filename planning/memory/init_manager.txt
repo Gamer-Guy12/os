@@ -1,0 +1,11 @@
+- first go through the multiboot structures and convert them into physical memory regions
+- then reserve space for the kernel
+    - create a kernel and next region
+    - kernel holds the kernel
+    - next holds the space after the kernel that would have been held in the previous one
+    - set up next and the kernel
+    - copy them to kernel gp memory
+    - set up next and previous
+    - destroy all empty regions and then create new nexts and previouses
+- reserve the first megabyte of space since u shouldn't write in that either if it hasn't been reserved already
+- create a new set of page tables that unmaps the lower pages
