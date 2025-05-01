@@ -13,28 +13,13 @@
 
 extern void *kernel_gp;
 extern void *kernel_gp_end;
+extern void *kernel_start;
+extern void *end_kernel;
 
+/// Mem lock is required to use kernel_gp for writes
+/// Dont care about reads
 lock_t *get_mem_lock(void);
 
-void *phys_map(void);
-void *phys_map_contig(size_t page_count);
-void phys_unmap(void *page, size_t page_count);
-
 void init_memory_manager(void);
-
-typedef enum {
-  phys_reserved = 0,
-  phys_free = 1,
-  phys_used = 2
-} phys_mem_region_type_t;
-
-struct phys_mem_region_struct {
-  void *start_addr;
-  size_t length;
-  phys_mem_region_type_t type;
-  struct phys_mem_region_struct *next;
-};
-
-typedef struct phys_mem_region_struct phys_mem_region_t;
 
 #endif

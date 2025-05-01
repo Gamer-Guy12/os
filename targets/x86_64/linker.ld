@@ -42,6 +42,8 @@ SECTIONS {
 
 	. += 0xFFFFFFFF80000000;
 
+	kernel_start = .;
+
     .text ALIGN(4k) : AT(ADDR(.text) - 0xFFFFFFFF80000000)
 	{
         _text = .;

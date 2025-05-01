@@ -4,21 +4,32 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-/// Void maps a certain amount of pages into virtual memory
-/// They are all contiguous in virtual memory
-/// @param contiguous Defines whether they should be contiguous in physical
-/// memory
-void *hal_mmap(size_t page_count, bool contiguous);
+typedef enum { phys_reserved, phys_free, phys_allocated } phys_mem_type_t;
 
-/// Unmaps a certain amount of contiguous virtual pages from memory
-/// These are both kernel only versions that will then be used by system calls
-/// and should not be used by usermode
-void hal_munmap(void *page, size_t page_count);
+struct phys_mem_region_struct {
+  void *base;
+  size_t len;
+  size_t pages;
+  struct phys_mem_region_struct *next;
+  struct phys_mem_region_struct *prev;
+  phys_mem_type_t type;
+};
 
-/// Reserves a physical page so that it can't be allocated or deallocated
-void res_phys_page(void *phys_addr);
+typedef struct phys_mem_region_struct phys_mem_region_t;
 
-/// Reserves a virtual page so that it can't be mapped or unmapped
-void res_virt_page(void *virt_addr);
+typedef struct {
+  void *base;
+  size_t size;
+  size_t region_count;
+  phys_mem_region_t *first;
+} phys_mem_section_t;
+
+void phys_alloc(phys_mem_section_t *section);
+/// These are contiguous pages, just use phys_alloc multiple times to get
+/// multiple non-contiguous ones
+void phys_multi_alloc(phys_mem_section_t *section, size_t page_count);
+void phys_reserve(phys_mem_section_t *section, size_t page_offset,
+                  size_t page_count);
+void phys_unreserve(phys_mem_region_t *region, phys_mem_section_t *section);
 
 #endif
