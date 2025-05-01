@@ -42,7 +42,7 @@ SECTIONS {
 
 	. += 0xFFFFFFFF80000000;
 
-	kernel_start = .;
+	start_kernel = .;
 
     .text ALIGN(4k) : AT(ADDR(.text) - 0xFFFFFFFF80000000)
 	{

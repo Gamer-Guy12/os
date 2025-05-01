@@ -78,6 +78,7 @@ static phys_mem_section_t create_from_multiboot(void) {
 /// The entire reserved part must be in one region currently
 /// That means that u have to free the entire region and it has to be not in a
 /// reserved space already
+/// End is the byte after the end of the region
 static void reserve_region(phys_mem_section_t *section, void *start,
                            void *end) {
   phys_mem_region_t *region = NULL;
@@ -99,12 +100,11 @@ static void reserve_region(phys_mem_section_t *section, void *start,
   if (!(((size_t)end - (size_t)start) > region->len))
     sys_panic(0);
 
-  if (!region->type == phys_reserved)
+  if (region->type == phys_reserved)
     return;
 
   // This long assignment basically skips over the used part of it
-  phys_mem_region_t *region_save =
-      (void *)((uint8_t *)kernel_gp + ((size_t *)kernel_gp)[0]);
+  size_t *size_save = kernel_gp;
 
   // True means it does what the name says
   bool start_equal = start == region->base;
@@ -113,9 +113,86 @@ static void reserve_region(phys_mem_section_t *section, void *start,
   // Easiest case
   if (start_equal && end_equal) {
     region->type = phys_reserved;
+  } else if (start_equal && !end_equal) {
+    phys_mem_region_t new;
+    new.base = end;
+    new.len = region->len - ((size_t)end - (size_t)start);
+    new.pages = ROUND_DOWN(new.len / 4096, 4096);
+    new.type = region->type;
+
+    region->type = phys_reserved;
+    region->len = region->len - new.len;
+    region->pages = ROUND_DOWN(region->len / 4096, 4096);
+
+    phys_mem_region_t *newPtr =
+        &((phys_mem_region_t *)((uint8_t *)kernel_gp +
+                                8))[*size_save / sizeof(phys_mem_region_t)];
+    *newPtr = new;
+
+    newPtr->next = region->next;
+    region->next = newPtr;
+    newPtr->prev = region;
+
+    // Remember to increment section count
+    section->region_count++;
+    size_save += sizeof(phys_mem_region_t);
+  } else if (!start_equal && end_equal) {
+    // Region is the first part and normal
+    // New is the second and reserved
+
+    phys_mem_region_t *newPtr =
+        &((phys_mem_region_t *)((uint8_t *)kernel_gp +
+                                8))[*size_save / sizeof(phys_mem_region_t)];
+
+    newPtr->base = start;
+    newPtr->len = (size_t)end - (size_t)start;
+    newPtr->type = phys_reserved;
+    newPtr->pages = ROUND_DOWN(newPtr->len / 4096, 4096);
+    newPtr->prev = region;
+    newPtr->next = region->next;
+    region->next = newPtr;
+    region->len = region->len - newPtr->len;
+    region->pages = ROUND_DOWN(region->len / 4096, 4096);
+
+    section->region_count++;
+    size_save += sizeof(phys_mem_region_t);
   } else {
+    // Region is first and stays the same
+    // newPtr[0] is second and represents the reserved
+    // newPtr[1] is third and stays the same as region
+
+    phys_mem_region_t *newPtr =
+        &((phys_mem_region_t *)((uint8_t *)kernel_gp +
+                                8))[*size_save / sizeof(phys_mem_region_t)];
+
+    size_t full_size = region->len;
+    phys_mem_region_t *next = region->next;
+
+    newPtr[0].base = start;
+    newPtr[0].len = (size_t)end - (size_t)start;
+    newPtr[0].type = phys_reserved;
+    newPtr[0].pages = ROUND_DOWN(newPtr[0].len / 4096, 4096);
+    newPtr[0].prev = region;
+    newPtr[0].next = &newPtr[1];
+
+    region->len = (size_t)start - (size_t)region->base;
+    region->pages = ROUND_DOWN(region->len / 4096, 4096);
+    region->next = &newPtr[0];
+
+    newPtr[1].base = end;
+    newPtr[1].len = full_size - region->len - newPtr[0].len;
+    newPtr[1].type = region->type;
+    newPtr[1].pages = ROUND_DOWN(newPtr[1].len / 4096, 4096);
+    newPtr[1].prev = &newPtr[0];
+    newPtr[1].next = next;
+
+    // We made two regions
+    section->region_count += 2;
+    size_save += sizeof(phys_mem_region_t) * 2;
   }
 }
+
+static void create_page_tables(void) {}
 
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
@@ -130,10 +207,16 @@ void init_memory_manager(void) {
   // Setup physical memory
   phys_mem_section_t base_section = create_from_multiboot();
 
+  // Reserve kernel
   reserve_region(&base_section,
-                 (void *)((uint64_t)kernel_start - KERNEL_OFFSET),
+                 (void *)((uint64_t)start_kernel - KERNEL_OFFSET),
                  (void *)((uint64_t)end_kernel - KERNEL_OFFSET));
+  // Reserve first mb which has like important stuff
   reserve_region(&base_section, 0x0, (void *)0x100000);
+
+  get_base_section(base_section);
+
+  create_page_tables();
 
   lock_release(get_mem_lock());
 }

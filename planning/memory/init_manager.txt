@@ -8,4 +8,7 @@
     - set up next and previous
     - destroy all empty regions and then create new nexts and previouses
 - reserve the first megabyte of space since u shouldn't write in that either if it hasn't been reserved already
+- allocate a page to hold the info for the physical memory manager
+    - If it is bigger than a page go into kernel panic with code 1
+- 
 - create a new set of page tables that unmaps the lower pages

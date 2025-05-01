@@ -1,1 +1,2 @@
 0: Memory Allocation Error
+1: Too much space taken
