@@ -1,7 +1,7 @@
 #ifndef X86_64_MEMORY_H
 #define X86_64_MEMORY_H
 
-#include "hal/memory.h"
+#include <hal/memory.h>
 #include <libk/lock.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,6 +11,9 @@ extern void *kernel_gp;
 extern void *kernel_gp_end;
 extern void *start_kernel;
 extern void *end_kernel;
+
+#define PHYSICAL_MEMORY_MANAGER_INFO kernel_gp;
+#define PML4_LOCATION (uint8_t *)kernel_gp + 0x1000;
 
 typedef enum {
   PML4_PRESENT = 1,
@@ -40,7 +43,7 @@ typedef struct {
       uint8_t not_executable : 1;
     } __attribute__((packed));
   };
-} __attribute__((packed)) PML4_t;
+} __attribute__((packed)) PML4_entry_t;
 
 typedef enum {
   PDPT_PRESENT = 1,
@@ -70,7 +73,7 @@ typedef struct {
       uint8_t not_executable : 1;
     } __attribute__((packed));
   };
-} __attribute__((packed)) PDPT_t;
+} __attribute__((packed)) PDPT_entry_t;
 
 typedef enum {
   PDT_PRESENT = 1,
@@ -100,7 +103,7 @@ typedef struct {
       uint8_t not_executable : 1;
     } __attribute__((packed));
   };
-} __attribute__((packed)) PDT_t;
+} __attribute__((packed)) PDT_entry_t;
 
 typedef enum {
   PT_PRESENT = 1,
@@ -130,7 +133,7 @@ typedef struct {
       uint8_t not_executable : 1;
     } __attribute__((packed));
   };
-} __attribute__((packed)) PT_t;
+} __attribute__((packed)) PT_entry_t;
 
 /// Mem lock is required to use kernel_gp for writes
 /// Dont care about reads
@@ -138,7 +141,10 @@ lock_t *get_mem_lock(void);
 
 /// Allows you to get and set the base section that others are allowed to be
 /// built on but this is the base
-phys_mem_section_t *get_base_section(phys_mem_section_t section);
+phys_mem_section_t *get_base_section(phys_mem_section_t *section);
+
+/// Combines all the adjacent regions
+void phys_manager_combine(phys_mem_section_t *section);
 
 void init_memory_manager(void);
 

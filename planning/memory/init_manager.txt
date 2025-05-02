@@ -11,4 +11,5 @@
 - allocate a page to hold the info for the physical memory manager
     - If it is bigger than a page go into kernel panic with code 1
     - make sure that when u make page tables, the first page of the physical info is still mapped to where it is so nothing breaks
+    - actually reserve it cuz its never supposed to be freed
 - create a new set of page tables that unmaps the lower pages

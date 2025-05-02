@@ -192,17 +192,37 @@ static void reserve_region(phys_mem_section_t *section, void *start,
   }
 }
 
-static void create_page_tables(void) {}
+static void create_page_tables(void) {
+  PML4_entry_t *pml4 = (PML4_entry_t *)PML4_LOCATION;
+
+  // Each entry contains 512 gb
+  // The last entry is the one that contains the higher half
+  pml4 = *&pml4;
+}
 
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
+///
+/// This can call the physical memory manager functions after it sets up the
+/// necessary prerequisites but like since the entire thing is the necessary
+/// prereqs it kinda doesn't matter
+///
+/// But it may in the future
+///
+/// Actually it does cuz i can call phys alloc with the old page tables since
+/// the new ones have to map it to the same spot
+///
+/// Wait actually no cuz the physical memory manager needs the virtual memory
+/// manager which doesn't exist yet cuz of the fact that it needs to be set up
+/// So you can't
 void init_memory_manager(void) {
   lock_acquire(get_mem_lock());
 
   // Setup size
   // Increment this size by the size of the kernel_gp that hs been used
+  // It starts at 8 because the value itself is 8 bytes
   size_t *kernel_gp_64 = kernel_gp;
-  kernel_gp_64[0] = 0;
+  kernel_gp_64[0] = 8;
 
   // Setup physical memory
   phys_mem_section_t base_section = create_from_multiboot();
@@ -214,9 +234,16 @@ void init_memory_manager(void) {
   // Reserve first mb which has like important stuff
   reserve_region(&base_section, 0x0, (void *)0x100000);
 
-  get_base_section(base_section);
+  // 0x1000 is the size of a page
+  // Reserving space for the physical memory manager's first page, more can be
+  // allocated and deallocated but this one must remain
+  reserve_region(&base_section, kernel_gp, (uint8_t *)kernel_gp + 0x1000);
+
+  get_base_section(&base_section);
 
   create_page_tables();
 
   lock_release(get_mem_lock());
+
+  phys_manager_combine(get_base_section(NULL));
 }
