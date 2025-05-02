@@ -197,7 +197,7 @@ static void reserve_region(phys_mem_section_t *section, void *start,
 /// I clear all the page tables i reserve
 static void create_page_tables(void) {
   PML4_entry_t *pml4 = (PML4_entry_t *)PML4_LOCATION;
-  PDPT_entry_t *pdpt = (PDPT_entry_t *)BYTES_PAST(PML4_LOCATION, 0x1000);
+  PDPT_entry_t *pdpt = (PDPT_entry_t *)(BYTES_PAST(PML4_LOCATION, 0x1000));
 
   // Reserve space for the pml4 and the pdpt
   // We only need one pdpt which is for the last 512 gigabytes which contains
@@ -242,7 +242,7 @@ static void create_page_tables(void) {
   // The 0x1000 here skips over the first pdt and jumps to the second one
   pdpt[511].full_entry =
       pdpt[511].full_entry |
-      ((size_t)BYTES_PAST(pdt, 0x1000) & PAGE_TABLE_ENTRY_ADDR_MASK);
+      (((size_t)BYTES_PAST(pdt, 0x1000)) & PAGE_TABLE_ENTRY_ADDR_MASK);
 
   // The pml4 holds 256 tb with 512 gb per entry
   // The pdpt holds 512 gb with 1 gb per entry

@@ -12,8 +12,8 @@ extern void *kernel_gp_end;
 extern void *start_kernel;
 extern void *end_kernel;
 
-#define PHYSICAL_MEMORY_MANAGER_INFO kernel_gp;
-#define PML4_LOCATION (uint8_t *)kernel_gp + 0x1000;
+#define PHYSICAL_MEMORY_MANAGER_INFO kernel_gp
+#define PML4_LOCATION (uint8_t *)kernel_gp + 0x1000
 #define PAGE_TABLE_ENTRY_ADDR_MASK 0x0007fffffffff000
 
 typedef enum {
