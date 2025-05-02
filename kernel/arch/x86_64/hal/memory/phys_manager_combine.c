@@ -50,7 +50,7 @@ void phys_manager_combine(phys_mem_section_t *section) {
       // Combine the two
       // Policy is to reuse the old one
       cur_region->prev->len += cur_region->len;
-      cur_region->prev->pages = ROUND_DOWN(cur_region->prev->len / 4096, 4096);
+      cur_region->prev->pages = ROUND_DOWN(cur_region->prev->len, 4096) / 4096;
       cur_region->prev->next = cur_region->next;
 
       // Decrease the amount of space used in the manager

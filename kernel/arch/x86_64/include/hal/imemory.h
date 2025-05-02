@@ -14,6 +14,7 @@ extern void *end_kernel;
 
 #define PHYSICAL_MEMORY_MANAGER_INFO kernel_gp;
 #define PML4_LOCATION (uint8_t *)kernel_gp + 0x1000;
+#define PAGE_TABLE_ENTRY_ADDR_MASK 0x0007fffffffff000
 
 typedef enum {
   PML4_PRESENT = 1,
@@ -119,6 +120,7 @@ typedef enum {
 
 typedef struct {
   union {
+    uint64_t full_entry;
     struct {
       uint16_t flags : 12;
       /// Bits 12 - 15
@@ -141,6 +143,10 @@ lock_t *get_mem_lock(void);
 
 /// Allows you to get and set the base section that others are allowed to be
 /// built on but this is the base
+///
+/// This base section should be the only one cuz any page can be used for every
+/// program This is not being removed because its kinda too late and im too lazy
+/// to go and refactor everything
 phys_mem_section_t *get_base_section(phys_mem_section_t *section);
 
 /// Combines all the adjacent regions
