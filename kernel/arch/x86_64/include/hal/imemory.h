@@ -141,17 +141,6 @@ typedef struct {
 /// Dont care about reads
 lock_t *get_mem_lock(void);
 
-/// Allows you to get and set the base section that others are allowed to be
-/// built on but this is the base
-///
-/// This base section should be the only one cuz any page can be used for every
-/// program This is not being removed because its kinda too late and im too lazy
-/// to go and refactor everything
-phys_mem_section_t *get_base_section(phys_mem_section_t *section);
-
-/// Combines all the adjacent regions
-void phys_manager_combine(phys_mem_section_t *section);
-
 void init_memory_manager(void);
 
 #endif
