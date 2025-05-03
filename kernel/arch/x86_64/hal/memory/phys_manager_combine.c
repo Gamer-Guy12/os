@@ -57,6 +57,12 @@ void phys_manager_combine(phys_mem_section_t *section) {
       copy_last_page(cur_region, get_base_section(NULL));
     }
 
+    if (cur_region->len == 0) {
+      cur_region->prev->next = cur_region->next;
+
+      copy_last_page(cur_region, get_base_section(NULL));
+    }
+
     cur_region = cur_region->next;
   }
 

@@ -24,10 +24,10 @@ typedef struct {
   phys_mem_region_t *first;
 } phys_mem_section_t;
 
-void phys_alloc(phys_mem_section_t *section);
+void *phys_alloc(phys_mem_section_t *section);
 /// These are contiguous pages, just use phys_alloc multiple times to get
 /// multiple non-contiguous ones
-void phys_multi_alloc(phys_mem_section_t *section, size_t page_count);
+void *phys_multi_alloc(phys_mem_section_t *section, size_t page_count);
 void phys_reserve(phys_mem_section_t *section, size_t page_offset,
                   size_t page_count);
 void phys_unreserve(phys_mem_region_t *region, phys_mem_section_t *section);

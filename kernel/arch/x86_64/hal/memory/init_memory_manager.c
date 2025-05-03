@@ -332,9 +332,14 @@ void init_memory_manager(void) {
 
   // Setup size
   // Increment this size by the size of the kernel_gp that hs been used
-  // It starts at 8 because the value itself is 8 bytes
+  // It starts at 16 because the value itself is 8 bytes and then it takes
+  // another 8 bytes for the amount of pages used by the physical manager
   size_t *kernel_gp_64 = kernel_gp;
-  kernel_gp_64[0] = 8;
+  kernel_gp_64[0] = 16;
+  // when a page fills up its important to make sure u fully set the size to
+  // 4096 so that the thingy doesn't end up accidently think there is space when
+  // there isn't
+  kernel_gp_64[1] = 1;
 
   // Setup physical memory
   phys_mem_section_t base_section = create_from_multiboot();
