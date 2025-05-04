@@ -87,14 +87,13 @@ SECTIONS {
 	}
 
 	end_kernel = .;
-	. = 0x1000000 + 0xFFFFFFFF80000000;
-	kernel_mem_end = .;
+	. = ALIGN(4K);
+	kernel_gp = .;
 
  	/* This is general purpose kernel memory, on x86_64 this is just used for the physical memory allocator and maybe later virtual memory allocator */
 	/* This space should only be used for the initial memory managment bootstrap before something new is created */
 	/* This is just here to clear some space and provide consistent addressing */
 	/* Can and should be allocated over in physical memory */
-	kernel_gp = .;
 	. = 0x2000000 + 0xFFFFFFFF80000000;
 	kernel_gp_end = .;
 }

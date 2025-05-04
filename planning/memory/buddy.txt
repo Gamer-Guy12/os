@@ -1,0 +1,16 @@
+Max order is 10 so max buddy size is 4 mb
+
+Each 4mb chunk is represented by a 8 byte number
+The first byte in a page is a pointer to the next page
+
+Each 8 byte number goes like this
+
+============================================================
+| 63 - 22 - Base address | 21 - Type | 0 - 20 - Pages free |
+============================================================
+
+Type is reserved (1) or not-reserved (0)
+
+Don't set up buddy tables until the 4m chunk is used
+Allocate 3 pages per a buddy system (free when pages free goes up to 4096)
+The allocator will always keep an extra page and when it runs out of space on one it uses the second one to allocate an extra to repeat

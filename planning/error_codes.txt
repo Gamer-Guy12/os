@@ -1,2 +1,3 @@
 0: Memory Allocation Error
 1: Too much space taken
+2: Out of order memory map

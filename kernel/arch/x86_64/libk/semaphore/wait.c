@@ -1,4 +1,4 @@
-#include "libk/lock.h"
+#include <libk/lock.h>
 #include <libk/semaphore.h>
 #include <stdint.h>
 

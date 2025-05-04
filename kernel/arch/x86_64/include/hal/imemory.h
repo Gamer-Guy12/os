@@ -15,6 +15,8 @@ extern void *end_kernel;
 #define PHYSICAL_MEMORY_MANAGER_INFO kernel_gp
 #define PML4_LOCATION (uint8_t *)kernel_gp + 0x1000
 #define PAGE_TABLE_ENTRY_ADDR_MASK 0x0007fffffffff000
+#define PAGE_SIZE 0x1000
+#define BUDDY_MAX_ORDER 10
 
 typedef enum {
   PML4_PRESENT = 1,
