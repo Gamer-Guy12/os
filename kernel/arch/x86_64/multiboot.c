@@ -30,6 +30,8 @@ uint8_t *move_to_type(uint32_t type) {
     curr_size = multiboot[4] | (multiboot[5] << 8) | (multiboot[6] << 16) |
                 (multiboot[7] << 24);
 
+    if (size < curr_size)
+      break;
     size -= curr_size;
     multiboot += curr_size;
   }

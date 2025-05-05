@@ -12,5 +12,5 @@ Each 8 byte number goes like this
 Type is reserved (1) or not-reserved (0)
 
 Don't set up buddy tables until the 4m chunk is used
-Allocate 3 pages per a buddy system (free when pages free goes up to 4096)
+Allocate 3 pages per a buddy system (free when pages free goes up to 1024)
 The allocator will always keep an extra page and when it runs out of space on one it uses the second one to allocate an extra to repeat

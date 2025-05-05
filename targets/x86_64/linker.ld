@@ -46,9 +46,9 @@ SECTIONS {
 
     .text ALIGN(4k) : AT(ADDR(.text) - 0xFFFFFFFF80000000)
 	{
-        _text = .;
 		
-		. = 0x200000;
+		. += 0x200000;
+        _text = .;
 
 		*(.startup)
 		*(.text)
@@ -86,14 +86,16 @@ SECTIONS {
 		*(COMMON)
 	}
 
+	. = ALIGN(4k);
 	end_kernel = .;
-	. = ALIGN(4K);
+	. = 0x1000000 + 0xFFFFFFFF80000000;
+	
 	kernel_gp = .;
 
  	/* This is general purpose kernel memory, on x86_64 this is just used for the physical memory allocator and maybe later virtual memory allocator */
 	/* This space should only be used for the initial memory managment bootstrap before something new is created */
 	/* This is just here to clear some space and provide consistent addressing */
 	/* Can and should be allocated over in physical memory */
-	. = 0x2000000 + 0xFFFFFFFF80000000;
+	. = kernel_gp + 0x1000000;
 	kernel_gp_end = .;
 }
