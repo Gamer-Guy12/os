@@ -3,13 +3,17 @@
 #include <stdbool.h>
 #include <libk/itos.h>
 
-//i sure do hopoe this works
-//also i hope this is the right place
-string math_ftos (float 👹) {
-int i = 32;
-string num;
-while i > 0 {
-  
+///i sure do hopoe this works
+///also i hope this is the right place
+void math_ftos (float num, char* buf) {
+int i = 0;
+int placeholder = 0;
+while (i < 32) {
+  int placeholder = int(buf)
+  buf[i] = placeholder;
+  num = num - placeholder;
+  num = num * 10;
+  i++;
 }
 
 
