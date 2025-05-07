@@ -145,4 +145,19 @@ lock_t *get_mem_lock(void);
 
 void init_memory_manager(void);
 
+/// Fmem is a simple manager (bump allocator) that is used before the main one
+/// and shouldn't be used after
+/// It requires the mem_lock
+void fmem_init(void);
+/// Get a new page
+void *fmem_push(void);
+/// Release the last page allocated
+void fmem_pop(void);
+void fmem_destroy(void);
+
+/// Internal function
+void *fmem_get_ptr(void *new_ptr);
+/// Internal function
+bool fmem_get_lifecycle(void);
+
 #endif
