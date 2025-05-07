@@ -113,6 +113,10 @@ kernel_early_start:
     hlt
     jmp .stop
 
+section .data
+page_count_startup:
+dq 0
+
 section .bss
 align 4096
 stack_bottom:

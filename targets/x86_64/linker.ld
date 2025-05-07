@@ -4,7 +4,7 @@ OUTPUT_FORMAT(elf64-x86-64)
 SECTIONS {
 	. = 0x100000;
 
-	.loading : ALIGN(4K) 
+	.loading ALIGN(4K) :
 	{
 		_loading = .;
 
@@ -16,7 +16,7 @@ SECTIONS {
 	}
 
 	/* All these page tables will be replaced later on */
-	.page_tables (NOLOAD) : ALIGN(4K) 
+	.page_tables (NOLOAD) : ALIGN(4K)
 	{
 		_page_tables = .;
 		_l4_page = .;
@@ -88,7 +88,6 @@ SECTIONS {
 
 	. = ALIGN(4k);
 	end_kernel = .;
-	. = 0x1000000 + 0xFFFFFFFF80000000;
 	
 	kernel_gp = .;
 
@@ -97,5 +96,6 @@ SECTIONS {
 	/* This is just here to clear some space and provide consistent addressing */
 	/* Can and should be allocated over in physical memory */
 	. = kernel_gp + 0x1000000;
+	. = ALIGN(2M)
 	kernel_gp_end = .;
 }
