@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <hal/imemory.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -8,6 +9,7 @@ static uint8_t *ptr;
 void fmem_init(void) {
   enabled = true;
   ptr = end_kernel;
+  kio_printf("addr: %u\n", (ptr));
 }
 
 void fmem_destroy(void) { enabled = false; }
@@ -15,6 +17,6 @@ void fmem_destroy(void) { enabled = false; }
 bool fmem_get_lifecycle(void) { return enabled; }
 
 void *fmem_get_ptr(void *new_ptr) {
-  ptr = new_ptr != NULL ? new_ptr : NULL;
+  ptr = new_ptr != NULL ? new_ptr : ptr;
   return ptr;
 }

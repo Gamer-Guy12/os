@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <hal/imemory.h>
 #include <hal/memory.h>
 #include <libk/lock.h>
@@ -35,6 +36,43 @@ inline void safe_fmem_pop(void) {
   }
 }
 
+static inline block_descriptor_t *create_block_descriptors(void *start,
+                                                           size_t block_count) {
+
+  block_descriptor_t *prev_ptr = NULL;
+  block_descriptor_t *cur_ptr = safe_fmem_push();
+  kio_printf("%u addr\n", (size_t)cur_ptr);
+  return NULL;
+  block_descriptor_t *first = cur_ptr;
+  size_t descriptors_left =
+      (PAGE_SIZE - PAGE_SIZE % sizeof(block_descriptor_t)) /
+      sizeof(block_descriptor_t);
+
+  for (size_t i = 0; i < block_count; i++) {
+
+    cur_ptr->free_page_count = 1024;
+    cur_ptr->base = (void *)((size_t)start + i * BLOCK_SIZE);
+
+    if (i != 0) {
+      cur_ptr->prev = prev_ptr;
+      cur_ptr->prev->next = cur_ptr;
+    }
+
+    prev_ptr = cur_ptr;
+
+    // Move to the next descriptor
+    cur_ptr += 1;
+    // If there is no space for new descriptors
+    if (descriptors_left == 0) {
+      cur_ptr = safe_fmem_push();
+      descriptors_left = (PAGE_SIZE - PAGE_SIZE % sizeof(block_descriptor_t)) /
+                         sizeof(block_descriptor_t);
+    }
+  }
+
+  return first;
+}
+
 static void create_physical_map(void) {
   uint8_t *multiboot = move_to_type(MULTIBOOT_MEMORY_MAP);
 
@@ -48,7 +86,37 @@ static void create_physical_map(void) {
   multiboot += 8;
   multiboot_memory_t *entries = (multiboot_memory_t *)multiboot;
 
+  block_descriptor_t *first_descriptor = NULL;
+  block_descriptor_t *last_descriptor = NULL;
+
   for (size_t i = 0; i < entry_count; i++) {
+    if (entries[i].type != 1)
+      continue;
+
+    // A block can start at any page but must be aligned to block count
+    size_t start = ROUND_UP(entries[i].base, PAGE_SIZE);
+    size_t len = ROUND_DOWN(entries[i].len, BLOCK_SIZE);
+
+    if (start > entries[i].base + entries[i].len)
+      continue;
+
+    size_t block_count = len / BLOCK_SIZE;
+
+    if (len == 0)
+      continue;
+
+    block_descriptor_t *descriptors =
+        create_block_descriptors((void *)start, block_count);
+
+    if (first_descriptor == NULL)
+      first_descriptor = descriptors;
+
+    if (last_descriptor != NULL) {
+      last_descriptor->next = descriptors;
+      descriptors->prev = last_descriptor;
+    }
+
+    last_descriptor = &descriptors[block_count - 1];
   }
 }
 
@@ -56,6 +124,7 @@ static void create_physical_map(void) {
 /// depend on it being ready
 void init_memory_manager(void) {
   fmem_init();
+  return;
 
   create_physical_map();
 

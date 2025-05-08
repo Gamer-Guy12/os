@@ -96,6 +96,6 @@ SECTIONS {
 	/* This is just here to clear some space and provide consistent addressing */
 	/* Can and should be allocated over in physical memory */
 	. = kernel_gp + 0x1000000;
-	. = ALIGN(2M)
+	. = ALIGN(2M);
 	kernel_gp_end = .;
 }

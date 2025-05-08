@@ -10,5 +10,5 @@ void *fmem_push(void) {
   fmem_get_ptr(ptr);
   lock_release(get_mem_lock());
 
-  return ptr;
+  return ptr - PAGE_SIZE;
 }
