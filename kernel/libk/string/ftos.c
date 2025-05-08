@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <libk/itos.h>
+#include <libk/stcmp.h>
+#include <libk/strlen.h>
 
 ///i sure do hopoe this works
 ///also i hope this is the right place
