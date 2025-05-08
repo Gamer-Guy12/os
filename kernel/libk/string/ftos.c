@@ -25,5 +25,5 @@ while (length < 20) { //this is wayyy more digits than we need and/or is accurat
   num = num * 10;
   length++;
 }
-*buf = '\0'
+buf[length] = '\0'
 }
