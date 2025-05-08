@@ -1,4 +1,5 @@
 #include "libk/kio.h"
+#include "x86_64.h"
 #include <hal/imemory.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -9,7 +10,8 @@ static uint8_t *ptr;
 void fmem_init(void) {
   enabled = true;
   ptr = end_kernel;
-  kio_printf("addr: %u\n", (ptr));
+  kio_printf("addr: %x and %x and %x\n", (size_t)start_kernel - KERNEL_OFFSET,
+             (size_t)end_kernel - KERNEL_OFFSET, (size_t)end_kernel);
 }
 
 void fmem_destroy(void) { enabled = false; }

@@ -28,6 +28,6 @@ __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   handle_init_array();
   init_multiboot(multiboot);
   init_memory_manager();
-  kio_clear();
+  // kio_clear();
   kio_printf("I might be in!\n");
 }
