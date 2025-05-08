@@ -13,16 +13,17 @@ char* p = ""
 placeholder = (int32_t) num; ////"but why dont you just declare the variable at the beginning?" it's cuz i copy and pasted this and i dont care
 string_itos32(placeholder, p);
 buf = p;
-length = length(p);
+length = length(p) + 1;
 num = num - placeholder;
 num = num * 10;
 *buf = buf + '.'; //decimal point!
 while (length < 20) { //this is wayyy more digits than we need and/or is accurate.
   placeholder = (int32_t) num;
-  buf = buf + string_itos32(placeholder);
+  string_itos32(placeholder, p);
+  buf[length] = p;
   num = num - placeholder;
   num = num * 10;
-  i++;
+  length++;
 }
 *buf = '\0'
 }
