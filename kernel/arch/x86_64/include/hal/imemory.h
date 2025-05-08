@@ -148,6 +148,7 @@ void init_memory_manager(void);
 /// Fmem is a simple manager (bump allocator) that is used before the main one
 /// and shouldn't be used after
 /// It requires the mem_lock
+/// It doesn't check for the acpi or multiboot tables
 void fmem_init(void);
 /// Get a new page
 void *fmem_push(void);

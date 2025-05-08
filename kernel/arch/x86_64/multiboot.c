@@ -8,6 +8,13 @@ void init_multiboot(uint8_t *multiboot) { global_multiboot = multiboot; }
 
 uint8_t *get_multiboot(void) { return global_multiboot; }
 
+size_t get_multiboot_size(void) {
+  uint8_t *multiboot = get_multiboot();
+  multiboot += 8;
+
+  return *(uint32_t *)multiboot;
+}
+
 uint8_t *move_to_type(uint32_t type) {
   uint8_t *multiboot = get_multiboot();
   uint32_t size = multiboot[0] | (multiboot[1] << 8) | (multiboot[2] << 16) |
