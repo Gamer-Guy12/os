@@ -7,7 +7,7 @@
 
 ///i sure do hopoe this works
 ///also i hope this is the right place
-void math_ftos (float num, char* buf) {
+void string_ftos (float num, char* buf) {
 int32_t i = 0;
 int32_t placeholder = 0;
 int length = 0;
