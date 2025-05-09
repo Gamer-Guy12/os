@@ -21,6 +21,7 @@ num = num * 10;
 buf[length++] = '.'; //decimal point!
 while (length < 32) { //this is wayyy more digits than we need and/or is accurate.
   placeholder = (int32_t) num;
+  if (placeholder < 0) placeholder *= -1;
   string_itos32(placeholder, p);
   buf[length] = p[0];
   num = num - placeholder;
