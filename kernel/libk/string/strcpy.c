@@ -2,10 +2,10 @@
 #include <libk/string.h>
 #include <libk/strlen.h>
 
-void strcpy (char* og, char* notog) {
-  uint16_t i = 0
-  while ( i < strlen(string1)) {
-    notog[i]=og[i];
-    i++;    
-  }
+void strcpy (char* src, char* dest) {
+  uint16_t i = 0;
+  do {
+    src[i] = dest[i];
+    i++;
+  } while (src[i] != '\0');
 }
