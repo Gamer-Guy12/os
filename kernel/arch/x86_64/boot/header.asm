@@ -11,6 +11,17 @@ dd ARCH
 dd LENGTH
 dd -(LENGTH + ARCH + MAGIC)
 
+; Request information
+info_request:
+dw 1
+dw 0
+dd info_request_end - info_request
+dd 6
+dd 15
+dd 16
+dd 8
+info_request_end:
+
 ; End tag
 dw 0
 dw 0

@@ -7,17 +7,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
-extern void *kernel_gp;
-extern void *kernel_gp_end;
-extern void *start_kernel;
-extern void *end_kernel;
+extern char kernel_gp[];
+extern char kernel_gp_end[];
+extern char start_kernel[];
+extern char end_kernel[];
 
 #define PHYSICAL_MEMORY_MANAGER_INFO kernel_gp
 #define PML4_LOCATION (uint8_t *)kernel_gp + 0x1000
 #define PAGE_TABLE_ENTRY_ADDR_MASK 0x0007fffffffff000
 #define PAGE_SIZE 0x1000
 /// A block is 4mb and is used in the buddy system
-#define BLOCK_SIZE 0x1000 * 0x400
+#define BLOCK_SIZE (0x1000 * 0x400)
 #define BUDDY_MAX_ORDER 10
 
 typedef enum {
