@@ -14,15 +14,15 @@ int length = 0;
 char p[20] = "";
 placeholder = (int32_t) num; ////"but why dont you just declare the variable at the beginning?" it's cuz i copy and pasted this and i dont care
 string_itos32(placeholder, p);
-strcpy(buf, p); ////i have no idea if we have a strcpy function
-length = strlen(p) + 1;
+strcpy(buf, p);
+length = strlen(p);
 num = num - placeholder;
 num = num * 10;
 buf[length++] = '.'; //decimal point!
-while (length < 20) { //this is wayyy more digits than we need and/or is accurate.
+while (length < 32) { //this is wayyy more digits than we need and/or is accurate.
   placeholder = (int32_t) num;
   string_itos32(placeholder, p);
-  buf[length] = p;
+  buf[length] = p[0];
   num = num - placeholder;
   num = num * 10;
   length++;
