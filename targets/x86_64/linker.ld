@@ -52,6 +52,7 @@ SECTIONS {
 
 		*(.startup)
 		*(.text)
+		_text_end = .;
     }
 
     .rodata ALIGN(4k) : AT(ADDR(.rodata) - 0xFFFFFFFF80000000)

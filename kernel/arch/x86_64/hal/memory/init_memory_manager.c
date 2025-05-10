@@ -35,6 +35,17 @@ inline void safe_fmem_pop(void) {
   }
 }
 
+inline void *safe_fmem_multi_push(size_t count) {
+  uint64_t ptr = (uint64_t)fmem_push();
+  while (ptr > (size_t)get_multiboot() && ptr < get_multiboot_size()) {
+    ptr = (uint64_t)fmem_push();
+  }
+  fmem_pop();
+  fmem_multi_push(count);
+
+  return (void *)ptr;
+}
+
 static inline block_descriptor_t *create_block_descriptors(void *start,
                                                            size_t block_count) {
 
@@ -124,12 +135,69 @@ static void create_physical_map(void) {
   }
 }
 
+static void create_page_tables(void) {
+  // Allocate the page for the pml4
+  PML4_entry_t *pml4 = safe_fmem_push();
+  memset(pml4, 0, PAGE_SIZE);
+
+  // One pdpt is needed for the last 512 gb
+  PDPT_entry_t *pdpt = safe_fmem_push();
+  memset(pdpt, 0, PAGE_SIZE);
+
+  pml4[511].flags = PML4_PRESENT | PML4_READ_WRITE | PML4_USER_PAGE;
+  pml4[511].not_executable = 0;
+  pml4[511].full_entry |= PAGE_ADDR(pdpt);
+
+  PDT_entry_t *pdt = safe_fmem_multi_push(2);
+  memset(pdt, 0, PAGE_SIZE * 2);
+
+  pdpt[510].flags = PDPT_PRESENT | PDPT_READ_WRITE;
+  pdpt[510].not_executable = 0;
+  pdpt[510].full_entry |= PAGE_ADDR(pdt);
+
+  pdpt[511].flags = PDPT_PRESENT | PDPT_READ_WRITE;
+  pdpt[511].not_executable = 0;
+  pdpt[511].full_entry |= PAGE_ADDR(&pdt[512]);
+
+#define MB2 0x200000
+
+  extern char _text_end[];
+
+  size_t mb2s_needed =
+      ROUND_UP((size_t)fmem_get_ptr(NULL) - KERNEL_OFFSET, MB2) / MB2 + 1;
+
+  PT_entry_t *pt = safe_fmem_multi_push(mb2s_needed);
+
+  for (size_t i = 0; i < mb2s_needed; i++) {
+    pdt[i].flags = PDT_PRESENT | PDT_READ_WRITE;
+    pdt[i].not_executable = 0;
+    pdt[i].full_entry |= PAGE_ADDR(&pt[512 * i]);
+
+    for (size_t j = 0; j < 512; j++) {
+      pt[i].flags = PDT_PRESENT;
+      pt[i].flags |= (i * MB2 + j * PAGE_SIZE) < (size_t)(void *)_text_end
+                         ? 0
+                         : PT_READ_WRITE;
+      pt[i].not_executable =
+          (i * MB2 + j * PAGE_SIZE) < (size_t)(void *)_text_end ? 0 : 1;
+      pt[i].full_entry |= PAGE_ADDR(i * MB2 + j * PAGE_SIZE);
+    }
+  }
+
+  __asm__ volatile("movq %0, %%cr3"
+                   :
+                   : "r"((size_t)pml4 - KERNEL_OFFSET)
+                   : "memory");
+}
+
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
 void init_memory_manager(void) {
   fmem_init();
 
   create_physical_map();
+
+  create_page_tables();
 
   fmem_destroy();
 }

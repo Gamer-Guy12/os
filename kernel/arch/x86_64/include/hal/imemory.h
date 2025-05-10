@@ -20,6 +20,8 @@ extern char end_kernel[];
 #define BLOCK_SIZE (0x1000 * 0x400)
 #define BUDDY_MAX_ORDER 10
 
+#define PAGE_ADDR(addr) ((size_t)addr) | PAGE_TABLE_ENTRY_ADDR_MASK
+
 typedef enum {
   PML4_PRESENT = 1,
   PML4_READ_WRITE = 1 << 1,
@@ -165,6 +167,8 @@ void init_memory_manager(void);
 void fmem_init(void);
 /// Get a new page
 void *fmem_push(void);
+/// Get multiple contiguous pages
+void *fmem_multi_push(size_t count);
 /// Release the last page allocated
 void fmem_pop(void);
 void fmem_destroy(void);
