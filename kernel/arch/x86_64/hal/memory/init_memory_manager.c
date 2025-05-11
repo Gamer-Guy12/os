@@ -35,6 +35,7 @@ inline void safe_fmem_pop(void) {
   }
 }
 
+/// Actually unsafe cuz ofl ike things where it pops and pushes without a lock
 inline void *safe_fmem_multi_push(size_t count) {
   uint64_t ptr = (uint64_t)fmem_push();
   while (ptr > (size_t)get_multiboot() && ptr < get_multiboot_size()) {
@@ -136,19 +137,21 @@ static void create_physical_map(void) {
 }
 
 static void create_page_tables(void) {
-  // Allocate the page for the pml4
+
   PML4_entry_t *pml4 = safe_fmem_push();
   memset(pml4, 0, PAGE_SIZE);
 
-  // One pdpt is needed for the last 512 gb
   PDPT_entry_t *pdpt = safe_fmem_push();
   memset(pdpt, 0, PAGE_SIZE);
 
-  pml4[511].flags = PML4_PRESENT | PML4_READ_WRITE | PML4_USER_PAGE;
+  pml4[511].flags = PML4_USER_PAGE | PML4_READ_WRITE | PML4_PRESENT;
   pml4[511].not_executable = 0;
   pml4[511].full_entry |= PAGE_ADDR(pdpt);
 
-  PDT_entry_t *pdt = safe_fmem_multi_push(2);
+  // Save 2 pages (hopefully contigouous)
+  // Should be cuz no other concurrent things
+  PDT_entry_t *pdt = safe_fmem_push();
+  safe_fmem_push();
   memset(pdt, 0, PAGE_SIZE * 2);
 
   pdpt[510].flags = PDPT_PRESENT | PDPT_READ_WRITE;
@@ -161,26 +164,31 @@ static void create_page_tables(void) {
 
 #define MB2 0x200000
 
+  size_t mb2s_needed = ROUND_UP((size_t)fmem_get_ptr(NULL), MB2) / MB2 + 1;
+
   extern char _text_end[];
-
-  size_t mb2s_needed =
-      ROUND_UP((size_t)fmem_get_ptr(NULL) - KERNEL_OFFSET, MB2) / MB2 + 1;
-
-  PT_entry_t *pt = safe_fmem_multi_push(mb2s_needed);
+  const void *text_end = _text_end;
 
   for (size_t i = 0; i < mb2s_needed; i++) {
+    PT_entry_t *pt = safe_fmem_push();
+    memset(pt, 0, PAGE_SIZE);
+
     pdt[i].flags = PDT_PRESENT | PDT_READ_WRITE;
     pdt[i].not_executable = 0;
-    pdt[i].full_entry |= PAGE_ADDR(&pt[512 * i]);
+    pdt[i].full_entry |= PAGE_ADDR(pt);
 
+    // 512 entries in a pt
     for (size_t j = 0; j < 512; j++) {
-      pt[i].flags = PDT_PRESENT;
-      pt[i].flags |= (i * MB2 + j * PAGE_SIZE) < (size_t)(void *)_text_end
-                         ? 0
-                         : PT_READ_WRITE;
-      pt[i].not_executable =
-          (i * MB2 + j * PAGE_SIZE) < (size_t)(void *)_text_end ? 0 : 1;
-      pt[i].full_entry |= PAGE_ADDR(i * MB2 + j * PAGE_SIZE);
+      size_t cur_addr = MB2 * i + PAGE_SIZE * j;
+
+      pt[i].flags = PT_PRESENT;
+      if (cur_addr > (size_t)text_end - KERNEL_OFFSET) {
+        pt[i].flags |= PT_READ_WRITE;
+        pt[i].not_executable = 1;
+      } else {
+        pt[i].not_executable = 0;
+      }
+      pt[i].full_entry |= PAGE_ADDR(cur_addr);
     }
   }
 
