@@ -1,6 +1,6 @@
-#include "libk/kio.h"
 #include <hal/imemory.h>
 #include <hal/memory.h>
+#include <libk/kio.h>
 #include <libk/lock.h>
 #include <libk/math.h>
 #include <libk/mem.h>
@@ -149,6 +149,8 @@ static void create_page_tables(void) {
   pml4[511].not_executable = 0;
   pml4[511].full_entry |= PAGE_ADDR(pdpt);
 
+  kio_printf("PML4: index 0, val %x\n", pml4[511].full_entry);
+
   // Save 2 pages (hopefully contigouous)
   // Should be cuz no other concurrent things
   PDT_entry_t *pdt = safe_fmem_push();
@@ -162,6 +164,9 @@ static void create_page_tables(void) {
   pdpt[511].flags = PDPT_PRESENT | PDPT_READ_WRITE;
   pdpt[511].not_executable = 0;
   pdpt[511].full_entry |= PAGE_ADDR(&pdt[512]);
+
+  kio_printf("PDPT: index 0, val %x\n", pdpt[510].full_entry);
+  kio_printf("PDPT: index 1, val %x\n", pdpt[511].full_entry);
 
 #define MB2 0x200000
 
@@ -181,20 +186,24 @@ static void create_page_tables(void) {
     pdt[i].not_executable = 0;
     pdt[i].full_entry |= PAGE_ADDR(pt);
 
+    kio_printf("PDT: index %x, val %x\n", i, pdt[i].full_entry);
+
     // 512 entries in a pt
     for (size_t j = 0; j < 512; j++) {
       size_t cur_addr = MB2 * i + PAGE_SIZE * j;
 
-      pt[i].flags = PT_PRESENT;
+      pt[j].flags = PT_PRESENT;
       if (cur_addr > (size_t)text_end - KERNEL_OFFSET) {
-        pt[i].flags |= PT_READ_WRITE;
-        pt[i].not_executable = 1;
+        pt[j].flags |= PT_READ_WRITE;
+        pt[j].not_executable = 1;
       } else {
-        pt[i].not_executable = 0;
+        pt[j].not_executable = 0;
       }
-      pt[i].full_entry |= PAGE_ADDR(cur_addr);
+      pt[j].full_entry |= cur_addr & PAGE_TABLE_ENTRY_ADDR_MASK;
     }
   }
+
+  return;
 
   __asm__ volatile("movq %0, %%cr3"
                    :
