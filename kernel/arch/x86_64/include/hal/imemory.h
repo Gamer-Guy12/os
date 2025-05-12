@@ -21,7 +21,7 @@ extern char end_kernel[];
 #define BUDDY_MAX_ORDER 10
 
 #define PAGE_ADDR(addr)                                                        \
-  ((size_t)addr - KERNEL_OFFSET) | PAGE_TABLE_ENTRY_ADDR_MASK
+  ((size_t)addr - KERNEL_OFFSET) & PAGE_TABLE_ENTRY_ADDR_MASK
 
 typedef enum {
   PML4_PRESENT = 1,

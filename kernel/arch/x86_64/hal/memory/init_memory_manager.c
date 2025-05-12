@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <hal/imemory.h>
 #include <hal/memory.h>
 #include <libk/lock.h>
@@ -164,7 +165,10 @@ static void create_page_tables(void) {
 
 #define MB2 0x200000
 
-  size_t mb2s_needed = ROUND_UP((size_t)fmem_get_ptr(NULL), MB2) / MB2 + 1;
+  size_t mb2s_needed =
+      ROUND_UP((size_t)fmem_get_ptr(NULL) - KERNEL_OFFSET, MB2) / MB2 + 1;
+
+  kio_printf("MB2s: %x\n", mb2s_needed);
 
   extern char _text_end[];
   const void *text_end = _text_end;
