@@ -180,11 +180,11 @@ static void create_page_tables(void) {
 
   kio_printf("MB2s: %x\n", mb2s_needed);
 
-  extern char _text_end[];
-  const void *text_end = _text_end;
-
-  extern char _text[];
-  const void *text = _text;
+  // extern char _text_end[];
+  // const void *text_end = _text_end;
+  //
+  // extern char _text[];
+  // const void *text = _text;
 
   for (size_t i = 0; i < mb2s_needed; i++) {
     PT_entry_t *pt = safe_fmem_push();
@@ -202,15 +202,18 @@ static void create_page_tables(void) {
       size_t cur_addr = MB2 * i + PAGE_SIZE * j;
 
       pt[j].flags = PT_PRESENT;
-      if (cur_addr > (size_t)text_end - KERNEL_OFFSET ||
-          cur_addr <= (size_t)text - KERNEL_OFFSET) {
-        pt[j].flags |= PT_READ_WRITE;
-        pt[j].not_executable = 1;
-      } else {
-        pt[j].not_executable = 0;
-      }
-      // pt[j].not_executable = 0;
-      // pt[j].flags |= PT_READ_WRITE;
+
+      // TODO: add security for pages
+      // if (cur_addr >= (size_t)text_end - KERNEL_OFFSET ||
+      //     cur_addr < (size_t)text - KERNEL_OFFSET) {
+      //   pt[j].flags |= PT_READ_WRITE;
+      //   pt[j].not_executable = 1;
+      // } else {
+      //   pt[j].not_executable = 0;
+      // }
+
+      pt[j].not_executable = 0;
+      pt[j].flags |= PT_READ_WRITE;
       pt[j].full_entry |= cur_addr & PAGE_TABLE_ENTRY_ADDR_MASK;
 
       if (0xf17fa8 > cur_addr && 0xf17fa8 < cur_addr + PAGE_SIZE) {
