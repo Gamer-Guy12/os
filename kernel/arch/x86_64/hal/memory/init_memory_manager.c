@@ -21,17 +21,19 @@ typedef struct {
   uint32_t reserved;
 } __attribute__((packed)) multiboot_memory_t;
 
+extern char end_kernel[];
+void *kernel_end = end_kernel;
+
+size_t used_page_count = 0;
+
+#define NEXT_PAGE                                                              \
+  (void *)(ROUND_UP((size_t)(uint8_t *)kernel_end, PAGE_SIZE) +                \
+           used_page_count * PAGE_SIZE)
+#define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
+
 static void create_page_tables(void) {
   // The page tables will be after the kernel but will then be remapped to be
   // recursive page tables
-
-  size_t used_page_count = 0;
-
-  extern char end_kernel[];
-  void *kernel_end = end_kernel;
-
-#define NEXT_PAGE (void *)((uint8_t *)kernel_end + used_page_count * PAGE_SIZE)
-#define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
 #define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
 
   PML4_entry_t *pml4 = NEXT_PAGE;

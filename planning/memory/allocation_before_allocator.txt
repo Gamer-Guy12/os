@@ -1,0 +1,13 @@
+bump allocator?
+
+At the end reserve just the page tables used
+but also don't reserve the virtual page tables
+
+L3 0 contains physical mapping
+L3 511 Contains Kernel
+L3 510 Contains Recursive Paging
+
+Physical Memory bump allocator
+Gives out physical addresses that can be used for some init that can be used with the page tables
+
+How to Figure out which ones should be reserved and which ones should be freeable when switching to full memory manager

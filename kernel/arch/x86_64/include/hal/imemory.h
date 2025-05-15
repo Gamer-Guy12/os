@@ -11,7 +11,7 @@
 #define PAGE_SIZE 0x1000
 /// A block is 4mb and is used in the buddy system
 #define BLOCK_SIZE (0x1000 * 0x400)
-#define BUDDY_MAX_ORDER 10
+#define BUDDY_MAX_ORDER 9
 
 typedef enum {
   PML4_PRESENT = 1,
@@ -134,12 +134,19 @@ typedef struct {
   };
 } __attribute__((packed)) PT_entry_t;
 
-typedef struct block_descriptor_struct {
-  void *base;
-  struct block_descriptor_struct *next;
-  struct block_descriptor_struct *prev;
-  uint16_t free_page_count;
-  uint8_t reserved : 1;
+typedef union {
+  uint64_t full_entry;
+  struct {
+    uint64_t is_reserved : 1;
+    uint64_t free_pages : BUDDY_MAX_ORDER;
+    uint64_t linked_page_addr_byte : 8;
+    /// Merge with the address that is bigger
+    uint64_t right_merged : 1;
+    /// Merge with the address that is smaller
+    uint64_t left_merged : 1;
+    uint64_t reserved : 1;
+    uint64_t base : 43;
+  } __attribute__((packed));
 } block_descriptor_t;
 
 /// Mem lock is required to use kernel_gp for writes
