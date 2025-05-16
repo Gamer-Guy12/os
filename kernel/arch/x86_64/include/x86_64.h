@@ -11,7 +11,8 @@
 
 #define PAGE_INDICES_TO_ADDR(pml4, pdpt, pdt, pt, addr)                        \
   ((addr & 0xfff) | ((pt & 0x1ff) << 12) | ((pdt & 0x1ff) << 21) |             \
-   ((pdpt & 0x1ff) << 30) | ((pml4 & 0x1ff) << 39))
+   ((pdpt & 0x1ff) << 30) | ((pml4 & 0x1ff) << 39) |                           \
+   ((pml4 & 0x100) ? 0xffffull << 48 : 0))
 
 void start_cores(void);
 
