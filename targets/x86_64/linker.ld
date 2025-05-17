@@ -88,8 +88,8 @@ SECTIONS {
 	}
 
 	. = ALIGN(4k);
-	end_kernel = .;
 	. = 0xFFFFFFFF80000000 + 0x1000000;
+	end_kernel = .;
 	
 	kernel_gp = .;
 

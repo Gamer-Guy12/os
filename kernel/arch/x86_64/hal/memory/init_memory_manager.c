@@ -21,22 +21,18 @@ typedef struct {
   uint32_t reserved;
 } __attribute__((packed)) multiboot_memory_t;
 
-extern char end_kernel[];
-void *kernel_end = end_kernel;
-
-size_t used_page_count = 0;
-
-#define PHYS_BUMP_START (void *)((uint8_t *)kernel_end - KERNEL_CODE_OFFSET)
-#define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
-
-#define NEXT_PAGE                                                              \
-  (void *)(ROUND_UP((size_t)(uint8_t *)kernel_end, PAGE_SIZE) +                \
-           used_page_count * PAGE_SIZE)
-#define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
-
 static void create_page_tables(void) {
   // The page tables will be after the kernel but will then be remapped to be
   // recursive page tables
+
+  size_t used_page_count = 0;
+
+  extern char end_kernel[];
+  void *kernel_end = end_kernel;
+
+#define NEXT_PAGE (void *)((uint8_t *)kernel_end + used_page_count * PAGE_SIZE)
+#define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
+#define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
 
   PML4_entry_t *pml4 = NEXT_PAGE;
   used_page_count++;
@@ -118,43 +114,9 @@ static void create_page_tables(void) {
                    : "memory");
 }
 
-static void create_pages_for_physical_map(void) {
-  PDPT_entry_t *l3_table = NEXT_PAGE;
-  used_page_count++;
-  CLEAR_PAGE(l3_table);
-
-  PML4_entry_t *pml4_entry = (PML4_entry_t *)PAGE_INDICES_TO_ADDR(
-      510ull, 510ull, 510ull, 510ull, 256ull * sizeof(PML4_entry_t));
-
-  pml4_entry->full_entry = PAGE_ADDR(l3_table - KERNEL_CODE_OFFSET);
-  pml4_entry->not_executable = 1;
-  pml4_entry->flags = PML4_PRESENT | PML4_READ_WRITE;
-
-  // Clear the TLB and reset
-  __asm__ volatile(
-      "mov %0, %%cr3"
-      :
-      : "r"((size_t)PAGE_INDICES_TO_ADDR(510ull, 510ull, 510ull, 510ull, 0) -
-            KERNEL_CODE_OFFSET)
-      : "memory");
-}
-
-static void init_physical_map(void) {
-  // Im just creating up to the l3 page tables
-  create_pages_for_physical_map();
-}
-
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
 void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
-
-  uint64_t *idk =
-      (uint64_t *)PAGE_INDICES_TO_ADDR(510ull, 0ull, 0ull, 0ull, 0ull);
-  *idk = 0;
-
-  return;
-
-  init_physical_map();
 }
