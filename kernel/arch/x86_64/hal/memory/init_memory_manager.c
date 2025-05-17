@@ -21,22 +21,136 @@ typedef struct {
   uint32_t reserved;
 } __attribute__((packed)) multiboot_memory_t;
 
-extern char end_kernel[];
-void *kernel_end = end_kernel;
+inline void *safe_fmem_push(void) {
+  uint64_t ptr = (uint64_t)fmem_push();
+  while (ptr > (size_t)get_multiboot() && ptr < get_multiboot_size()) {
+    ptr = (uint64_t)fmem_push();
+  }
 
-size_t used_page_count = 0;
+  return (void *)ptr;
+}
 
-#define PHYS_BUMP_START (void *)((uint8_t *)kernel_end - KERNEL_CODE_OFFSET)
-#define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
+inline void safe_fmem_pop(void) {
+  fmem_pop();
+  while ((size_t)fmem_get_ptr(NULL) > (size_t)get_multiboot() &&
+         (size_t)fmem_get_ptr(NULL) < get_multiboot_size()) {
+    fmem_pop();
+  }
+}
 
-#define NEXT_PAGE                                                              \
-  (void *)(ROUND_UP((size_t)(uint8_t *)kernel_end, PAGE_SIZE) +                \
-           used_page_count * PAGE_SIZE)
-#define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
+/// Actually unsafe cuz ofl ike things where it pops and pushes without a lock
+inline void *safe_fmem_multi_push(size_t count) {
+  uint64_t ptr = (uint64_t)fmem_push();
+  while (ptr > (size_t)get_multiboot() && ptr < get_multiboot_size()) {
+    ptr = (uint64_t)fmem_push();
+  }
+  fmem_pop();
+  fmem_multi_push(count);
+
+  return (void *)ptr;
+}
+
+static inline block_descriptor_t *create_block_descriptors(void *start,
+                                                           size_t block_count) {
+
+  block_descriptor_t *prev_ptr = NULL;
+  block_descriptor_t *cur_ptr = safe_fmem_push();
+  block_descriptor_t *first = cur_ptr;
+  size_t descriptors_left = ROUND_DOWN(PAGE_SIZE, sizeof(block_descriptor_t)) /
+                            sizeof(block_descriptor_t);
+
+  for (size_t i = 0; i < block_count; i++) {
+
+    // kio_printf("Done %u, %u\n", i, block_count);
+
+    cur_ptr->free_page_count = 1024;
+    cur_ptr->base = (void *)((size_t)start + i * BLOCK_SIZE);
+
+    if (i != 0) {
+      cur_ptr->prev = prev_ptr;
+      cur_ptr->prev->next = cur_ptr;
+    }
+
+    prev_ptr = cur_ptr;
+
+    // Move to the next descriptor
+    cur_ptr += 1;
+    // If there is no space for new descriptors
+    if (descriptors_left == 0) {
+      cur_ptr = safe_fmem_push();
+      descriptors_left = ROUND_DOWN(PAGE_SIZE, sizeof(block_descriptor_t)) /
+                         sizeof(block_descriptor_t);
+    }
+  }
+
+  return first;
+}
+
+static void create_physical_map(void) {
+  uint8_t *multiboot = move_to_type(MULTIBOOT_MEMORY_MAP);
+
+  if (multiboot == NULL)
+    sys_panic(3);
+
+  // For more info see
+  // https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html#Boot-information-format
+  // 3.6.8
+  size_t entry_count =
+      (((uint32_t *)multiboot)[1] - 16) / sizeof(multiboot_memory_t);
+
+  // Skip over static part of the header
+  multiboot += 16;
+  multiboot_memory_t *entries = (multiboot_memory_t *)multiboot;
+
+  block_descriptor_t *first_descriptor = NULL;
+  block_descriptor_t *last_descriptor = NULL;
+
+  for (size_t i = 0; i < entry_count; i++) {
+    if (entries[i].type != 1)
+      continue;
+
+    // A block can start at any page but must be aligned to block count
+    size_t start = ROUND_UP(entries[i].base, PAGE_SIZE);
+    size_t len = ROUND_DOWN(entries[i].len, BLOCK_SIZE);
+
+    if (start > entries[i].base + entries[i].len)
+      continue;
+
+    if (len > entries[i].len || entries[i].len < BLOCK_SIZE)
+      continue;
+
+    size_t block_count = len / BLOCK_SIZE;
+
+    if (len == 0)
+      continue;
+
+    block_descriptor_t *descriptors =
+        create_block_descriptors((void *)start, block_count);
+
+    if (first_descriptor == NULL)
+      first_descriptor = descriptors;
+
+    if (last_descriptor != NULL) {
+      last_descriptor->next = descriptors;
+      descriptors->prev = last_descriptor;
+    }
+
+    last_descriptor = &descriptors[block_count - 1];
+  }
+}
 
 static void create_page_tables(void) {
   // The page tables will be after the kernel but will then be remapped to be
   // recursive page tables
+
+  size_t used_page_count = 0;
+
+  extern char end_kernel[];
+  void *kernel_end = end_kernel;
+
+#define NEXT_PAGE (void *)((uint8_t *)kernel_end + used_page_count * PAGE_SIZE)
+#define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
+#define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
 
   PML4_entry_t *pml4 = NEXT_PAGE;
   used_page_count++;
@@ -49,73 +163,105 @@ static void create_page_tables(void) {
   kio_printf("Address: %x and %x\n", (size_t)pml4 - KERNEL_CODE_OFFSET,
              (size_t)pdpt - KERNEL_CODE_OFFSET);
 
-  pml4[511].full_entry = PAGE_ADDR(pdpt);
+  pml4[511].flags = PML4_USER_PAGE | PML4_READ_WRITE | PML4_PRESENT;
   pml4[511].not_executable = 0;
-  pml4[511].flags = PML4_PRESENT | PML4_READ_WRITE;
+  pml4[511].full_entry |= PAGE_ADDR(pdpt);
 
-  PDT_entry_t *pdt = NEXT_PAGE;
-  used_page_count += 2;
-  CLEAR_PAGE(pdt);
-  CLEAR_PAGE(&pdt[512]);
+  kio_printf("PML4: index 0, val %x, ptr %x\n", pml4[511].full_entry,
+             (size_t)pdpt - KERNEL_OFFSET);
 
-  pdpt[510].full_entry = PAGE_ADDR(pdt);
-  pdpt[510].not_executable = 0;
+  // Save 2 pages (hopefully contigouous)
+  // Should be cuz no other concurrent things
+  PDT_entry_t *pdt = safe_fmem_push();
+  safe_fmem_push();
+  memset(pdt, 0, PAGE_SIZE * 2);
+
   pdpt[510].flags = PDPT_PRESENT | PDPT_READ_WRITE;
+  pdpt[510].not_executable = 0;
+  pdpt[510].full_entry |= PAGE_ADDR(pdt);
 
-  pdpt[511].full_entry = PAGE_ADDR(&pdt[512]);
-  pdpt[511].not_executable = 0;
   pdpt[511].flags = PDPT_PRESENT | PDPT_READ_WRITE;
+  pdpt[511].not_executable = 0;
+  pdpt[511].full_entry |= PAGE_ADDR(&pdt[512]);
+
+  kio_printf("PDPT: index 0, val %x, ptr %x\n", pdpt[510].full_entry,
+             (size_t)pdt - KERNEL_OFFSET);
+  kio_printf("PDPT: index 1, val %x, ptr %x\n\n", pdpt[511].full_entry,
+             (size_t)&pdt[512] - KERNEL_OFFSET);
 
 #define MB2 0x200000
 
-  extern char start_kernel[];
-  void *kernel_start = start_kernel;
-
   size_t mb2s_needed =
-      ROUND_UP((size_t)kernel_end - KERNEL_CODE_OFFSET, MB2) / MB2;
+      ROUND_UP((size_t)fmem_get_ptr(NULL) - KERNEL_OFFSET, MB2) / MB2 + 1;
+
+  kio_printf("MB2s: %x\n", mb2s_needed);
+
+  // extern char _text_end[];
+  // const void *text_end = _text_end;
+  //
+  // extern char _text[];
+  // const void *text = _text;
 
   for (size_t i = 0; i < mb2s_needed; i++) {
-    PT_entry_t *pt = NEXT_PAGE;
-    used_page_count++;
-    CLEAR_PAGE(pt);
+    PT_entry_t *pt = safe_fmem_push();
+    memset(pt, 0, PAGE_SIZE);
 
-    kio_printf("Addresses: %x, %x and the pt %x\n",
-               (size_t)pdt - KERNEL_CODE_OFFSET,
-               (size_t)&pdt[512] - KERNEL_CODE_OFFSET,
-               (size_t)pt - KERNEL_CODE_OFFSET);
-
-    pdt[i].full_entry = PAGE_ADDR(pt);
-    pdt[i].not_executable = 0;
     pdt[i].flags = PDT_PRESENT | PDT_READ_WRITE;
+    pdt[i].not_executable = 0;
+    pdt[i].full_entry |= PAGE_ADDR(pt);
 
+    kio_printf("PDT: index %x, val %x, ptr %x\n", i, pdt[i].full_entry,
+               (size_t)pt - KERNEL_OFFSET);
+
+    // 512 entries in a pt
     for (size_t j = 0; j < 512; j++) {
-      // The bios stuff is also there so ja
-      bool before_kernel =
-          MB2 * i + PAGE_SIZE * j < (size_t)kernel_start - KERNEL_CODE_OFFSET;
+      size_t cur_addr = MB2 * i + PAGE_SIZE * j;
 
-      pt[j].full_entry = MB2 * i + PAGE_SIZE * j;
-      if (__builtin_expect(before_kernel, false)) {
-        pt[j].not_executable = 0;
-        pt[j].flags = PT_PRESENT;
-      } else {
-        pt[j].not_executable = 1;
-        pt[j].flags = PT_PRESENT | PT_READ_WRITE;
-      }
+      pt[j].flags = PT_PRESENT;
+
+      // TODO: add security for pages
+      // if (cur_addr >= (size_t)text_end - KERNEL_OFFSET ||
+      //     cur_addr < (size_t)text - KERNEL_OFFSET) {
+      //   pt[j].flags |= PT_READ_WRITE;
+      //   pt[j].not_executable = 1;
+      // } else {
+      //   pt[j].not_executable = 0;
+      // }
 
       pt[j].not_executable = 0;
-      pt[j].flags = PT_PRESENT | PT_READ_WRITE;
+      pt[j].flags |= PT_READ_WRITE;
+      pt[j].full_entry |= cur_addr & PAGE_TABLE_ENTRY_ADDR_MASK;
+
+      if (0xf17fa8 > cur_addr && 0xf17fa8 < cur_addr + PAGE_SIZE) {
+        kio_printf("Correct\n");
+      }
     }
   }
 
-  // Recursive Paging
-  pml4[510].full_entry = PAGE_ADDR(pml4);
-  pml4[510].not_executable = 1;
-  pml4[510].flags = PT_PRESENT | PT_READ_WRITE;
-
-  __asm__ volatile("mov %0, %%cr3"
+  __asm__ volatile("movq %0, %%cr3"
                    :
-                   : "r"((size_t)pml4 - KERNEL_CODE_OFFSET)
+                   : "r"((size_t)pml4 - KERNEL_OFFSET)
                    : "memory");
+
+  kio_printf("PML4 addr %x\n", (size_t)pml4 - KERNEL_OFFSET);
+
+  for (size_t i = 0; i < 5000; i++) {
+    outb(0x43, 0x30);
+    io_wait();
+    outb(0x40, 0xA9);
+    io_wait();
+    outb(0x40, 0x4);
+    io_wait();
+
+    bool dontStop = true;
+    while (dontStop) {
+      outb(0x43, 0xE2);
+      io_wait();
+      dontStop = !check_bit(inb(0x40), 7);
+    }
+  }
+
+  memset(NULL, 0, 3);
 }
 
 static void create_pages_for_physical_map(void) {
@@ -147,14 +293,9 @@ static void init_physical_map(void) {
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
 void init_memory_manager(void) {
-  // Add Fmem if you want
+  fmem_init();
+
+  create_physical_map();
+
   create_page_tables();
-
-  uint64_t *idk =
-      (uint64_t *)PAGE_INDICES_TO_ADDR(510ull, 0ull, 0ull, 0ull, 0ull);
-  *idk = 0;
-
-  return;
-
-  init_physical_map();
 }
