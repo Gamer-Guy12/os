@@ -4,20 +4,32 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-void *phys_alloc(void);
-void *phys_alloc_at(void *addr);
+typedef enum { phys_reserved, phys_free, phys_allocated } phys_mem_type_t;
 
-/// It should return NULL
-void *phys_free(void *addr);
+struct phys_mem_region_struct {
+  void *base;
+  size_t len;
+  size_t pages;
+  struct phys_mem_region_struct *next;
+  struct phys_mem_region_struct *prev;
+  phys_mem_type_t type;
+};
 
-void *virt_map_at(void *phys_addr, void *virt_addr);
+typedef struct phys_mem_region_struct phys_mem_region_t;
 
-/// Maps into kernel space
-void *virt_kernel_map(void *addr);
-/// Maps into user space
-void *virt_user_map(void *addr);
+typedef struct {
+  void *base;
+  size_t size;
+  size_t region_count;
+  phys_mem_region_t *first;
+} phys_mem_section_t;
 
-/// Should return NULL
-void *virt_unmap(void *addr);
+void *phys_alloc(phys_mem_section_t *section);
+/// These are contiguous pages, just use phys_alloc multiple times to get
+/// multiple non-contiguous ones
+void *phys_multi_alloc(phys_mem_section_t *section, size_t page_count);
+void phys_reserve(phys_mem_section_t *section, size_t page_offset,
+                  size_t page_count);
+void phys_unreserve(phys_mem_region_t *region, phys_mem_section_t *section);
 
 #endif

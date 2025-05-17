@@ -21,136 +21,19 @@ typedef struct {
   uint32_t reserved;
 } __attribute__((packed)) multiboot_memory_t;
 
-inline void *safe_fmem_push(void) {
-  uint64_t ptr = (uint64_t)fmem_push();
-  while (ptr > (size_t)get_multiboot() && ptr < get_multiboot_size()) {
-    ptr = (uint64_t)fmem_push();
-  }
+extern char end_kernel[];
+void *kernel_end = end_kernel;
 
-  return (void *)ptr;
-}
+size_t used_page_count = 0;
 
-inline void safe_fmem_pop(void) {
-  fmem_pop();
-  while ((size_t)fmem_get_ptr(NULL) > (size_t)get_multiboot() &&
-         (size_t)fmem_get_ptr(NULL) < get_multiboot_size()) {
-    fmem_pop();
-  }
-}
-
-/// Actually unsafe cuz ofl ike things where it pops and pushes without a lock
-inline void *safe_fmem_multi_push(size_t count) {
-  uint64_t ptr = (uint64_t)fmem_push();
-  while (ptr > (size_t)get_multiboot() && ptr < get_multiboot_size()) {
-    ptr = (uint64_t)fmem_push();
-  }
-  fmem_pop();
-  fmem_multi_push(count);
-
-  return (void *)ptr;
-}
-
-static inline block_descriptor_t *create_block_descriptors(void *start,
-                                                           size_t block_count) {
-
-  block_descriptor_t *prev_ptr = NULL;
-  block_descriptor_t *cur_ptr = safe_fmem_push();
-  block_descriptor_t *first = cur_ptr;
-  size_t descriptors_left = ROUND_DOWN(PAGE_SIZE, sizeof(block_descriptor_t)) /
-                            sizeof(block_descriptor_t);
-
-  for (size_t i = 0; i < block_count; i++) {
-
-    // kio_printf("Done %u, %u\n", i, block_count);
-
-    cur_ptr->free_page_count = 1024;
-    cur_ptr->base = (void *)((size_t)start + i * BLOCK_SIZE);
-
-    if (i != 0) {
-      cur_ptr->prev = prev_ptr;
-      cur_ptr->prev->next = cur_ptr;
-    }
-
-    prev_ptr = cur_ptr;
-
-    // Move to the next descriptor
-    cur_ptr += 1;
-    // If there is no space for new descriptors
-    if (descriptors_left == 0) {
-      cur_ptr = safe_fmem_push();
-      descriptors_left = ROUND_DOWN(PAGE_SIZE, sizeof(block_descriptor_t)) /
-                         sizeof(block_descriptor_t);
-    }
-  }
-
-  return first;
-}
-
-static void create_physical_map(void) {
-  uint8_t *multiboot = move_to_type(MULTIBOOT_MEMORY_MAP);
-
-  if (multiboot == NULL)
-    sys_panic(3);
-
-  // For more info see
-  // https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html#Boot-information-format
-  // 3.6.8
-  size_t entry_count =
-      (((uint32_t *)multiboot)[1] - 16) / sizeof(multiboot_memory_t);
-
-  // Skip over static part of the header
-  multiboot += 16;
-  multiboot_memory_t *entries = (multiboot_memory_t *)multiboot;
-
-  block_descriptor_t *first_descriptor = NULL;
-  block_descriptor_t *last_descriptor = NULL;
-
-  for (size_t i = 0; i < entry_count; i++) {
-    if (entries[i].type != 1)
-      continue;
-
-    // A block can start at any page but must be aligned to block count
-    size_t start = ROUND_UP(entries[i].base, PAGE_SIZE);
-    size_t len = ROUND_DOWN(entries[i].len, BLOCK_SIZE);
-
-    if (start > entries[i].base + entries[i].len)
-      continue;
-
-    if (len > entries[i].len || entries[i].len < BLOCK_SIZE)
-      continue;
-
-    size_t block_count = len / BLOCK_SIZE;
-
-    if (len == 0)
-      continue;
-
-    block_descriptor_t *descriptors =
-        create_block_descriptors((void *)start, block_count);
-
-    if (first_descriptor == NULL)
-      first_descriptor = descriptors;
-
-    if (last_descriptor != NULL) {
-      last_descriptor->next = descriptors;
-      descriptors->prev = last_descriptor;
-    }
-
-    last_descriptor = &descriptors[block_count - 1];
-  }
-}
+#define NEXT_PAGE                                                              \
+  (void *)(ROUND_UP((size_t)(uint8_t *)kernel_end, PAGE_SIZE) +                \
+           used_page_count * PAGE_SIZE)
+#define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
 
 static void create_page_tables(void) {
   // The page tables will be after the kernel but will then be remapped to be
   // recursive page tables
-
-  size_t used_page_count = 0;
-
-  extern char end_kernel[];
-  void *kernel_end = end_kernel;
-
-#define NEXT_PAGE (void *)((uint8_t *)kernel_end + used_page_count * PAGE_SIZE)
-#define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
-#define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
 
   PML4_entry_t *pml4 = NEXT_PAGE;
   used_page_count++;
@@ -262,32 +145,6 @@ static void create_page_tables(void) {
   }
 
   memset(NULL, 0, 3);
-}
-
-static void create_pages_for_physical_map(void) {
-  PDPT_entry_t *l3_table = NEXT_PAGE;
-  used_page_count++;
-  CLEAR_PAGE(l3_table);
-
-  PML4_entry_t *pml4_entry = (PML4_entry_t *)PAGE_INDICES_TO_ADDR(
-      510ull, 510ull, 510ull, 510ull, 256ull * sizeof(PML4_entry_t));
-
-  pml4_entry->full_entry = PAGE_ADDR(l3_table - KERNEL_CODE_OFFSET);
-  pml4_entry->not_executable = 1;
-  pml4_entry->flags = PML4_PRESENT | PML4_READ_WRITE;
-
-  // Clear the TLB and reset
-  __asm__ volatile(
-      "mov %0, %%cr3"
-      :
-      : "r"((size_t)PAGE_INDICES_TO_ADDR(510ull, 510ull, 510ull, 510ull, 0) -
-            KERNEL_CODE_OFFSET)
-      : "memory");
-}
-
-static void init_physical_map(void) {
-  // Im just creating up to the l3 page tables
-  create_pages_for_physical_map();
 }
 
 /// This function cannot call mmap or physical map or anything cuz like they
