@@ -30,6 +30,8 @@ void *kernel_end = end_kernel;
 #define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
 #define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
 
+size_t pml4_phys = 0;
+
 static void create_page_tables(void) {
   // The page tables will be after the kernel but will then be remapped to be
   // recursive page tables
@@ -109,6 +111,8 @@ static void create_page_tables(void) {
   recursive_entry->not_executable = 0;
   recursive_entry->flags = PT_PRESENT | PT_READ_WRITE | PT_GLOBAL;
 
+  pml4_phys = (size_t)pml4 - KERNEL_CODE_OFFSET;
+
   __asm__ volatile("mov %0, %%cr3"
                    :
                    : "r"((size_t)pml4 - KERNEL_CODE_OFFSET)
@@ -123,35 +127,27 @@ void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
 
-  PDPT_entry_t *phys_3 = (PDPT_entry_t *)(GB * 3 + KB * 4);
-  PDPT_entry_t *phys_2 = (PDPT_entry_t *)(GB * 3 + KB * 8);
-  PDPT_entry_t *phys_1 = (PDPT_entry_t *)(GB * 3 + KB * 12);
+  PDPT_entry_t *phys_3 = (PDPT_entry_t *)GB + PAGE_SIZE;
+  PDT_entry_t *phys_2 = (PDT_entry_t *)GB + PAGE_SIZE * 2;
+  PT_entry_t *phys_1 = (PT_entry_t *)GB + PAGE_SIZE * 3;
   PML4_entry_t *pml4 = (PML4_entry_t *)PML4_ADDR;
   PDPT_entry_t *pdpt = (PDPT_entry_t *)PDPT_ADDR;
   PDT_entry_t *pdt = (PDT_entry_t *)PDT_ADDR;
   PT_entry_t *pt = (PT_entry_t *)PT_ADDR;
 
-  pml4[0].full_entry = PAGE_ADDR(phys_3 + KERNEL_CODE_OFFSET);
+  pml4[0].full_entry = (size_t)phys_3;
   pml4[0].not_executable = 0;
   pml4[0].flags = PML4_READ_WRITE | PML4_PRESENT;
 
-  pdpt[0].full_entry = PAGE_ADDR(phys_2 + KERNEL_CODE_OFFSET);
+  pdpt[0].full_entry = (size_t)phys_2;
   pdpt[0].not_executable = 0;
   pdpt[0].flags = PDPT_PRESENT | PDPT_READ_WRITE;
-
-  pdt[0].full_entry = PAGE_ADDR(phys_1 + KERNEL_CODE_OFFSET);
+  pdt[0].full_entry = (size_t)phys_1;
   pdt[0].not_executable = 0;
   pdt[0].flags = PDT_PRESENT | PDT_READ_WRITE;
-
-  pt[0].full_entry = 0;
+  pt[0].full_entry = (size_t)GB;
   pt[0].not_executable = 0;
   pt[0].flags = PT_PRESENT | PT_READ_WRITE;
 
-  __asm__ volatile("mov %0, %%cr3" : : "r"((size_t)0x1000000) : "memory");
-
-  uint64_t *num_ptr = 0x0;
-
-  *num_ptr = 4345;
-
-  kio_printf("Value stored wax %u\n", *num_ptr);
+  __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" : : : "rax");
 }
