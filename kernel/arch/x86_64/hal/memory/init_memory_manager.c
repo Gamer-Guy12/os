@@ -21,12 +21,21 @@ typedef struct {
   uint32_t reserved;
 } __attribute__((packed)) multiboot_memory_t;
 
+typedef struct {
+  uint32_t type;
+  uint32_t size;
+  uint32_t entry_size;
+  uint32_t entry_version;
+} __attribute__((packed)) multiboot_memory_header_t;
+
 size_t used_page_count = 0;
 
 extern char end_kernel[];
 void *kernel_end = end_kernel;
 
-#define NEXT_PAGE (void *)((uint8_t *)kernel_end + used_page_count * PAGE_SIZE)
+#define NEXT_PAGE                                                              \
+  (void *)((uint8_t *)ROUND_UP((size_t)kernel_end, MB * 2) +                   \
+           used_page_count * PAGE_SIZE)
 #define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
 #define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
 
@@ -121,18 +130,13 @@ static void create_page_tables(void) {
   kio_printf("ADDR: %x\n", (size_t)pml4 - KERNEL_CODE_OFFSET);
 }
 
-inline size_t virt_to_phys(size_t addr) {
-  PT_entry_t *pt = (PT_entry_t *)PT_ADDR;
+static void create_physical_structures(void) {
+  uint8_t *ptr = move_to_type(MULTIBOOT_MEMORY_MAP);
+  multiboot_memory_header_t *header = (multiboot_memory_header_t *)ptr;
 
-  size_t pml4_index = (addr >> 39) & 0x1FF;
-  size_t pdpt_index = (addr >> 30) & 0x1FF;
-  size_t pdt_index = (addr >> 21) & 0x1FF;
-  size_t pt_index = (addr >> 12) & 0x1FF;
-
-  PT_entry_t entry = pt[pt_index + pdt_index * 512 + pdpt_index * 512 * 512 +
-                        pml4_index * 512 * 512 * 512];
-
-  return entry.full_entry & PAGE_TABLE_ENTRY_ADDR_MASK;
+  // Skip over the static header
+  ptr += 16;
+  multiboot_memory_t *map = (multiboot_memory_t *)ptr;
 }
 
 /// This function cannot call mmap or physical map or anything cuz like they
@@ -141,43 +145,5 @@ void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
 
-  PML4_entry_t *pml4 = (PML4_entry_t *)PML4_ADDR;
-  PDPT_entry_t *pdpt = (PDPT_entry_t *)PDPT_ADDR;
-  PDT_entry_t *pdt = (PDT_entry_t *)PDT_ADDR;
-  PT_entry_t *pt = (PT_entry_t *)PT_ADDR;
-
-  pml4[0].full_entry = GB + PAGE_SIZE * 1;
-  pml4[0].not_executable = 0;
-  pml4[0].flags = PML4_READ_WRITE | PML4_PRESENT;
-
-  pdpt[0].full_entry = GB + PAGE_SIZE * 2;
-  pdpt[0].not_executable = 0;
-  pdpt[0].flags = PDPT_PRESENT | PDPT_READ_WRITE;
-
-  pdt[0].full_entry = GB + PAGE_SIZE * 3;
-  pdt[0].not_executable = 0;
-  pdt[0].flags = PDT_PRESENT | PDT_READ_WRITE;
-
-  pt[511].full_entry = (size_t)GB;
-  pt[511].not_executable = 0;
-  pt[511].flags = PT_PRESENT | PT_READ_WRITE;
-
-  __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" : : : "rax");
-
-  kio_printf("pml4[0], %x\n", pml4[0].full_entry);
-  kio_printf("pdpt[0], %x\n", pdpt[0].full_entry);
-  kio_printf("pdt[0], %x\n", pdt[0].full_entry);
-  kio_printf("pt[0], %x\n", pt[0].full_entry);
-  kio_printf("pml4 addr: %x\n", virt_to_phys(PML4_ADDR));
-  kio_printf("pdpt addr: %x\n", virt_to_phys(PDPT_ADDR));
-  kio_printf("pdt addr: %x\n", virt_to_phys(PDT_ADDR));
-  kio_printf("pt addr: %x\n", virt_to_phys(PT_ADDR));
-  kio_printf("raw addr: %x\n", virt_to_phys(0x0));
-  kio_printf("GB: %x\n", (size_t)GB);
-
-  uint64_t *addr = (uint64_t *)(PAGE_SIZE * 511);
-
-  *addr = 49;
-
-  kio_printf("Value stored: %x\n", *addr);
+  create_physical_structures();
 }

@@ -153,4 +153,18 @@ lock_t *get_mem_lock(void);
 
 void init_memory_manager(void);
 
+inline size_t virt_to_phys(size_t addr) {
+  PT_entry_t *pt = (PT_entry_t *)PT_ADDR;
+
+  size_t pml4_index = (addr >> 39) & 0x1FF;
+  size_t pdpt_index = (addr >> 30) & 0x1FF;
+  size_t pdt_index = (addr >> 21) & 0x1FF;
+  size_t pt_index = (addr >> 12) & 0x1FF;
+
+  PT_entry_t entry = pt[pt_index + pdt_index * 512 + pdpt_index * 512 * 512 +
+                        pml4_index * 512 * 512 * 512];
+
+  return entry.full_entry & PAGE_TABLE_ENTRY_ADDR_MASK;
+}
+
 #endif
