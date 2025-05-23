@@ -184,15 +184,55 @@ static void create_physical_structures(void) {
   const size_t pages_needed =
       ROUND_UP(block_count * sizeof(block_descriptor_t), PAGE_SIZE) / PAGE_SIZE;
 
+  // Just to reserve the pages, will be remmapped
   block_descriptor_t *descriptors = NEXT_PAGE;
   used_page_count += pages_needed;
+
+  // Map into virtual memory
+  const size_t phys_1 = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+  used_page_count++;
+  const size_t phys_2 = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+  used_page_count++;
+  const size_t phys_3 = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+  used_page_count++;
+
+  PML4_entry_t *pml4 = (PML4_entry_t *)PML4_ADDR;
+  PDPT_entry_t *pdpt = (PDPT_entry_t *)PDPT_ADDR;
+  PDT_entry_t *pdt = (PDT_entry_t *)PDT_ADDR;
+  PT_entry_t *pt = (PT_entry_t *)PT_ADDR;
+
+  pml4[256].full_entry = phys_1;
+  pml4[256].not_executable = 1;
+  pml4[256].flags = PML4_PRESENT | PML4_READ_WRITE;
+
+  // Add 512 * 256 because thats how the offsets work with recursive paging
+  pdpt[512 * 256 + 0].full_entry = phys_2;
+  pdpt[512 * 256 + 0].not_executable = 1;
+  pdpt[512 * 256 + 0].flags = PDPT_PRESENT | PDPT_READ_WRITE;
+
+  // Multiply by another 512 to do some more skipping over the pdpts
+  pdt[512 * 512 * 256 + 0].full_entry = phys_3;
+  pdt[512 * 512 * 256 + 0].not_executable = 1;
+  pdt[512 * 512 * 256 + 0].flags = PDT_PRESENT | PDT_READ_WRITE;
+
+  // Do skipping and looping, yay
+  for (size_t i = 0; i < pages_needed; i++) {
+    pt[512ull * 512ull * 512ull * 256ull + i].full_entry =
+        (size_t)descriptors - KERNEL_CODE_OFFSET + PAGE_SIZE * i;
+    pt[512ull * 512ull * 512ull * 256ull + i].not_executable = 1;
+    pt[512ull * 512ull * 512ull * 256ull + i].flags =
+        PT_PRESENT | PT_READ_WRITE;
+  }
+
+  descriptors = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
+
   CLEAR_PAGES(descriptors, pages_needed);
 
   if (block_count != create_block_descriptors(descriptors)) {
     sys_panic(MULTIBOOT_ERR);
   }
 
-  set_block_descriptor_ptr(descriptors);
+  set_block_descriptor_ptr((const block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR);
 }
 
 /// This function cannot call mmap or physical map or anything cuz like they
