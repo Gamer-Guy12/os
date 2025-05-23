@@ -3,6 +3,7 @@
 
 #include <hal/memory.h>
 #include <libk/lock.h>
+#include <libk/mem.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -10,7 +11,7 @@
 #define PAGE_TABLE_ENTRY_ADDR_MASK 0x0007fffffffff000
 #define PAGE_SIZE 0x1000
 /// A block is 4mb and is used in the buddy system
-#define BLOCK_SIZE (0x1000 * 0x400)
+#define BLOCK_SIZE (MB * 2)
 #define BUDDY_MAX_ORDER 10
 
 #define PT_ADDR 0xFFFFFF0000000000
@@ -139,12 +140,15 @@ typedef struct {
   };
 } __attribute__((packed)) PT_entry_t;
 
+typedef enum { BLOCK_DESCRIPTOR_RESERVED = 1 } block_descriptor_flags;
+
 typedef struct block_descriptor_struct {
-  void *base;
-  struct block_descriptor_struct *next;
-  struct block_descriptor_struct *prev;
-  uint16_t free_page_count;
-  uint8_t reserved : 1;
+  struct {
+    uint64_t free_pages : 16;
+    uint64_t flags : 5;
+    uint64_t addr : 43;
+  };
+  void *buddy_data;
 } block_descriptor_t;
 
 /// Mem lock is required to use kernel_gp for writes
@@ -166,5 +170,8 @@ inline size_t virt_to_phys(size_t addr) {
 
   return entry.full_entry & PAGE_TABLE_ENTRY_ADDR_MASK;
 }
+
+const block_descriptor_t *get_block_descriptor_ptr(void);
+void set_block_descriptor_ptr(const block_descriptor_t *new_ptr);
 
 #endif

@@ -1,3 +1,4 @@
+#include "libk/err.h"
 #include <asm.h>
 #include <hal/imemory.h>
 #include <hal/memory.h>
@@ -37,6 +38,7 @@ void *kernel_end = end_kernel;
   (void *)((uint8_t *)ROUND_UP((size_t)kernel_end, MB * 2) +                   \
            used_page_count * PAGE_SIZE)
 #define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
+#define CLEAR_PAGES(ptr, count) memset(ptr, 0, PAGE_SIZE *count)
 #define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
 
 size_t pml4_phys = 0;
@@ -130,13 +132,67 @@ static void create_page_tables(void) {
   kio_printf("ADDR: %x\n", (size_t)pml4 - KERNEL_CODE_OFFSET);
 }
 
-static void create_physical_structures(void) {
+static inline void create_block_descriptor(block_descriptor_t *descriptor,
+                                           size_t base) {
+  descriptor->free_pages = (BLOCK_SIZE / PAGE_SIZE);
+  descriptor->buddy_data = NULL;
+  descriptor->flags = 0;
+  descriptor->addr = base >> 21;
+}
+
+/// Returns count
+/// Pass in null just to get count
+static size_t create_block_descriptors(block_descriptor_t *descriptors) {
   uint8_t *ptr = move_to_type(MULTIBOOT_MEMORY_MAP);
-  multiboot_memory_header_t *header = (multiboot_memory_header_t *)ptr;
+  const multiboot_memory_header_t *header = (multiboot_memory_header_t *)ptr;
+
+  const size_t count = (header->size - 16) / sizeof(multiboot_memory_t);
+
+  if (descriptors == NULL) {
+    return count;
+  }
 
   // Skip over the static header
   ptr += 16;
-  multiboot_memory_t *map = (multiboot_memory_t *)ptr;
+  const multiboot_memory_t *map = (multiboot_memory_t *)ptr;
+  size_t block_index = 0;
+
+  for (size_t i = 0; i < count; i++) {
+    if (map[i].len < BLOCK_SIZE) {
+      continue;
+    }
+
+    const uint64_t base = ROUND_UP(map[i].base, BLOCK_SIZE);
+    const uint64_t len = ROUND_DOWN(map[i].len, BLOCK_SIZE);
+    const uint64_t block_count = len / BLOCK_SIZE;
+
+    if (base > (map[i].base + map[i].len)) {
+      continue;
+    }
+
+    for (size_t i = 0; i < block_count; i++) {
+      create_block_descriptor(&descriptors[block_index], base + i * BLOCK_SIZE);
+      block_index++;
+    }
+  }
+
+  return count;
+}
+
+static void create_physical_structures(void) {
+  const size_t block_count = create_block_descriptors(NULL);
+  const size_t pages_needed =
+      ROUND_UP(block_count * sizeof(block_descriptor_t), PAGE_SIZE) / PAGE_SIZE;
+
+  block_descriptor_t *descriptors = NEXT_PAGE;
+  used_page_count += pages_needed;
+  CLEAR_PAGES(descriptors, pages_needed);
+
+  if (block_count != create_block_descriptors(descriptors)) {
+    sys_panic(MULTIBOOT_ERR);
+  }
+
+  set_block_descriptor_ptr(descriptors);
 }
 
 /// This function cannot call mmap or physical map or anything cuz like they
