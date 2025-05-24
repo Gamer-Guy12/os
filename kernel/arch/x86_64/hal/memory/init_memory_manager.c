@@ -1,8 +1,8 @@
-#include "libk/err.h"
 #include <asm.h>
 #include <hal/imemory.h>
 #include <hal/memory.h>
 #include <libk/bit.h>
+#include <libk/err.h>
 #include <libk/kio.h>
 #include <libk/lock.h>
 #include <libk/math.h>
@@ -146,7 +146,10 @@ static size_t create_block_descriptors(block_descriptor_t *descriptors) {
   uint8_t *ptr = move_to_type(MULTIBOOT_MEMORY_MAP);
   const multiboot_memory_header_t *header = (multiboot_memory_header_t *)ptr;
 
-  const size_t count = (header->size - 16) / sizeof(multiboot_memory_t);
+  const size_t count =
+      ((header->size - 16) / sizeof(multiboot_memory_t)) > MAX_BLOCK_COUNT
+          ? MAX_BLOCK_COUNT
+          : (header->size - 16) / sizeof(multiboot_memory_t);
 
   if (descriptors == NULL) {
     return count;
@@ -194,7 +197,7 @@ static void create_physical_structures(void) {
   const size_t phys_2 = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
   used_page_count++;
   const size_t phys_3 = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
-  used_page_count++;
+  used_page_count += pages_needed * PAGE_SIZE / (MB * 2);
 
   PML4_entry_t *pml4 = (PML4_entry_t *)PML4_ADDR;
   PDPT_entry_t *pdpt = (PDPT_entry_t *)PDPT_ADDR;
@@ -210,12 +213,16 @@ static void create_physical_structures(void) {
   pdpt[512 * 256 + 0].not_executable = 1;
   pdpt[512 * 256 + 0].flags = PDPT_PRESENT | PDPT_READ_WRITE;
 
-  // Multiply by another 512 to do some more skipping over the pdpts
-  pdt[512 * 512 * 256 + 0].full_entry = phys_3;
-  pdt[512 * 512 * 256 + 0].not_executable = 1;
-  pdt[512 * 512 * 256 + 0].flags = PDT_PRESENT | PDT_READ_WRITE;
+  // Make the pdts
+  for (size_t i = 0; i < pages_needed * PAGE_SIZE / (MB * 2); i++) {
+    // Multiply by another 512 to do some more skipping over the pdpts
+    pdt[512 * 512 * 256 + i].full_entry = phys_3 + PAGE_SIZE;
+    pdt[512 * 512 * 256 + i].not_executable = 1;
+    pdt[512 * 512 * 256 + i].flags = PDT_PRESENT | PDT_READ_WRITE;
+  }
 
   // Do skipping and looping, yay
+  // Make the pts
   for (size_t i = 0; i < pages_needed; i++) {
     pt[512ull * 512ull * 512ull * 256ull + i].full_entry =
         (size_t)descriptors - KERNEL_CODE_OFFSET + PAGE_SIZE * i;
@@ -223,6 +230,8 @@ static void create_physical_structures(void) {
     pt[512ull * 512ull * 512ull * 256ull + i].flags =
         PT_PRESENT | PT_READ_WRITE;
   }
+
+  __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
 
   descriptors = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
 
@@ -241,5 +250,20 @@ void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
 
+  void *phys_1 = (void *)(GB + PAGE_SIZE * 1);
+  void *phys_2 = (void *)(GB + PAGE_SIZE * 2);
+  void *phys_3 = (void *)(GB + PAGE_SIZE * 3);
+
+  map_virt_to_phys((void *)PDPT_ADDR, phys_1, 1, PML4_READ_WRITE);
+  map_virt_to_phys((void *)PDT_ADDR, phys_2, 1, PDPT_READ_WRITE);
+  return;
+  map_virt_to_phys((void *)PT_ADDR, phys_3, 1, PDT_READ_WRITE);
+  map_virt_to_phys((void *)(PAGE_SIZE * 2), (void *)GB, 1, PT_READ_WRITE);
+
+  __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
+
+  kio_printf("The mapped addr is %x\n", virt_to_phys(PAGE_SIZE * 2));
+
+  return;
   create_physical_structures();
 }

@@ -21,6 +21,8 @@
 #define PDPT_ADDR 0xFFFFFF7FBFC00000
 #define PML4_ADDR 0xFFFFFF7FBFDFE000
 
+#define MAX_BLOCK_COUNT (GB * 512ull / BLOCK_SIZE)
+
 typedef enum {
   PML4_PRESENT = 1,
   PML4_READ_WRITE = 1 << 1,
@@ -127,14 +129,15 @@ typedef struct {
   union {
     uint64_t full_entry;
     struct {
-      uint16_t flags : 12;
+      uint16_t flags : 9;
+      uint16_t ignored_1 : 3;
       /// Bits 12 - 15
       uint16_t addr_bottom : 4;
       /// bits 16 - 47
       uint32_t addr_main;
       /// Bits 48 - 50
       uint8_t addr_top;
-      uint8_t ignored : 3;
+      uint8_t ignored_2 : 3;
       uint8_t memory_protection_key : 4;
       /// If this is set the page cannot be executed
       uint8_t not_executable : 1;
@@ -175,5 +178,10 @@ inline size_t virt_to_phys(size_t addr) {
 
 const block_descriptor_t *get_block_descriptor_ptr(void);
 void set_block_descriptor_ptr(const block_descriptor_t *new_ptr);
+
+void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
+                       uint16_t flags);
+
+void *unmap_virt(void *virt);
 
 #endif

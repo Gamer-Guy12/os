@@ -1,0 +1,10 @@
+PDPT Entries:
+0 - 255 User space
+256 - Physical Memory Management Structures
+257 - Physical Memory Identity Mapping
+258 - Misc Data: PDT structure
+    - Multiboot Info
+    - ACPI Info
+259 - 509 - Kernel Heap
+510 - Recursive Mapping
+511 - Kernel
