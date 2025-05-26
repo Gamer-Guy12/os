@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <hal/imemory.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -15,16 +16,15 @@ void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
   bool global = flags & PT_GLOBAL;
 
   PT_entry_t *entries = (PT_entry_t *)PT_ADDR;
+  kio_printf("Flags are %x and index is %x\n", (size_t)small_flags,
+             (size_t)((virt_bits & UNCANONICALIZER) / PAGE_SIZE));
 
-  entries[(virt_bits & UNCANONICALIZER) / PAGE_SIZE].full_entry =
-      phys_bits & UNCANONICALIZER;
+  entries[(virt_bits & UNCANONICALIZER) / PAGE_SIZE].full_entry = phys_bits;
   entries[(virt_bits & UNCANONICALIZER) / PAGE_SIZE].flags = small_flags;
   if (global)
     entries[(virt_bits & UNCANONICALIZER) / PAGE_SIZE].flags |= PT_GLOBAL;
   entries[(virt_bits & UNCANONICALIZER) / PAGE_SIZE].not_executable =
       not_executable;
-
-  return virt;
 
   __asm__ volatile("invlpg (%0)" : : "r"(virt_bits) : "memory");
 

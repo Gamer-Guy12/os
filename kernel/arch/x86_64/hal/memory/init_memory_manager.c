@@ -174,9 +174,15 @@ static size_t create_block_descriptors(block_descriptor_t *descriptors) {
     }
 
     for (size_t i = 0; i < block_count; i++) {
+      if (block_index >= MAX_BLOCK_COUNT)
+        break;
+
       create_block_descriptor(&descriptors[block_index], base + i * BLOCK_SIZE);
       block_index++;
     }
+
+    if (block_index >= MAX_BLOCK_COUNT)
+      break;
   }
 
   return count;
@@ -216,7 +222,7 @@ static void create_physical_structures(void) {
   // Make the pdts
   for (size_t i = 0; i < pages_needed * PAGE_SIZE / (MB * 2); i++) {
     // Multiply by another 512 to do some more skipping over the pdpts
-    pdt[512 * 512 * 256 + i].full_entry = phys_3 + PAGE_SIZE;
+    pdt[512 * 512 * 256 + i].full_entry = phys_3 + PAGE_SIZE * i;
     pdt[512 * 512 * 256 + i].not_executable = 1;
     pdt[512 * 512 * 256 + i].flags = PDT_PRESENT | PDT_READ_WRITE;
   }
@@ -250,15 +256,24 @@ void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
 
-  void *phys_1 = (void *)(GB + PAGE_SIZE * 1);
-  void *phys_2 = (void *)(GB + PAGE_SIZE * 2);
-  void *phys_3 = (void *)(GB + PAGE_SIZE * 3);
+  void *phys_1 = (void *)(GB - PAGE_SIZE * 1);
+  void *phys_2 = (void *)(GB - PAGE_SIZE * 2);
+  void *phys_3 = (void *)(GB - PAGE_SIZE * 3);
 
   map_virt_to_phys((void *)PDPT_ADDR, phys_1, 1, PML4_READ_WRITE);
+  kio_printf("Phys addr %x, virt addr %x\n", virt_to_phys(PDPT_ADDR),
+             PDPT_ADDR);
+
+  // __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
+  // CLEAR_PAGE((void *)PDPT_ADDR);
+  // uint64_t *ptr = (uint64_t *)PDPT_ADDR;
+  // *ptr = 9;
+  return;
   map_virt_to_phys((void *)PDT_ADDR, phys_2, 1, PDPT_READ_WRITE);
   return;
   map_virt_to_phys((void *)PT_ADDR, phys_3, 1, PDT_READ_WRITE);
-  map_virt_to_phys((void *)(PAGE_SIZE * 2), (void *)GB, 1, PT_READ_WRITE);
+  map_virt_to_phys((void *)(PAGE_SIZE * 2), (void *)(GB - PAGE_SIZE * 4), 1,
+                   PT_READ_WRITE);
 
   __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
 

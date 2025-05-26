@@ -26,8 +26,11 @@ __attribute__((section(".startup"))) static void handle_init_array(void) {
 
 __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   handle_init_array();
+  kio_printf("Called Global Constructors\n");
   init_multiboot(multiboot);
+  kio_printf("Initialized Multiboot\n");
   init_memory_manager();
+  kio_printf("Initialized Memory Manager\n");
   // kio_clear();
   kio_printf("I might be in!\n");
 }
