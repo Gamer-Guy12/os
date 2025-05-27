@@ -10,7 +10,8 @@
 
 #define PAGE_TABLE_ENTRY_ADDR_MASK 0x0007fffffffff000
 #define PAGE_SIZE 0x1000
-/// A block is 4mb and is used in the buddy system
+/// A block is 2mb and is used in the buddy system
+/// If you change this, update the block descriptor and nuke one of the flags
 #define BLOCK_SIZE (MB * 2)
 #define BUDDY_MAX_ORDER 10
 
@@ -179,9 +180,17 @@ inline size_t virt_to_phys(size_t addr) {
 const block_descriptor_t *get_block_descriptor_ptr(void);
 void set_block_descriptor_ptr(const block_descriptor_t *new_ptr);
 
+size_t get_block_count(void);
+void set_block_count(size_t count);
+
 void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
                        uint16_t flags);
 
 void *unmap_virt(void *virt);
+
+// I code so it is honor system
+// Returns where u should start using
+size_t reserve_258_pdt_page(size_t count);
+size_t get_used_258_pdt_page_count(void);
 
 #endif

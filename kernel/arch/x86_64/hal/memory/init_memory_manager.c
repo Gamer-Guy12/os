@@ -187,62 +187,77 @@ static size_t create_block_descriptors(block_descriptor_t *descriptors) {
   return count;
 }
 
-static void create_physical_structures(void) {
-  const size_t block_count = create_block_descriptors(NULL);
-  const size_t pages_needed =
-      ROUND_UP(block_count * sizeof(block_descriptor_t), PAGE_SIZE) / PAGE_SIZE;
-
-  // Just to reserve the pages, will be remmapped
-  block_descriptor_t *descriptors = NEXT_PAGE;
-  used_page_count += pages_needed;
-
-  // Map into virtual memory
-  const size_t phys_1 = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+void create_block_page_tables(const size_t pages_needed) {
+  // To calculate the address needed to map the 256th pdpt entry, we must do
+  // some shit
+  // First we start with the PDPT addr thingy. then we add nothing cuz
+  // i dont think so
+  // Wait no we do. And then we add 256 pages and map that to something (A
+  // physical Addr)
+  const size_t pdpt_phys_addr = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
   used_page_count++;
-  const size_t phys_2 = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+  map_virt_to_phys((void *)(PDPT_ADDR + PAGE_SIZE * 256),
+                   (void *)pdpt_phys_addr, 1, PML4_READ_WRITE);
+  CLEAR_PAGE((void *)(PDPT_ADDR + PAGE_SIZE * 256));
+
+  // Each PDPT points to a PDT which can hold 1gb
+  // Each descriptor is 16 bytes and holds 2 Mb
+  // This is perfect for the 512 gb max memory
+  // 1 PDT
+
+  const size_t pdt_phys_addr = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
   used_page_count++;
-  const size_t phys_3 = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
-  used_page_count += pages_needed * PAGE_SIZE / (MB * 2);
+  map_virt_to_phys((void *)(PDT_ADDR + 512 * 256 * PAGE_SIZE),
+                   (void *)pdt_phys_addr, 1, PDPT_READ_WRITE);
+  CLEAR_PAGE((void *)(PDT_ADDR + 512 * 256 * PAGE_SIZE));
 
-  PML4_entry_t *pml4 = (PML4_entry_t *)PML4_ADDR;
-  PDPT_entry_t *pdpt = (PDPT_entry_t *)PDPT_ADDR;
-  PDT_entry_t *pdt = (PDT_entry_t *)PDT_ADDR;
-  PT_entry_t *pt = (PT_entry_t *)PT_ADDR;
+  // Calculate PT count
+  // Each one takes 2MB
+  const size_t PT_count = ROUND_UP(pages_needed, (MB * 2)) / (MB * 2);
+  const size_t pt_phys_addr = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+  used_page_count += PT_count;
 
-  pml4[256].full_entry = phys_1;
-  pml4[256].not_executable = 1;
-  pml4[256].flags = PML4_PRESENT | PML4_READ_WRITE;
-
-  // Add 512 * 256 because thats how the offsets work with recursive paging
-  pdpt[512 * 256 + 0].full_entry = phys_2;
-  pdpt[512 * 256 + 0].not_executable = 1;
-  pdpt[512 * 256 + 0].flags = PDPT_PRESENT | PDPT_READ_WRITE;
-
-  // Make the pdts
-  for (size_t i = 0; i < pages_needed * PAGE_SIZE / (MB * 2); i++) {
-    // Multiply by another 512 to do some more skipping over the pdpts
-    pdt[512 * 512 * 256 + i].full_entry = phys_3 + PAGE_SIZE * i;
-    pdt[512 * 512 * 256 + i].not_executable = 1;
-    pdt[512 * 512 * 256 + i].flags = PDT_PRESENT | PDT_READ_WRITE;
+  for (size_t i = 0; i < PT_count; i++) {
+    map_virt_to_phys((void *)(PT_ADDR + 512ull * 512ull * 256ull * PAGE_SIZE +
+                              PAGE_SIZE * i),
+                     (void *)(pt_phys_addr + PAGE_SIZE * i), 1, PDT_READ_WRITE);
+    CLEAR_PAGE((void *)(PT_ADDR + 512ull * 512ull * 256ull * PAGE_SIZE +
+                        PAGE_SIZE * i));
   }
 
-  // Do skipping and looping, yay
-  // Make the pts
+  const size_t descriptor_phys_addr = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+  used_page_count += pages_needed;
+
   for (size_t i = 0; i < pages_needed; i++) {
-    pt[512ull * 512ull * 512ull * 256ull + i].full_entry =
-        (size_t)descriptors - KERNEL_CODE_OFFSET + PAGE_SIZE * i;
-    pt[512ull * 512ull * 512ull * 256ull + i].not_executable = 1;
-    pt[512ull * 512ull * 512ull * 256ull + i].flags =
-        PT_PRESENT | PT_READ_WRITE;
+    map_virt_to_phys((void *)(KERNEL_OFFSET + PAGE_SIZE * i),
+                     (void *)(descriptor_phys_addr + PAGE_SIZE * i), 1,
+                     PT_READ_WRITE);
+    CLEAR_PAGE((void *)(KERNEL_OFFSET + PAGE_SIZE * i));
   }
 
   __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
+}
 
-  descriptors = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
+void map_multiboot(void) {
+  // Get multiboot returns the physical address
+  // Map the page into the 258 pdt and then should be fine
+}
 
-  CLEAR_PAGES(descriptors, pages_needed);
+static void create_physical_structures(void) {
+  map_multiboot();
 
-  if (block_count != create_block_descriptors(descriptors)) {
+  const size_t block_count = create_block_descriptors(NULL);
+
+  return;
+  set_block_count(block_count);
+  const size_t pages_needed =
+      sizeof(block_descriptor_t) * block_count / PAGE_SIZE;
+
+  create_block_page_tables(pages_needed);
+
+  // Wanna make sure it didn't change
+  if (block_count !=
+      create_block_descriptors((block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR)) {
     sys_panic(MULTIBOOT_ERR);
   }
 
@@ -259,35 +274,5 @@ void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
 
-  void *phys_1 = (void *)(GB - PAGE_SIZE * 1);
-  void *phys_2 = (void *)(GB - PAGE_SIZE * 2);
-  void *phys_3 = (void *)(GB - PAGE_SIZE * 3);
-
-  map_virt_to_phys((void *)PDPT_ADDR, phys_1, 1, PML4_READ_WRITE);
-  kio_printf("Phys addr %x, virt addr %x\n", virt_to_phys(PDPT_ADDR),
-             PDPT_ADDR);
-
-  // __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
-  // CLEAR_PAGE((void *)PDPT_ADDR);
-  // uint64_t *ptr = (uint64_t *)PDPT_ADDR;
-  // *ptr = 9;
-
-  map_virt_to_phys((void *)PDT_ADDR, phys_2, 1, PDPT_READ_WRITE);
-
-  kio_printf("Phys addr %x, virt addr %x\n", virt_to_phys(PDT_ADDR), PDT_ADDR);
-  map_virt_to_phys((void *)PT_ADDR, phys_3, 1, PDT_READ_WRITE);
-  map_virt_to_phys((void *)(PAGE_SIZE * 2), (void *)(GB - PAGE_SIZE * 4), 1,
-                   PT_READ_WRITE);
-
-  __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
-
-  kio_printf("The mapped addr is %x\n", virt_to_phys(PAGE_SIZE * 2));
-
-  uint64_t *ptr = (uint64_t *)(PAGE_SIZE * 2);
-  *ptr = 458;
-
-  kio_printf("Stored value is %u\n", *ptr);
-
-  return;
   create_physical_structures();
 }
