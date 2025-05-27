@@ -99,8 +99,8 @@ static void create_page_tables(void) {
 
     for (size_t j = 0; j < 512; j++) {
       // The bios stuff is also there so ja
-      bool before_kernel =
-          MB2 * i + PAGE_SIZE * j < (size_t)kernel_start - KERNEL_CODE_OFFSET;
+      bool before_kernel = (MB2 * i + PAGE_SIZE * j) <
+                           ((size_t)kernel_start - KERNEL_CODE_OFFSET);
 
       pt[j].full_entry = MB2 * i + PAGE_SIZE * j;
       if (__builtin_expect(before_kernel, false)) {
@@ -112,7 +112,6 @@ static void create_page_tables(void) {
       }
 
       pt[j].not_executable = 0;
-      pt[j].flags = PT_PRESENT | PT_READ_WRITE;
     }
   }
 
@@ -253,6 +252,10 @@ static void create_physical_structures(void) {
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
 void init_memory_manager(void) {
+// Allow not executable bit
+#define EXECUTE_DISABLE_BIT_ENABLE 1 << 11
+  wrmsr(IA32_EFER, rdmsr(IA32_EFER) | EXECUTE_DISABLE_BIT_ENABLE);
+
   // Add Fmem if you want
   create_page_tables();
 
@@ -268,9 +271,10 @@ void init_memory_manager(void) {
   // CLEAR_PAGE((void *)PDPT_ADDR);
   // uint64_t *ptr = (uint64_t *)PDPT_ADDR;
   // *ptr = 9;
-  return;
+
   map_virt_to_phys((void *)PDT_ADDR, phys_2, 1, PDPT_READ_WRITE);
-  return;
+
+  kio_printf("Phys addr %x, virt addr %x\n", virt_to_phys(PDT_ADDR), PDT_ADDR);
   map_virt_to_phys((void *)PT_ADDR, phys_3, 1, PDT_READ_WRITE);
   map_virt_to_phys((void *)(PAGE_SIZE * 2), (void *)(GB - PAGE_SIZE * 4), 1,
                    PT_READ_WRITE);
@@ -278,6 +282,11 @@ void init_memory_manager(void) {
   __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
 
   kio_printf("The mapped addr is %x\n", virt_to_phys(PAGE_SIZE * 2));
+
+  uint64_t *ptr = (uint64_t *)(PAGE_SIZE * 2);
+  *ptr = 458;
+
+  kio_printf("Stored value is %u\n", *ptr);
 
   return;
   create_physical_structures();

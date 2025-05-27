@@ -48,7 +48,7 @@ clean-kernel:
 	@rm -rf kernel/obj
 	@echo Cleaned kernel
 
-.PHONY: install
+.PHONY: install-kernel
 install-kernel: build/bin/kernel.bin
 	@mkdir -p build/iso/boot
 	@cp build/bin/kernel.bin build/iso/boot

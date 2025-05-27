@@ -11,22 +11,21 @@ void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
   size_t virt_bits = (size_t)virt;
   size_t phys_bits = (size_t)phys;
 
-  uint8_t small_flags = flags & 0xFF;
-  small_flags |= PT_PRESENT;
-  bool global = flags & PT_GLOBAL;
+  uint8_t bit8_flags = flags & 0xFF;
 
   PT_entry_t *entries = (PT_entry_t *)PT_ADDR;
-  kio_printf("Flags are %x and index is %x\n", (size_t)small_flags,
-             (size_t)((virt_bits & UNCANONICALIZER) / PAGE_SIZE));
+  // Get the address and page index
+  size_t index = (virt_bits & UNCANONICALIZER) / PAGE_SIZE;
 
-  entries[(virt_bits & UNCANONICALIZER) / PAGE_SIZE].full_entry = phys_bits;
-  entries[(virt_bits & UNCANONICALIZER) / PAGE_SIZE].flags = small_flags;
-  if (global)
-    entries[(virt_bits & UNCANONICALIZER) / PAGE_SIZE].flags |= PT_GLOBAL;
-  entries[(virt_bits & UNCANONICALIZER) / PAGE_SIZE].not_executable =
-      not_executable;
+  kio_printf("Calculated address is %x\n", PT_ADDR + index * 8);
 
-  __asm__ volatile("invlpg (%0)" : : "r"(virt_bits) : "memory");
+  entries[index].full_entry = phys_bits;
+  entries[index].flags |= bit8_flags | PT_PRESENT;
+  if (flags & PT_GLOBAL)
+    entries[index].flags |= PT_GLOBAL;
+  entries[index].not_executable = not_executable;
+
+  kio_printf("The entry created is this%x\n", entries[index].full_entry);
 
   return virt;
 }
