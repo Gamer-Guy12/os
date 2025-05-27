@@ -1,4 +1,5 @@
-0: Memory Allocation Error
-1: Too much space taken
-2: Out of order memory map
-3: Multiboot Error
+Or this shit together to make cool errors!
+
+Bit 0: Too much space
+Bit 1: Memory Allocator Error
+Bit 2: Multiboot Error

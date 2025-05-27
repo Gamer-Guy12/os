@@ -235,12 +235,83 @@ void create_block_page_tables(const size_t pages_needed) {
     CLEAR_PAGE((void *)(KERNEL_OFFSET + PAGE_SIZE * i));
   }
 
-  __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
+  // Dont need this cuz map virt to phys does the clearing of the TLB
+  // __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
 }
 
+/// Don't worry about page alinging the thing just put it in one
 void map_multiboot(void) {
   // Get multiboot returns the physical address
   // Map the page into the 258 pdt and then should be fine
+  const size_t page_offset = get_used_258_pdt_page_count();
+
+  // Do PDPT
+  if (page_offset == 0) {
+    const size_t pdpt_phys = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+    used_page_count++;
+    map_virt_to_phys((void *)(PDPT_ADDR + 258 * PAGE_SIZE), (void *)pdpt_phys,
+                     1, PML4_READ_WRITE);
+    CLEAR_PAGE((void *)(PDPT_ADDR + 258 * PAGE_SIZE));
+  }
+
+  // if gb aligned so I don't have to make the pdt
+  if (page_offset % GB == 0) {
+    const size_t pdt_used_count = page_offset / GB;
+
+    const size_t pdt_phys = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+    used_page_count++;
+    // I hope this skippping works
+    const size_t pdt_virt =
+        PDT_ADDR + 512 * 258 * PAGE_SIZE + pdt_used_count * PAGE_SIZE;
+    map_virt_to_phys((void *)pdt_virt, (void *)pdt_phys, 1, PDPT_READ_WRITE);
+    CLEAR_PAGE((void *)pdt_virt);
+  }
+
+  // stuff
+  const size_t pdt_used_count = ROUND_DOWN(page_offset, GB) / GB;
+
+  // if 2mb aligned so I don't have to make the pt
+  if (page_offset % (MB * 2) == 0) {
+    // I love these like MB GB and KB macros
+    // Life so much better
+    const size_t pt_used_count = page_offset / (MB * 2);
+
+    const size_t pt_phys = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+    used_page_count++;
+    // I hope THIS skipping works
+    const size_t pt_virt = PT_ADDR + 512ull * 512 * 258 * PAGE_SIZE +
+                           pdt_used_count * 512 * PAGE_SIZE +
+                           pt_used_count * PAGE_SIZE;
+    map_virt_to_phys((void *)pt_virt, (void *)pt_phys, 1, PDT_READ_WRITE);
+    CLEAR_PAGE((void *)pt_virt);
+  }
+
+  // more stuff
+  // yk what round down and round up are also like insanely nice macros
+  // prolly inefficinet though
+  const size_t pt_used_count = ROUND_DOWN(page_offset, MB * 2) / (MB * 2);
+
+  // Map the pages
+
+  // IDK i think thats how it works
+  // Nearly a name clash
+  const size_t used_page_count_offset = ROUND_DOWN(page_offset, 512);
+
+  const size_t page_phys = ROUND_DOWN((size_t)get_multiboot(), PAGE_SIZE);
+  const size_t multiboot_offset = (size_t)get_multiboot() % PAGE_SIZE;
+  used_page_count++;
+  // Skipping hell
+  const size_t page_virt = 0x000 + (used_page_count_offset << 12) +
+                           (pt_used_count << 21) + (pdt_used_count << 30) +
+                           (258ull << 39ull) +
+                           /* Cananocalization */ (0xFFFFull << 48);
+  map_virt_to_phys((void *)page_virt, (void *)page_phys, 1, PT_READ_WRITE);
+  CLEAR_PAGE((void *)page_virt);
+
+  uint8_t *multiboot = (uint8_t *)(page_phys + multiboot_offset);
+  uint32_t size = *(uint32_t *)multiboot;
+
+  kio_printf("Header size is %x\n", (size_t)size);
 }
 
 static void create_physical_structures(void) {
@@ -274,5 +345,8 @@ void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
 
+  map_multiboot();
+
+  return;
   create_physical_structures();
 }
