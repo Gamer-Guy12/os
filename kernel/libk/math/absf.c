@@ -4,5 +4,5 @@ float math_absf (float input) {
     return input;
   }
   else {
-    return input * (1-2);
+    return -input;
 }

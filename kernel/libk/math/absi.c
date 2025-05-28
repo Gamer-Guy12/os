@@ -4,6 +4,5 @@ int math_absi (int input) {
     return input;
   }
   else {
-    return input * (1-2);
-}
+    return -input;
 }
