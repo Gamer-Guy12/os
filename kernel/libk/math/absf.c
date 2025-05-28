@@ -3,7 +3,6 @@ float math_absf (float input) {
   {
     return input;
   }
-  if (input < 0) {
+  else {
     return input * (1-2);
-  }
 }

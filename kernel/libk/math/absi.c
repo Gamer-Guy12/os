@@ -3,7 +3,7 @@ int math_absi (int input) {
   {
     return input;
   }
-  if (input < 0) {
+  else {
     return input * (1-2);
-  }
+}
 }
