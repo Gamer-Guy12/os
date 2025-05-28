@@ -1,7 +1,7 @@
 PDPT Entries:
 0 - 255 User space
 256 - Physical Memory Management Structures
-257 - Physical Memory Identity Mapping
+257 - Physical Memory Identity Mapping (If wanted later)
 258 - Misc Data: PDT structure
     - Multiboot Info
     - ACPI Info

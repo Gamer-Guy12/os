@@ -372,7 +372,7 @@ static void map_multiboot(void) {
   }
 }
 
-static void create_physical_structures(void) {
+static void create_all_block_descriptors(void) {
   map_multiboot();
 
   const size_t block_count = create_block_descriptors(NULL);
@@ -393,6 +393,8 @@ static void create_physical_structures(void) {
   set_block_descriptor_ptr((const block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR);
 }
 
+static void create_buddy_memory(void) {}
+
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
 void init_memory_manager(void) {
@@ -403,5 +405,7 @@ void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
 
-  create_physical_structures();
+  create_all_block_descriptors();
+
+  create_buddy_memory();
 }
