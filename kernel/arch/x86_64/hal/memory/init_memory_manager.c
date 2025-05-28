@@ -265,6 +265,9 @@ void map_multiboot(void) {
         PDT_ADDR + 512 * 258 * PAGE_SIZE + pdt_used_count * PAGE_SIZE;
     map_virt_to_phys((void *)pdt_virt, (void *)pdt_phys, 1, PDPT_READ_WRITE);
     CLEAR_PAGE((void *)pdt_virt);
+
+    kio_printf("The mapped addr multiboot %x and phys %x and mapped %x\n",
+               pdt_virt, pdt_phys, virt_to_phys(pdt_virt));
   }
 
   // stuff
@@ -295,23 +298,49 @@ void map_multiboot(void) {
 
   // IDK i think thats how it works
   // Nearly a name clash
-  const size_t used_page_count_offset = ROUND_DOWN(page_offset, 512);
+  const size_t used_page_count_offset =
+      page_offset - ROUND_DOWN(page_offset, 512);
 
   const size_t page_phys = ROUND_DOWN((size_t)get_multiboot(), PAGE_SIZE);
   const size_t multiboot_offset = (size_t)get_multiboot() % PAGE_SIZE;
-  used_page_count++;
   // Skipping hell
   const size_t page_virt = 0x000 + (used_page_count_offset << 12) +
                            (pt_used_count << 21) + (pdt_used_count << 30) +
                            (258ull << 39ull) +
                            /* Cananocalization */ (0xFFFFull << 48);
+  kio_printf("Addr is %x and phys %x\n", page_virt, page_phys);
   map_virt_to_phys((void *)page_virt, (void *)page_phys, 1, PT_READ_WRITE);
-  CLEAR_PAGE((void *)page_virt);
+  reserve_258_pdt_page(1);
 
-  uint8_t *multiboot = (uint8_t *)(page_phys + multiboot_offset);
+  uint8_t *multiboot = (uint8_t *)(page_virt + multiboot_offset);
   uint32_t size = *(uint32_t *)multiboot;
 
   kio_printf("Header size is %x\n", (size_t)size);
+
+  // Check if the thingy needs more pages
+  if (multiboot_offset + size > PAGE_SIZE) {
+    const size_t new_pages_needed =
+        ROUND_UP((multiboot_offset + size - PAGE_SIZE), PAGE_SIZE) / PAGE_SIZE;
+
+    // Plus 1 cuz we forgor about the next one cuz like next one cuz like - PAGE
+    // Size
+    if (new_pages_needed > 512 - used_page_count_offset + 1) {
+      sys_panic(MULTIBOOT_ERR | TOO_MUCH_SPACE_ERR);
+    }
+
+    // I hope this is right
+    for (size_t i = 0; i < new_pages_needed; i++) {
+      const size_t page_phys =
+          ROUND_DOWN((size_t)get_multiboot(), PAGE_SIZE) + i + 1;
+
+      const size_t page_virt =
+          0x000 + ((used_page_count_offset + i + 1) << 12) +
+          (pt_used_count << 21) + (pdt_used_count << 30) + (258ull << 39ull) +
+          /* Cananocalization */ (0xFFFFull << 48);
+
+      map_virt_to_phys((void *)page_virt, (void *)page_phys, 1, PT_READ_WRITE);
+    }
+  }
 }
 
 static void create_physical_structures(void) {

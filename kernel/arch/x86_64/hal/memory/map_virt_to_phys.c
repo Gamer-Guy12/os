@@ -7,7 +7,6 @@
 
 void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
                        uint16_t flags) {
-
   size_t virt_bits = (size_t)virt;
   size_t phys_bits = (size_t)phys;
 
@@ -25,7 +24,7 @@ void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
     entries[index].flags |= PT_GLOBAL;
   entries[index].not_executable = not_executable;
 
-  kio_printf("The entry created is this%x\n", entries[index].full_entry);
+  kio_printf("The entry created is this %x\n", entries[index].full_entry);
 
   return virt;
 }

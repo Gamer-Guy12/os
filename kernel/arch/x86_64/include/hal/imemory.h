@@ -163,7 +163,7 @@ lock_t *get_mem_lock(void);
 
 void init_memory_manager(void);
 
-inline size_t virt_to_phys(size_t addr) {
+static inline size_t virt_to_phys(size_t addr) {
   PT_entry_t *pt = (PT_entry_t *)PT_ADDR;
 
   size_t pml4_index = (addr >> 39) & 0x1FF;
