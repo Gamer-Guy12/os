@@ -139,34 +139,56 @@ static inline void create_block_descriptor(block_descriptor_t *descriptor,
   descriptor->addr = base >> 21;
 }
 
-/// Returns count
+/// Returns count of block descriptors needed
 /// Pass in null just to get count
 static size_t create_block_descriptors(block_descriptor_t *descriptors) {
   uint8_t *ptr = move_to_type(MULTIBOOT_MEMORY_MAP);
   const multiboot_memory_header_t *header = (multiboot_memory_header_t *)ptr;
 
-  const size_t count =
+  const size_t entry_count =
       ((header->size - 16) / sizeof(multiboot_memory_t)) > MAX_BLOCK_COUNT
           ? MAX_BLOCK_COUNT
           : (header->size - 16) / sizeof(multiboot_memory_t);
-
-  if (descriptors == NULL) {
-    return count;
-  }
 
   // Skip over the static header
   ptr += 16;
   const multiboot_memory_t *map = (multiboot_memory_t *)ptr;
   size_t block_index = 0;
 
-  for (size_t i = 0; i < count; i++) {
+  size_t block_count = 0;
+
+  for (size_t i = 0; i < entry_count; i++) {
     if (map[i].len < BLOCK_SIZE) {
       continue;
     }
 
+    if (map[i].type != 1)
+      continue;
+
+    const uint64_t len = ROUND_DOWN(map[i].len, BLOCK_SIZE);
+    const uint64_t cur_count = len / BLOCK_SIZE;
+
+    block_count += cur_count;
+  }
+
+  if (descriptors == NULL) {
+    return block_count;
+  }
+
+  for (size_t i = 0; i < entry_count; i++) {
+    if (map[i].len < BLOCK_SIZE) {
+      continue;
+    }
+
+    if (map[i].type != 1)
+      continue;
+
     const uint64_t base = ROUND_UP(map[i].base, BLOCK_SIZE);
     const uint64_t len = ROUND_DOWN(map[i].len, BLOCK_SIZE);
     const uint64_t block_count = len / BLOCK_SIZE;
+
+    if (block_count == 0)
+      continue;
 
     if (base > (map[i].base + map[i].len)) {
       continue;
@@ -184,10 +206,10 @@ static size_t create_block_descriptors(block_descriptor_t *descriptors) {
       break;
   }
 
-  return count;
+  return block_count;
 }
 
-void create_block_page_tables(const size_t pages_needed) {
+static void create_block_page_tables(const size_t pages_needed) {
   // To calculate the address needed to map the 256th pdpt entry, we must do
   // some shit
   // First we start with the PDPT addr thingy. then we add nothing cuz
@@ -234,13 +256,19 @@ void create_block_page_tables(const size_t pages_needed) {
                      PT_READ_WRITE);
     CLEAR_PAGE((void *)(KERNEL_OFFSET + PAGE_SIZE * i));
   }
+  kio_printf("needed %x\n", pages_needed);
+  return;
+  uint64_t *ptr = (uint64_t *)KERNEL_OFFSET;
+  *ptr = 5;
+
+  kio_printf("Pages needed %x, stored val %x\n", pages_needed, *ptr);
 
   // Dont need this cuz map virt to phys does the clearing of the TLB
   // __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
 }
 
 /// Don't worry about page alinging the thing just put it in one
-void map_multiboot(void) {
+static void map_multiboot(void) {
   // Get multiboot returns the physical address
   // Map the page into the 258 pdt and then should be fine
   const size_t page_offset = get_used_258_pdt_page_count();
@@ -313,6 +341,7 @@ void map_multiboot(void) {
   reserve_258_pdt_page(1);
 
   uint8_t *multiboot = (uint8_t *)(page_virt + multiboot_offset);
+  init_multiboot(multiboot);
   uint32_t size = *(uint32_t *)multiboot;
 
   kio_printf("Header size is %x\n", (size_t)size);
@@ -347,11 +376,11 @@ static void create_physical_structures(void) {
   map_multiboot();
 
   const size_t block_count = create_block_descriptors(NULL);
+  kio_printf("Neededn %x\n", block_count);
 
-  return;
   set_block_count(block_count);
   const size_t pages_needed =
-      sizeof(block_descriptor_t) * block_count / PAGE_SIZE;
+      ROUND_UP(sizeof(block_descriptor_t) * block_count, PAGE_SIZE) / PAGE_SIZE;
 
   create_block_page_tables(pages_needed);
 
@@ -374,8 +403,5 @@ void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
 
-  map_multiboot();
-
-  return;
   create_physical_structures();
 }

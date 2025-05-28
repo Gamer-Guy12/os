@@ -1,5 +1,5 @@
-#include "libk/kio.h"
 #include <hal/imemory.h>
+#include <libk/kio.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -16,7 +16,7 @@ void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
   // Get the address and page index
   size_t index = (virt_bits & UNCANONICALIZER) / PAGE_SIZE;
 
-  kio_printf("Calculated address is %x\n", PT_ADDR + index * 8);
+  // kio_printf("Calculated address is %x\n", PT_ADDR + index * 8);
 
   entries[index].full_entry = phys_bits;
   entries[index].flags |= bit8_flags | PT_PRESENT;
@@ -24,7 +24,7 @@ void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
     entries[index].flags |= PT_GLOBAL;
   entries[index].not_executable = not_executable;
 
-  kio_printf("The entry created is this %x\n", entries[index].full_entry);
+  // kio_printf("The entry created is this %x\n", entries[index].full_entry);
 
   return virt;
 }
