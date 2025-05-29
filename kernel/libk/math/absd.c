@@ -1,9 +1,9 @@
-int64_t math_absi (int64_t input) {
+double math_absd (double input) {
   if (input > 0)
   {
     return input;
   }
   else {
     return -input;
-}
+  }
 }

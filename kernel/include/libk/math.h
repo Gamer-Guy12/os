@@ -16,6 +16,10 @@ int64_t math_powi64(int64_t base, int64_t exp);
 double math_powf(float base, float exp);
 double math_powd(double base, double exp);
 
+int64_t math_absi(int64_t input);
+float math_absf(float input);
+double math_absd(double input);
+
 #define ROUND_UP(num, to) num + (to - (num % to))
 #define ROUND_DOWN(num, to) num - (num % to)
 
