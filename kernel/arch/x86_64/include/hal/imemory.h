@@ -13,7 +13,7 @@
 /// A block is 2mb and is used in the buddy system
 /// If you change this, update the block descriptor and nuke one of the flags
 #define BLOCK_SIZE (MB * 2)
-#define BUDDY_MAX_ORDER 10
+#define BUDDY_MAX_ORDER 9
 
 #define BLOCK_DESCRIPTORS_ADDR 0xFFFF800000000000
 
@@ -150,8 +150,9 @@ typedef enum { BLOCK_DESCRIPTOR_RESERVED = 1 } block_descriptor_flags;
 
 typedef struct block_descriptor_struct {
   struct {
-    uint64_t free_pages : 16;
-    uint64_t flags : 5;
+    uint64_t free_pages : 10;
+    uint64_t largest_region_order : 5;
+    uint64_t flags : 6;
     uint64_t addr : 43;
   };
   void *buddy_data;

@@ -134,6 +134,7 @@ static void create_page_tables(void) {
 static inline void create_block_descriptor(block_descriptor_t *descriptor,
                                            size_t base) {
   descriptor->free_pages = (BLOCK_SIZE / PAGE_SIZE);
+  descriptor->largest_region_order = BUDDY_MAX_ORDER;
   descriptor->buddy_data = NULL;
   descriptor->flags = 0;
   descriptor->addr = base >> 21;
