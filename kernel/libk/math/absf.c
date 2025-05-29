@@ -5,4 +5,5 @@ float math_absf (float input) {
   }
   else {
     return -input;
+  }
 }
