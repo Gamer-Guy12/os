@@ -377,7 +377,7 @@ static void create_all_block_descriptors(void) {
   map_multiboot();
 
   const size_t block_count = create_block_descriptors(NULL);
-  kio_printf("Neededn %x\n", block_count);
+  kio_printf("Block Descriptors Needed %x\n", block_count);
 
   set_block_count(block_count);
   const size_t pages_needed =
@@ -394,7 +394,62 @@ static void create_all_block_descriptors(void) {
   set_block_descriptor_ptr((const block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR);
 }
 
-static void create_buddy_memory(void) {}
+static void map_buddy_memory(void) {
+  // The PDPT has already been created so what is left to create are the pdts
+  // and pts
+  // As of now one pdt has been made but I'll just keep track (actually I won't)
+
+  const size_t block_count = get_block_count();
+
+  const size_t bytes_taken = ROUND_UP(math_powu64(2, 9) * 2, 8) / 8;
+
+  for (size_t i = 0; i < block_count; i++) {
+    bool make_pdt = ((i * bytes_taken) % (PAGE_SIZE * 512 * 512)) == 0;
+    bool make_pt = ((i * bytes_taken) % (PAGE_SIZE * 512)) == 0;
+    bool make_page = ((i * bytes_taken) % (PAGE_SIZE)) == 0;
+
+    // + 1 skips over the first pdt used for the block descriptors
+    size_t pdt_count = ROUND_UP(i * bytes_taken, PAGE_SIZE * 512 * 512) /
+                       (PAGE_SIZE * 512 * 512);
+    if (make_pdt) {
+      size_t phys = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+      used_page_count++;
+
+      size_t virt = PDT_ADDR + 512 * 256 * PAGE_SIZE + pdt_count * PAGE_SIZE;
+
+      kio_printf("pdt virt %x\n", virt);
+
+      map_virt_to_phys((void *)virt, (void *)phys, 1, PDPT_READ_WRITE);
+    }
+
+    size_t pt_count =
+        ROUND_UP(i * bytes_taken, PAGE_SIZE * 512) / (PAGE_SIZE * 512);
+
+    if (make_pt) {
+      size_t phys = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+      used_page_count++;
+
+      size_t virt = PT_ADDR + 512ull * 512 * 256 * PAGE_SIZE +
+                    pdt_count * 512 * PAGE_SIZE + PAGE_SIZE * (pt_count % 512);
+
+      kio_printf("pt virt %x\n", virt);
+
+      map_virt_to_phys((void *)virt, (void *)phys, 1, PDT_READ_WRITE);
+    }
+
+    size_t page_count = ROUND_UP(i * bytes_taken, PAGE_SIZE) / PAGE_SIZE;
+
+    if (make_page) {
+      size_t phys = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
+      used_page_count++;
+
+      size_t virt = INDICES_TO_ADDR(page_count, pt_count, pdt_count, 258ull);
+      kio_printf("page virt %x\n", virt);
+
+      map_virt_to_phys((void *)virt, (void *)phys, 1, PT_READ_WRITE);
+    }
+  }
+}
 
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
@@ -408,5 +463,5 @@ void init_memory_manager(void) {
 
   create_all_block_descriptors();
 
-  create_buddy_memory();
+  map_buddy_memory();
 }

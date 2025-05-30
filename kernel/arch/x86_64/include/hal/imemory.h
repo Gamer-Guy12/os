@@ -3,6 +3,7 @@
 
 #include <hal/memory.h>
 #include <libk/lock.h>
+#include <libk/math.h>
 #include <libk/mem.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -12,8 +13,8 @@
 #define PAGE_SIZE 0x1000
 /// A block is 2mb and is used in the buddy system
 /// If you change this, update the block descriptor and nuke one of the flags
-#define BLOCK_SIZE (MB * 2)
 #define BUDDY_MAX_ORDER 9
+#define BLOCK_SIZE (PAGE_SIZE * math_powu64(2, BUDDY_MAX_ORDER))
 
 #define BLOCK_DESCRIPTORS_ADDR 0xFFFF800000000000
 
@@ -23,6 +24,11 @@
 #define PML4_ADDR 0xFFFFFF7FBFDFE000
 
 #define MAX_BLOCK_COUNT (GB * 512ull / BLOCK_SIZE)
+
+#define INDICES_TO_ADDR(pt, pdt, pdpt, pml4)                                   \
+  ((((pt) << 12ull) | ((pdt) << 21ull) | ((pdpt) << 30ull) |                   \
+    ((pml4) << 39ull)) |                                                       \
+   ((pml4) > 255 ? (0xFFFFull << 48ull) : 0))
 
 typedef enum {
   PML4_PRESENT = 1,
