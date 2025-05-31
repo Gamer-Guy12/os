@@ -394,14 +394,22 @@ static void create_all_block_descriptors(void) {
   set_block_descriptor_ptr((const block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR);
 }
 
+inline void print_addr_comps(size_t addr) {
+
+  kio_printf("pml4 %u, pdpt %u, pdt %u, pt %u, index %u\n",
+             (addr >> 39) & 0x1FF, (addr >> 30) & 0x1FF, (addr >> 21) & 0x1FF,
+             (addr >> 12) & 0x1FF, addr & 0xFFF);
+}
+
 static void map_buddy_memory(void) {
   // The PDPT has already been created so what is left to create are the pdts
   // and pts
   // As of now one pdt has been made but I'll just keep track (actually I won't)
 
   const size_t block_count = get_block_count();
+  kio_printf("Block Count: %x\n", block_count);
 
-  const size_t bytes_taken = ROUND_UP(math_powu64(2, 9) * 2, 8) / 8;
+  const size_t bytes_taken = math_powu64(2, 9) * 2 / 8;
 
   for (size_t i = 0; i < block_count; i++) {
     bool make_pdt = ((i * bytes_taken) % (PAGE_SIZE * 512 * 512)) == 0;
@@ -417,8 +425,6 @@ static void map_buddy_memory(void) {
 
       size_t virt = PDT_ADDR + 512 * 256 * PAGE_SIZE + pdt_count * PAGE_SIZE;
 
-      kio_printf("pdt virt %x\n", virt);
-
       map_virt_to_phys((void *)virt, (void *)phys, 1, PDPT_READ_WRITE);
     }
 
@@ -432,8 +438,6 @@ static void map_buddy_memory(void) {
       size_t virt = PT_ADDR + 512ull * 512 * 256 * PAGE_SIZE +
                     pdt_count * 512 * PAGE_SIZE + PAGE_SIZE * (pt_count % 512);
 
-      kio_printf("pt virt %x\n", virt);
-
       map_virt_to_phys((void *)virt, (void *)phys, 1, PDT_READ_WRITE);
     }
 
@@ -443,8 +447,7 @@ static void map_buddy_memory(void) {
       size_t phys = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
       used_page_count++;
 
-      size_t virt = INDICES_TO_ADDR(page_count, pt_count, pdt_count, 258ull);
-      kio_printf("page virt %x\n", virt);
+      size_t virt = INDICES_TO_ADDR(page_count, pt_count, pdt_count, 256ull);
 
       map_virt_to_phys((void *)virt, (void *)phys, 1, PT_READ_WRITE);
     }

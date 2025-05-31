@@ -16,7 +16,7 @@ extern void kernel_main(void);
 typedef void initfunc_t(void);
 extern initfunc_t *__init_array_start[], *__init_array_end[];
 
-__attribute__((section(".startup"))) static void handle_init_array(void) {
+static void handle_init_array(void) {
   size_t nfunc = ((uintptr_t)__init_array_end - (uintptr_t)__init_array_start) /
                  sizeof(initfunc_t *);
   for (initfunc_t **p = __init_array_start; p < __init_array_start + nfunc; p++)
@@ -24,7 +24,7 @@ __attribute__((section(".startup"))) static void handle_init_array(void) {
 }
 #pragma endregion
 
-__attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
+void kernel_start(uint8_t *multiboot) {
   handle_init_array();
   kio_printf("Called Global Constructors\n");
   init_multiboot(multiboot);
@@ -33,4 +33,5 @@ __attribute__((section(".startup"))) void kernel_start(uint8_t *multiboot) {
   kio_printf("Initialized Memory Manager\n");
   // kio_clear();
   kio_printf("I might be in!\n");
+  kernel_main();
 }
