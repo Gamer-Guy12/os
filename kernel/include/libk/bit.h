@@ -27,4 +27,7 @@ inline uint64_t CONST unset_bits(uint64_t num, uint64_t bits) {
   return num & ~bits;
 }
 
+// This is only here because I get confused about the ^ operator
+#define XOR(first, second) (first ^ second)
+
 #endif

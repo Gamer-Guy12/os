@@ -1,3 +1,4 @@
+#include "decls.h"
 #include <asm.h>
 #include <hal/imemory.h>
 #include <hal/memory.h>
@@ -483,12 +484,74 @@ static void create_physical_structures(void) {
   modify_descriptors();
 }
 
+inline static CONST bool is_higher_buddy(size_t page, size_t order) {
+  return (page % math_powu64(2, order)) > (math_powu64(2, order - 1));
+}
+
+inline static void set_bit_in_ptr(uint8_t *ptr, size_t bit) {
+  size_t index = ROUND_DOWN(bit, 8);
+  size_t offset = bit - index;
+
+  ptr[index] |= 1 << offset;
+}
+
+inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
+  size_t index = ROUND_DOWN(bit, 8);
+  size_t offset = bit - index;
+
+  return ptr[index] & 1 << offset;
+}
+
+inline static bool block_of_order_exists(const uint8_t *ptr, size_t order) {
+  size_t start_index = math_powu64(2, BUDDY_MAX_ORDER - order) - 1;
+  size_t end_index = math_powu64(2, BUDDY_MAX_ORDER - order + 1) - 1;
+
+  for (size_t i = 0; i < end_index - start_index; i++) {
+    if (check_bit_in_ptr(ptr, start_index + i)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 static void reserve_page(size_t block, size_t page) {
   block_descriptor_t *blocks = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
 
   uint8_t *buddy = blocks[block].buddy_data;
 
+  bool higher_buddy = false;
+  size_t previous_bit = 0;
+
   for (size_t i = 0; i < BUDDY_MAX_ORDER; i++) {
+    if (i == 0) {
+      buddy[0] |= 1;
+      previous_bit = 0;
+      higher_buddy = is_higher_buddy(page, BUDDY_MAX_ORDER);
+      continue;
+    }
+
+    if (!higher_buddy) {
+      set_bit_in_ptr(buddy, previous_bit * 2 + 1);
+      previous_bit = previous_bit * 2 + 1;
+    } else {
+      set_bit_in_ptr(buddy, previous_bit * 2 + 2);
+      previous_bit = previous_bit * 2 + 2;
+    }
+
+    // kio_printf("Bit set is %x, block %x, page %x\n", previous_bit, block,
+    // page);
+
+    higher_buddy = is_higher_buddy(page, BUDDY_MAX_ORDER - i);
+  }
+
+  blocks[block].free_pages--;
+
+  for (size_t i = 0; i < BUDDY_MAX_ORDER; i++) {
+    if (block_of_order_exists(buddy, BUDDY_MAX_ORDER - i)) {
+      blocks[block].largest_region_order = BUDDY_MAX_ORDER - i;
+      return;
+    }
   }
 }
 
