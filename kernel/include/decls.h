@@ -4,6 +4,8 @@
 #define PACKED
 #define CONST
 #define NORETURN
+#define CONSTRUCTOR
+#define DESTRUCTOR
 
 #ifdef _x86_64_
 
@@ -15,6 +17,12 @@
 
 #undef NORETURN
 #define NORETURN __attribute__((noreturn))
+
+#undef CONSTRUCTOR
+#define CONSTRUCTOR __attribute__((constructor))
+
+#undef DESTRUCTOR
+#define DESTRUCTOR __attribute__((destructor))
 
 #endif
 

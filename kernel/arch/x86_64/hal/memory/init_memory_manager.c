@@ -409,7 +409,7 @@ static void map_buddy_memory(void) {
   const size_t block_count = get_block_count();
   kio_printf("Block Count: %x\n", block_count);
 
-  const size_t bytes_taken = math_powu64(2, 9) * 2 / 8;
+  const size_t bytes_taken = math_powu64(2, BUDDY_MAX_ORDER) * 2 / 8;
 
   for (size_t i = 0; i < block_count; i++) {
     bool make_pdt = ((i * bytes_taken) % (PAGE_SIZE * 512 * 512)) == 0;
@@ -426,6 +426,8 @@ static void map_buddy_memory(void) {
       size_t virt = PDT_ADDR + 512 * 256 * PAGE_SIZE + pdt_count * PAGE_SIZE;
 
       map_virt_to_phys((void *)virt, (void *)phys, 1, PDPT_READ_WRITE);
+
+      CLEAR_PAGE((void *)virt);
     }
 
     size_t pt_count =
@@ -439,6 +441,8 @@ static void map_buddy_memory(void) {
                     pdt_count * 512 * PAGE_SIZE + PAGE_SIZE * (pt_count % 512);
 
       map_virt_to_phys((void *)virt, (void *)phys, 1, PDT_READ_WRITE);
+
+      CLEAR_PAGE((void *)virt);
     }
 
     size_t page_count = ROUND_UP(i * bytes_taken, PAGE_SIZE) / PAGE_SIZE;
@@ -450,8 +454,33 @@ static void map_buddy_memory(void) {
       size_t virt = INDICES_TO_ADDR(page_count, pt_count, pdt_count, 256ull);
 
       map_virt_to_phys((void *)virt, (void *)phys, 1, PT_READ_WRITE);
+
+      CLEAR_PAGE((void *)virt);
     }
   }
+}
+
+static void modify_descriptors(void) {
+  const size_t block_descriptor_count = get_block_count();
+
+  block_descriptor_t *descriptors =
+      (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
+
+  size_t buddy_ptr = BLOCK_DESCRIPTORS_ADDR + PAGE_SIZE;
+
+  const size_t bytes_taken = math_powu64(2, BUDDY_MAX_ORDER) * 2 / 8;
+
+  for (size_t i = 0; i < block_descriptor_count; i++) {
+    descriptors[i].buddy_data = (void *)(buddy_ptr + bytes_taken * i);
+  }
+}
+
+static void create_physical_structures(void) {
+  create_all_block_descriptors();
+
+  map_buddy_memory();
+
+  modify_descriptors();
 }
 
 /// This function cannot call mmap or physical map or anything cuz like they
@@ -464,7 +493,5 @@ void init_memory_manager(void) {
   // Add Fmem if you want
   create_page_tables();
 
-  create_all_block_descriptors();
-
-  map_buddy_memory();
+  create_physical_structures();
 }
