@@ -483,6 +483,35 @@ static void create_physical_structures(void) {
   modify_descriptors();
 }
 
+static void reserve_page(size_t block, size_t page) {
+  block_descriptor_t *blocks = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
+
+  uint8_t *buddy = blocks[block].buddy_data;
+
+  for (size_t i = 0; i < BUDDY_MAX_ORDER; i++) {
+  }
+}
+
+static void reserve_kernel_structures(void) {
+  extern char end_kernel[];
+  const size_t kernel_end = (size_t)(void *)end_kernel;
+  const size_t kernel_block_count =
+      (kernel_end - KERNEL_CODE_OFFSET) / BLOCK_SIZE;
+
+  // Kernel is loaded into the first few blocks so its fine
+  block_descriptor_t *blocks = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
+
+  for (size_t i = 0; i < kernel_block_count; i++) {
+    blocks[i].flags |= BLOCK_DESCRIPTOR_RESERVED;
+  }
+
+  // Allocate all the pages used currently
+  for (size_t i = 0; i < used_page_count; i++) {
+    reserve_page(kernel_block_count + ROUND_DOWN(i, BLOCK_SIZE / PAGE_SIZE),
+                 i % (BLOCK_SIZE / PAGE_SIZE));
+  }
+}
+
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
 void init_memory_manager(void) {
@@ -494,4 +523,6 @@ void init_memory_manager(void) {
   create_page_tables();
 
   create_physical_structures();
+
+  reserve_kernel_structures();
 }
