@@ -4,7 +4,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+/// Allocate a physical page
 void *phys_alloc(void);
-void *phys_free(void);
+
+/// Free a physical page
+void phys_free(void *addr);
 
 #endif

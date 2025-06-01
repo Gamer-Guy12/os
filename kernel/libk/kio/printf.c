@@ -16,7 +16,7 @@ void kio_printf(const char *format, ...) {
   uint16_t index = 0;
   va_list args;
   va_start(args, format);
-  char str[24];
+  static char str[24];
 
   while (format[index] != '\0') {
     if (format[index] != '%') {

@@ -1,4 +1,5 @@
 #include <hal/imemory.h>
+#include <hal/memory.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/lock.h>
@@ -32,6 +33,14 @@ void kernel_start(uint8_t *multiboot) {
   init_memory_manager();
   kio_printf("Initialized Memory Manager\n");
   // kio_clear();
-  kio_printf("I might be in!\n");
+
+  size_t phys_1 = (size_t)phys_alloc();
+  size_t phys_2 = (size_t)phys_alloc();
+
+  extern char end_kernel[];
+
+  kio_printf("Addr 1 %x, 2 %x, diff %x\n", phys_1, phys_2,
+             (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET - phys_1);
+
   kernel_main();
 }

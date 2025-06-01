@@ -56,9 +56,6 @@ static void create_page_tables(void) {
   used_page_count++;
   CLEAR_PAGE(pdpt);
 
-  kio_printf("Address: %x and %x\n", (size_t)pml4 - KERNEL_CODE_OFFSET,
-             (size_t)pdpt - KERNEL_CODE_OFFSET);
-
   pml4[511].full_entry = PAGE_ADDR(pdpt);
   pml4[511].not_executable = 0;
   pml4[511].flags = PML4_PRESENT | PML4_READ_WRITE;
@@ -88,11 +85,6 @@ static void create_page_tables(void) {
     PT_entry_t *pt = NEXT_PAGE;
     used_page_count++;
     CLEAR_PAGE(pt);
-
-    kio_printf("Addresses: %x, %x and the pt %x\n",
-               (size_t)pdt - KERNEL_CODE_OFFSET,
-               (size_t)&pdt[512] - KERNEL_CODE_OFFSET,
-               (size_t)pt - KERNEL_CODE_OFFSET);
 
     pdt[i].full_entry = PAGE_ADDR(pt);
     pdt[i].not_executable = 0;
@@ -128,8 +120,6 @@ static void create_page_tables(void) {
                    :
                    : "r"((size_t)pml4 - KERNEL_CODE_OFFSET)
                    : "memory");
-
-  kio_printf("ADDR: %x\n", (size_t)pml4 - KERNEL_CODE_OFFSET);
 }
 
 static inline void create_block_descriptor(block_descriptor_t *descriptor,
@@ -258,15 +248,6 @@ static void create_block_page_tables(const size_t pages_needed) {
                      PT_READ_WRITE);
     CLEAR_PAGE((void *)(KERNEL_OFFSET + PAGE_SIZE * i));
   }
-  kio_printf("needed %x\n", pages_needed);
-  return;
-  uint64_t *ptr = (uint64_t *)KERNEL_OFFSET;
-  *ptr = 5;
-
-  kio_printf("Pages needed %x, stored val %x\n", pages_needed, *ptr);
-
-  // Dont need this cuz map virt to phys does the clearing of the TLB
-  // __asm__ volatile("mov %%cr3, %%rax; mov %%rax, %%cr3" ::: "rax");
 }
 
 /// Don't worry about page alinging the thing just put it in one
@@ -295,9 +276,6 @@ static void map_multiboot(void) {
         PDT_ADDR + 512 * 258 * PAGE_SIZE + pdt_used_count * PAGE_SIZE;
     map_virt_to_phys((void *)pdt_virt, (void *)pdt_phys, 1, PDPT_READ_WRITE);
     CLEAR_PAGE((void *)pdt_virt);
-
-    kio_printf("The mapped addr multiboot %x and phys %x and mapped %x\n",
-               pdt_virt, pdt_phys, virt_to_phys(pdt_virt));
   }
 
   // stuff
@@ -338,15 +316,13 @@ static void map_multiboot(void) {
                            (pt_used_count << 21) + (pdt_used_count << 30) +
                            (258ull << 39ull) +
                            /* Cananocalization */ (0xFFFFull << 48);
-  kio_printf("Addr is %x and phys %x\n", page_virt, page_phys);
+
   map_virt_to_phys((void *)page_virt, (void *)page_phys, 1, PT_READ_WRITE);
   reserve_258_pdt_page(1);
 
   uint8_t *multiboot = (uint8_t *)(page_virt + multiboot_offset);
   init_multiboot(multiboot);
   uint32_t size = *(uint32_t *)multiboot;
-
-  kio_printf("Header size is %x\n", (size_t)size);
 
   // Check if the thingy needs more pages
   if (multiboot_offset + size > PAGE_SIZE) {
@@ -378,7 +354,6 @@ static void create_all_block_descriptors(void) {
   map_multiboot();
 
   const size_t block_count = create_block_descriptors(NULL);
-  kio_printf("Block Descriptors Needed %x\n", block_count);
 
   set_block_count(block_count);
   const size_t pages_needed =
@@ -408,7 +383,7 @@ static void map_buddy_memory(void) {
   // As of now one pdt has been made but I'll just keep track (actually I won't)
 
   const size_t block_count = get_block_count();
-  kio_printf("Block Count: %x\n", block_count);
+  // kio_printf("Block Count: %x\n", block_count);
 
   const size_t bytes_taken = math_powu64(2, BUDDY_MAX_ORDER) * 2 / 8;
 
@@ -523,7 +498,7 @@ static void reserve_page(size_t block, size_t page) {
   bool higher_buddy = false;
   size_t previous_bit = 0;
 
-  for (size_t i = 0; i < BUDDY_MAX_ORDER; i++) {
+  for (size_t i = 0; i < BUDDY_MAX_ORDER + 1; i++) {
     if (i == 0) {
       buddy[0] |= 1;
       previous_bit = 0;
@@ -539,6 +514,10 @@ static void reserve_page(size_t block, size_t page) {
       previous_bit = previous_bit * 2 + 2;
     }
 
+    if (i == BUDDY_MAX_ORDER)
+      break;
+
+    // Don't uncomment (It won't allow anything else to print)
     // kio_printf("Bit set is %x, block %x, page %x\n", previous_bit, block,
     // page);
 
@@ -547,7 +526,7 @@ static void reserve_page(size_t block, size_t page) {
 
   blocks[block].free_pages--;
 
-  for (size_t i = 0; i < BUDDY_MAX_ORDER; i++) {
+  for (size_t i = 0; i < BUDDY_MAX_ORDER + 1; i++) {
     if (block_of_order_exists(buddy, BUDDY_MAX_ORDER - i)) {
       blocks[block].largest_region_order = BUDDY_MAX_ORDER - i;
       return;
@@ -588,4 +567,10 @@ void init_memory_manager(void) {
   create_physical_structures();
 
   reserve_kernel_structures();
+
+  extern char end_kernel[];
+  size_t usage = (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET +
+                 used_page_count * PAGE_SIZE;
+
+  kio_printf("Total usage %x\n", usage);
 }
