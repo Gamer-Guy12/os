@@ -12,7 +12,7 @@ global multiboot_ptr
 section .loading
 _start:
 
-    mov [multiboot_ptr], ebx
+    mov dword [multiboot_ptr], ebx
 
     ; This checks if long mode is supported
     mov eax, 0x80000001

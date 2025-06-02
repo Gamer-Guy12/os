@@ -7,15 +7,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-extern void *kernel_gp;
-extern void *kernel_gp_end;
-extern void *start_kernel;
-extern void *end_kernel;
-
-#define PHYSICAL_MEMORY_MANAGER_INFO kernel_gp
-#define PML4_LOCATION (uint8_t *)kernel_gp + 0x1000
 #define PAGE_TABLE_ENTRY_ADDR_MASK 0x0007fffffffff000
 #define PAGE_SIZE 0x1000
+/// A block is 4mb and is used in the buddy system
+#define BLOCK_SIZE (0x1000 * 0x400)
 #define BUDDY_MAX_ORDER 10
 
 typedef enum {
@@ -138,6 +133,14 @@ typedef struct {
     } __attribute__((packed));
   };
 } __attribute__((packed)) PT_entry_t;
+
+typedef struct block_descriptor_struct {
+  void *base;
+  struct block_descriptor_struct *next;
+  struct block_descriptor_struct *prev;
+  uint16_t free_page_count;
+  uint8_t reserved : 1;
+} block_descriptor_t;
 
 /// Mem lock is required to use kernel_gp for writes
 /// Dont care about reads

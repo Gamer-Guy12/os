@@ -20,7 +20,7 @@ int64_t math_absi(int64_t input);
 float math_absf(float input);
 double math_absd(double input);
 
-#define ROUND_UP(num, to) num + (to - (num % to))
-#define ROUND_DOWN(num, to) num - (num % to)
+#define ROUND_UP(num, to) ((num) + ((to) - ((num) % (to))))
+#define ROUND_DOWN(num, to) ((num) - ((num) % (to)))
 
 #endif
