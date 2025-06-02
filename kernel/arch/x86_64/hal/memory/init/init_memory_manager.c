@@ -505,7 +505,7 @@ static void reserve_block(size_t base) {
   block_descriptor_t *blocks = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
 
   for (size_t i = 0; i < get_block_count(); i++) {
-    if (blocks[i].addr == base) {
+    if (blocks[i].addr == base >> 21) {
       blocks[i].flags |= BLOCK_DESCRIPTOR_RESERVED;
       blocks[i].free_pages = 0;
       blocks[i].largest_region_order = 0;
@@ -519,6 +519,7 @@ static void reserve_page(size_t block_base, size_t page) {
   if (descriptor == NULL) {
     sys_panic(MEMORY_INIT_ERR | MISSING_BLOCK_ERR);
   }
+  descriptor->free_pages--;
 
   size_t prev_bit = 0;
 
