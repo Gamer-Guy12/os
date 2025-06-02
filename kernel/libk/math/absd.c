@@ -1,3 +1,5 @@
+#include <libk/math.h>
+
 double math_absd (double input) {
   if (input > 0)
   {

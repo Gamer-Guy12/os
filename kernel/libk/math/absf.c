@@ -1,3 +1,4 @@
+#include <libk/math.h>
 float math_absf (float input) {
   if (input > 0)
   {
