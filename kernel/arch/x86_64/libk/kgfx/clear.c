@@ -1,4 +1,4 @@
-#include "vga.h"
+#include "./vga.h"
 #include <libk/kgfx.h>
 #include <stdint.h>
 #include <x86_64.h>

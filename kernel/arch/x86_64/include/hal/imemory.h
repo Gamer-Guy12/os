@@ -15,6 +15,7 @@
 /// If you change this, update the block descriptor and nuke one of the flags
 #define BUDDY_MAX_ORDER 9
 #define BLOCK_SIZE (PAGE_SIZE * math_powu64(2, BUDDY_MAX_ORDER))
+#define BLOCKS_PER_PAGE (BLOCK_SIZE / PAGE_SIZE)
 
 #define BLOCK_DESCRIPTORS_ADDR 0xFFFF800000000000
 

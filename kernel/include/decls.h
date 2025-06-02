@@ -7,6 +7,8 @@
 #define CONSTRUCTOR
 #define DESTRUCTOR
 
+#define LOOP while (1)
+
 #ifdef _x86_64_
 
 #undef PACKED

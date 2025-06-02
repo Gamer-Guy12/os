@@ -1,5 +1,5 @@
-#include "decls.h"
 #include <asm.h>
+#include <decls.h>
 #include <hal/imemory.h>
 #include <hal/memory.h>
 #include <libk/bit.h>
@@ -36,8 +36,7 @@ extern char end_kernel[];
 void *kernel_end = end_kernel;
 
 #define NEXT_PAGE                                                              \
-  (void *)((uint8_t *)ROUND_UP((size_t)kernel_end, MB * 2) +                   \
-           used_page_count * PAGE_SIZE)
+  (void *)((uint8_t *)(size_t)kernel_end + used_page_count * PAGE_SIZE)
 #define CLEAR_PAGE(ptr) memset(ptr, 0, PAGE_SIZE)
 #define CLEAR_PAGES(ptr, count) memset(ptr, 0, PAGE_SIZE *count)
 #define PAGE_ADDR(ptr) (((size_t)ptr - KERNEL_CODE_OFFSET) & 0x0007fffffffff000)
@@ -459,10 +458,6 @@ static void create_physical_structures(void) {
   modify_descriptors();
 }
 
-inline static CONST bool is_higher_buddy(size_t page, size_t order) {
-  return (page % math_powu64(2, order)) > (math_powu64(2, order - 1));
-}
-
 inline static void set_bit_in_ptr(uint8_t *ptr, size_t bit) {
   size_t index = ROUND_DOWN(bit, 8);
   size_t offset = bit - index;
@@ -474,7 +469,10 @@ inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
   size_t index = ROUND_DOWN(bit, 8);
   size_t offset = bit - index;
 
-  return ptr[index] & 1 << offset;
+  // kio_printf("Value %x and ret %x and offset %x %x\n", (size_t)ptr[index],
+  //            (size_t)ptr[index] & (1 << offset), offset, 1 << offset);
+
+  return ptr[index] & (1 << offset);
 }
 
 inline static bool block_of_order_exists(const uint8_t *ptr, size_t order) {
@@ -490,48 +488,123 @@ inline static bool block_of_order_exists(const uint8_t *ptr, size_t order) {
   return false;
 }
 
-static void reserve_page(size_t block, size_t page) {
+static block_descriptor_t *get_descriptor(size_t base) {
   block_descriptor_t *blocks = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
 
-  uint8_t *buddy = blocks[block].buddy_data;
+  for (size_t i = 0; i < get_block_count(); i++) {
+    if (blocks[i].addr == (base >> 21)) {
+      return &blocks[i];
+    }
+  }
 
-  bool higher_buddy = false;
-  size_t previous_bit = 0;
+  return NULL;
+}
 
-  for (size_t i = 0; i < BUDDY_MAX_ORDER + 1; i++) {
-    if (i == 0) {
-      buddy[0] |= 1;
-      previous_bit = 0;
-      higher_buddy = is_higher_buddy(page, BUDDY_MAX_ORDER);
+static void reserve_block(size_t base) {
+
+  block_descriptor_t *blocks = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
+
+  for (size_t i = 0; i < get_block_count(); i++) {
+    if (blocks[i].addr == base) {
+      blocks[i].flags |= BLOCK_DESCRIPTOR_RESERVED;
+      blocks[i].free_pages = 0;
+      blocks[i].largest_region_order = 0;
+    }
+  }
+}
+
+static void reserve_page(size_t block_base, size_t page) {
+  block_descriptor_t *descriptor = get_descriptor(block_base);
+
+  if (descriptor == NULL) {
+    sys_panic(MEMORY_INIT_ERR | MISSING_BLOCK_ERR);
+  }
+
+  size_t prev_bit = 0;
+
+  for (size_t i = BUDDY_MAX_ORDER; i > 0; i--) {
+    if (i == BUDDY_MAX_ORDER) {
+      set_bit_in_ptr(descriptor->buddy_data, 0);
       continue;
     }
 
-    if (!higher_buddy) {
-      set_bit_in_ptr(buddy, previous_bit * 2 + 1);
-      previous_bit = previous_bit * 2 + 1;
+    size_t size = math_powu64(2, i);
+
+    if (page % size < size / 2) {
+      prev_bit = prev_bit * 2 + 1;
+      set_bit_in_ptr(descriptor->buddy_data, prev_bit);
     } else {
-      set_bit_in_ptr(buddy, previous_bit * 2 + 2);
-      previous_bit = previous_bit * 2 + 2;
+      prev_bit = prev_bit * 2 + 2;
+      set_bit_in_ptr(descriptor->buddy_data, prev_bit);
     }
-
-    if (i == BUDDY_MAX_ORDER)
-      break;
-
-    // Don't uncomment (It won't allow anything else to print)
-    // kio_printf("Bit set is %x, block %x, page %x\n", previous_bit, block,
-    // page);
-
-    higher_buddy = is_higher_buddy(page, BUDDY_MAX_ORDER - i);
   }
 
-  blocks[block].free_pages--;
+  if (page % 2 == 0) {
+    prev_bit = prev_bit * 2 + 1;
+    set_bit_in_ptr(descriptor->buddy_data, prev_bit);
+  } else {
+    prev_bit = prev_bit * 2 + 2;
+    set_bit_in_ptr(descriptor->buddy_data, prev_bit);
+  }
 
-  for (size_t i = 0; i < BUDDY_MAX_ORDER + 1; i++) {
-    if (block_of_order_exists(buddy, BUDDY_MAX_ORDER - i)) {
-      blocks[block].largest_region_order = BUDDY_MAX_ORDER - i;
+  for (size_t i = BUDDY_MAX_ORDER; i >= 0; i--) {
+    if (block_of_order_exists(descriptor->buddy_data, i)) {
+      descriptor->largest_region_order = i;
       return;
     }
   }
+
+  descriptor->largest_region_order = 0;
+}
+
+static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
+  uint8_t *data = descriptor->buddy_data;
+
+  size_t prev_bit = 0;
+
+  for (size_t i = BUDDY_MAX_ORDER; i > 0; i--) {
+    if (i == BUDDY_MAX_ORDER) {
+      if (!(data[0] & 1)) {
+        // kio_printf("Index %x\n", i);
+        return false;
+      }
+    } else {
+      size_t size = math_powu64(2, i);
+
+      if (page % size < size / 2) {
+        prev_bit = prev_bit * 2 + 1;
+        if (!(check_bit_in_ptr(data, prev_bit))) {
+          // kio_printf("Index %x %x\n", i, prev_bit);
+          return false;
+        }
+        // kio_printf("Lower %x  ", prev_bit);
+      } else {
+        prev_bit = prev_bit * 2 + 2;
+        if (!(check_bit_in_ptr(data, prev_bit))) {
+          // kio_printf("Idex %x %x\n", i, prev_bit);
+          return false;
+        }
+        // kio_printf("Higher %x  ", prev_bit);
+      }
+    }
+  }
+  // kio_printf("\n");
+
+  if (page % 2 == 0) {
+    prev_bit = prev_bit * 2 + 1;
+    if (!check_bit_in_ptr(data, prev_bit)) {
+      // kio_printf("Inde %x\n", prev_bit);
+      return false;
+    }
+  } else {
+    prev_bit = prev_bit * 2 + 2;
+    if (!(check_bit_in_ptr(data, prev_bit))) {
+      // kio_printf("Ide %x\n", prev_bit);
+      return false;
+    }
+  }
+
+  return true;
 }
 
 static void reserve_kernel_structures(void) {
@@ -540,17 +613,39 @@ static void reserve_kernel_structures(void) {
   const size_t kernel_block_count =
       (kernel_end - KERNEL_CODE_OFFSET) / BLOCK_SIZE;
 
-  // Kernel is loaded into the first few blocks so its fine
-  block_descriptor_t *blocks = (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
-
   for (size_t i = 0; i < kernel_block_count; i++) {
-    blocks[i].flags |= BLOCK_DESCRIPTOR_RESERVED;
+    reserve_block(i * BLOCK_SIZE);
   }
 
-  // Allocate all the pages used currently
+  size_t prev_base = 0;
+
   for (size_t i = 0; i < used_page_count; i++) {
-    reserve_page(kernel_block_count + ROUND_DOWN(i, BLOCK_SIZE / PAGE_SIZE),
-                 i % (BLOCK_SIZE / PAGE_SIZE));
+    size_t block_base = ROUND_DOWN(i, BLOCKS_PER_PAGE) * BLOCK_SIZE +
+                        kernel_block_count * BLOCK_SIZE;
+
+    if (prev_base != block_base) {
+      block_descriptor_t *descriptor = get_descriptor(block_base);
+      memset(descriptor->buddy_data, 0, math_powu64(2, BUDDY_MAX_ORDER + 1));
+      prev_base = block_base;
+    }
+
+    size_t page = i % BLOCKS_PER_PAGE;
+
+    reserve_page(block_base, page);
+  }
+  uint8_t *data = get_descriptor(kernel_block_count * BLOCK_SIZE)->buddy_data;
+
+  for (size_t i = 0; i < 128; i += 8) {
+    kio_printf("Data: %x %x %x %x %x %x %x %x\n", data[i], data[i + 1],
+               data[i + 2], data[i + 3], data[i + 4], data[i + 5], data[i + 6],
+               data[i + 7]);
+  }
+
+  for (size_t i = 0; i < used_page_count; i++) {
+    if (!check_page_index(get_descriptor(kernel_block_count * BLOCK_SIZE), i))
+      kio_printf("Page %x is %x\n", i,
+                 (size_t)check_page_index(
+                     get_descriptor(kernel_block_count * BLOCK_SIZE), i));
   }
 }
 
@@ -559,6 +654,7 @@ static void reserve_kernel_structures(void) {
 void init_memory_manager(void) {
 // Allow not executable bit
 #define EXECUTE_DISABLE_BIT_ENABLE 1 << 11
+
   wrmsr(IA32_EFER, rdmsr(IA32_EFER) | EXECUTE_DISABLE_BIT_ENABLE);
 
   // Add Fmem if you want

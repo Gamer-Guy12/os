@@ -1,6 +1,6 @@
-#include "x86_64.h"
 #include <acpi/acpi.h>
 #include <stdint.h>
+#include <x86_64.h>
 
 void init_acpi(void) {
   uint8_t *multiboot = get_multiboot();
