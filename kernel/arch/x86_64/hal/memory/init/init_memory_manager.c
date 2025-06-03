@@ -519,37 +519,57 @@ static void reserve_page(size_t block_base, size_t page) {
   if (descriptor == NULL) {
     sys_panic(MEMORY_INIT_ERR | MISSING_BLOCK_ERR);
   }
+
   descriptor->free_pages--;
 
-  size_t prev_bit = 0;
+  uint8_t *data = descriptor->buddy_data;
+
+  // Top level block is destroyed
+  size_t previous_bit = 0;
 
   for (size_t i = BUDDY_MAX_ORDER; i > 0; i--) {
     if (i == BUDDY_MAX_ORDER) {
-      set_bit_in_ptr(descriptor->buddy_data, 0);
+      data[0] |= 1;
       continue;
     }
+    // Its actually 2 times the size
+    size_t size = math_powu64(2, i + 1);
+    bool is_higher = page % size > size / 2;
 
-    size_t size = math_powu64(2, i);
-
-    if (page % size < size / 2) {
-      prev_bit = prev_bit * 2 + 1;
-      set_bit_in_ptr(descriptor->buddy_data, prev_bit);
+    if (is_higher) {
+      previous_bit = previous_bit * 2 + 2;
+      set_bit_in_ptr(data, previous_bit);
     } else {
-      prev_bit = prev_bit * 2 + 2;
-      set_bit_in_ptr(descriptor->buddy_data, prev_bit);
+      previous_bit = previous_bit * 2 + 1;
+      set_bit_in_ptr(data, previous_bit);
     }
   }
 
+  static uint64_t prev_num = 0;
+
+  // For the bottom layer
   if (page % 2 == 0) {
-    prev_bit = prev_bit * 2 + 1;
-    set_bit_in_ptr(descriptor->buddy_data, prev_bit);
+    previous_bit = previous_bit * 2 + 1;
+    if (prev_num + 1 != previous_bit && prev_num != 0) {
+      kio_printf("Diff %x %x %x\n", page, prev_num, previous_bit);
+    } else {
+      kio_printf("Same %x %x\n", page, prev_num);
+    }
+    prev_num = previous_bit;
+    set_bit_in_ptr(data, previous_bit);
   } else {
-    prev_bit = prev_bit * 2 + 2;
-    set_bit_in_ptr(descriptor->buddy_data, prev_bit);
+    previous_bit = previous_bit * 2 + 2;
+    if (prev_num + 1 != previous_bit && prev_num != 0) {
+      kio_printf("Diff %x %x %x\n", page, prev_num, previous_bit);
+    } else {
+      kio_printf("Same %x %x\n", page, prev_num);
+    }
+    prev_num = previous_bit;
+    set_bit_in_ptr(data, previous_bit);
   }
 
-  for (size_t i = BUDDY_MAX_ORDER; i >= 0; i--) {
-    if (block_of_order_exists(descriptor->buddy_data, i)) {
+  for (size_t i = BUDDY_MAX_ORDER; i > 0; i++) {
+    if (block_of_order_exists(data, i)) {
       descriptor->largest_region_order = i;
       return;
     }
@@ -570,17 +590,19 @@ static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
         return false;
       }
     } else {
-      size_t size = math_powu64(2, i);
+      // 2 * size
+      size_t size = math_powu64(2, i + 1);
+      bool is_higher = page % size > size / 2;
 
-      if (page % size < size / 2) {
-        prev_bit = prev_bit * 2 + 1;
+      if (is_higher) {
+        prev_bit = prev_bit * 2 + 2;
         if (!(check_bit_in_ptr(data, prev_bit))) {
           // kio_printf("Index %x %x\n", i, prev_bit);
           return false;
         }
         // kio_printf("Lower %x  ", prev_bit);
       } else {
-        prev_bit = prev_bit * 2 + 2;
+        prev_bit = prev_bit * 2 + 1;
         if (!(check_bit_in_ptr(data, prev_bit))) {
           // kio_printf("Idex %x %x\n", i, prev_bit);
           return false;
@@ -634,19 +656,21 @@ static void reserve_kernel_structures(void) {
 
     reserve_page(block_base, page);
   }
-  uint8_t *data = get_descriptor(kernel_block_count * BLOCK_SIZE)->buddy_data;
+  // uint8_t *data = get_descriptor(kernel_block_count *
+  // BLOCK_SIZE)->buddy_data;
 
   for (size_t i = 0; i < 128; i += 8) {
-    kio_printf("Data: %x %x %x %x %x %x %x %x\n", data[i], data[i + 1],
-               data[i + 2], data[i + 3], data[i + 4], data[i + 5], data[i + 6],
-               data[i + 7]);
+    // kio_printf("Data: %x %x %x %x %x %x %x %x\n", data[i], data[i + 1],
+    //            data[i + 2], data[i + 3], data[i + 4], data[i + 5], data[i +
+    //            6], data[i + 7]);
   }
 
   for (size_t i = 0; i < used_page_count; i++) {
-    if (!check_page_index(get_descriptor(kernel_block_count * BLOCK_SIZE), i))
+    if (!check_page_index(get_descriptor(kernel_block_count * BLOCK_SIZE), i)) {
       kio_printf("Page %x is %x\n", i,
                  (size_t)check_page_index(
                      get_descriptor(kernel_block_count * BLOCK_SIZE), i));
+    }
   }
 }
 
