@@ -17,7 +17,6 @@ double math_powf(float base, float exp);
 double math_powd(double base, double exp);
 
 int64_t math_absi(int64_t input);
-float math_absf(float input);
 
 #define ROUND_UP(num, to) ((num) + ((to) - ((num) % (to))))
 #define ROUND_DOWN(num, to) ((num) - ((num) % (to)))
