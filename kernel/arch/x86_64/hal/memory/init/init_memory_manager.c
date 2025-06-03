@@ -462,7 +462,7 @@ inline static void set_bit_in_ptr(uint8_t *ptr, size_t bit) {
   size_t index = ROUND_DOWN(bit, 8);
   size_t offset = bit - index;
 
-  ptr[index] |= 1 << offset;
+  ptr[index / 8] |= 1 << offset;
 }
 
 inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
@@ -472,7 +472,7 @@ inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
   // kio_printf("Value %x and ret %x and offset %x %x\n", (size_t)ptr[index],
   //            (size_t)ptr[index] & (1 << offset), offset, 1 << offset);
 
-  return ptr[index] & (1 << offset);
+  return ptr[index / 8] & (1 << offset);
 }
 
 inline static bool block_of_order_exists(const uint8_t *ptr, size_t order) {

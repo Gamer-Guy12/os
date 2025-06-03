@@ -6,6 +6,7 @@
 #include <libk/math.h>
 #include <libk/sys.h>
 #include <stddef.h>
+#include <stdint.h>
 
 inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
   size_t index = ROUND_DOWN(bit, 8);
@@ -14,14 +15,14 @@ inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
   // kio_printf("Value %x and ret %x and offset %x %x\n", (size_t)ptr[index],
   //            (size_t)ptr[index] & (1 << offset), offset, 1 << offset);
 
-  return ptr[index] & (1 << offset);
+  return ptr[index / 8] & (1 << offset);
 }
 
 inline static void set_bit_in_ptr(uint8_t *ptr, size_t bit) {
   size_t index = ROUND_DOWN(bit, 8);
   size_t offset = bit - index;
 
-  ptr[index] |= 1 << offset;
+  ptr[index / 8] |= 1 << offset;
 }
 
 static block_descriptor_t *get_descriptor(size_t base) {
@@ -54,8 +55,9 @@ static block_descriptor_t *get_free_descriptor(void) {
       (block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR;
 
   for (size_t i = 0; i < get_block_count(); i++) {
-    kio_printf("i: %x, free pages: %x, flags :%x\n", i,
-               (size_t)descriptors[i].free_pages, (size_t)descriptors[i].flags);
+    // kio_printf("i: %x, free pages: %x, flags :%x\n", i,
+    //            (size_t)descriptors[i].free_pages,
+    //            (size_t)descriptors[i].flags);
     if (descriptors[i].free_pages > 0 &&
         !(descriptors[i].flags & BLOCK_DESCRIPTOR_RESERVED)) {
       return &descriptors[i];
@@ -148,6 +150,56 @@ static size_t find_free_page(block_descriptor_t *descriptor) {
   return 0;
 }
 
+static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
+  uint8_t *data = descriptor->buddy_data;
+
+  size_t prev_bit = 0;
+
+  for (size_t i = BUDDY_MAX_ORDER; i > 0; i--) {
+    if (i == BUDDY_MAX_ORDER) {
+      if (!(data[0] & 1)) {
+        // kio_printf("Index %x\n", i);
+        return false;
+      }
+    } else {
+      size_t size = math_powu64(2, i);
+
+      if (page % size < size / 2) {
+        prev_bit = prev_bit * 2 + 1;
+        if (!(check_bit_in_ptr(data, prev_bit))) {
+          // kio_printf("Index %x %x\n", i, prev_bit);
+          return false;
+        }
+        // kio_printf("Lower %x  ", prev_bit);
+      } else {
+        prev_bit = prev_bit * 2 + 2;
+        if (!(check_bit_in_ptr(data, prev_bit))) {
+          // kio_printf("Idex %x %x\n", i, prev_bit);
+          return false;
+        }
+        // kio_printf("Higher %x  ", prev_bit);
+      }
+    }
+  }
+  // kio_printf("\n");
+
+  if (page % 2 == 0) {
+    prev_bit = prev_bit * 2 + 1;
+    if (!check_bit_in_ptr(data, prev_bit)) {
+      // kio_printf("Inde %x\n", prev_bit);
+      return false;
+    }
+  } else {
+    prev_bit = prev_bit * 2 + 2;
+    if (!(check_bit_in_ptr(data, prev_bit))) {
+      // kio_printf("Ide %x\n", prev_bit);
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void *phys_alloc(void) {
   lock_acquire(get_mem_lock());
 
@@ -157,6 +209,18 @@ void *phys_alloc(void) {
     return NULL;
 
   size_t page = find_free_page(descriptor);
+
+  kio_printf("Page %x\n", page);
+
+  kio_printf("Exists %x\n", (size_t)check_page_index(descriptor, page));
+
+  // uint8_t *data = descriptor->buddy_data;
+  //
+  // for (size_t i = 0; i < 128; i += 8) {
+  //   kio_printf("Data: %x %x %x %x %x %x %x %x\n", data[i], data[i + 1],
+  //              data[i + 2], data[i + 3], data[i + 4], data[i + 5], data[i +
+  //              6], data[i + 7]);
+  // }
 
   reserve_page(descriptor->addr << 21, page);
 
