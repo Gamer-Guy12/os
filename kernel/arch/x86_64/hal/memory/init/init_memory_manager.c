@@ -534,9 +534,9 @@ static void reserve_page(size_t block_base, size_t page) {
     }
     // Its actually 2 times the size
     size_t size = math_powu64(2, i + 1);
-    bool is_higher = page % size > size / 2;
+    bool is_lower = page % size < size / 2;
 
-    if (is_higher) {
+    if (!is_lower) {
       previous_bit = previous_bit * 2 + 2;
       set_bit_in_ptr(data, previous_bit);
     } else {
@@ -545,26 +545,12 @@ static void reserve_page(size_t block_base, size_t page) {
     }
   }
 
-  static uint64_t prev_num = 0;
-
   // For the bottom layer
   if (page % 2 == 0) {
     previous_bit = previous_bit * 2 + 1;
-    if (prev_num + 1 != previous_bit && prev_num != 0) {
-      kio_printf("Diff %x %x %x\n", page, prev_num, previous_bit);
-    } else {
-      kio_printf("Same %x %x\n", page, prev_num);
-    }
-    prev_num = previous_bit;
     set_bit_in_ptr(data, previous_bit);
   } else {
     previous_bit = previous_bit * 2 + 2;
-    if (prev_num + 1 != previous_bit && prev_num != 0) {
-      kio_printf("Diff %x %x %x\n", page, prev_num, previous_bit);
-    } else {
-      kio_printf("Same %x %x\n", page, prev_num);
-    }
-    prev_num = previous_bit;
     set_bit_in_ptr(data, previous_bit);
   }
 
@@ -592,9 +578,9 @@ static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
     } else {
       // 2 * size
       size_t size = math_powu64(2, i + 1);
-      bool is_higher = page % size > size / 2;
+      bool is_lower = page % size < size / 2;
 
-      if (is_higher) {
+      if (!is_lower) {
         prev_bit = prev_bit * 2 + 2;
         if (!(check_bit_in_ptr(data, prev_bit))) {
           // kio_printf("Index %x %x\n", i, prev_bit);
@@ -656,13 +642,12 @@ static void reserve_kernel_structures(void) {
 
     reserve_page(block_base, page);
   }
-  // uint8_t *data = get_descriptor(kernel_block_count *
-  // BLOCK_SIZE)->buddy_data;
+  uint8_t *data = get_descriptor(kernel_block_count * BLOCK_SIZE)->buddy_data;
 
   for (size_t i = 0; i < 128; i += 8) {
-    // kio_printf("Data: %x %x %x %x %x %x %x %x\n", data[i], data[i + 1],
-    //            data[i + 2], data[i + 3], data[i + 4], data[i + 5], data[i +
-    //            6], data[i + 7]);
+    kio_printf("Data: %x %x %x %x %x %x %x %x\n", data[i], data[i + 1],
+               data[i + 2], data[i + 3], data[i + 4], data[i + 5], data[i + 6],
+               data[i + 7]);
   }
 
   for (size_t i = 0; i < used_page_count; i++) {
@@ -691,7 +676,7 @@ void init_memory_manager(void) {
 
   extern char end_kernel[];
   size_t usage = (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET +
-                 used_page_count * PAGE_SIZE;
+                 (used_page_count - 1) * PAGE_SIZE;
 
   kio_printf("Total usage %x\n", usage);
 }
