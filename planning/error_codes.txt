@@ -1,4 +1,10 @@
-0: Memory Allocation Error
-1: Too much space taken
-2: Out of order memory map
-3: Multiboot Error
+Or this shit together to make cool errors!
+
+First 48 bits are for flags and the rest is just the error number
+
+Bit 0: Too much space
+Bit 1: Missing Block
+
+ERR 0: Memory Allocator Error
+ERR 1: Multiboot Error
+ERR 2: Memory Init Error

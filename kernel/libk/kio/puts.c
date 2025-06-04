@@ -1,5 +1,5 @@
-#include "libk/lock.h"
 #include <libk/kio.h>
+#include <libk/lock.h>
 
 static lock_t strLock;
 

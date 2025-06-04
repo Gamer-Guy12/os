@@ -1,3 +1,4 @@
+#include <decls.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 

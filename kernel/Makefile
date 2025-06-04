@@ -38,7 +38,7 @@ kernel/obj/%.asm.o: kernel/%.asm
 
 kernel/obj/%.c.o: kernel/%.c
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -I kernel/arch/x86_64/include $(addprefix -D , $(DECLS)) -o $@ $<
+	@$(CC) $(CFLAGS) -I kernel/arch/x86_64/include $(addprefix -D , $(DECLS)) -D _$(ARCH)_ -o $@ $<
 	@echo CC $< $@
 	
 endif
@@ -48,7 +48,7 @@ clean-kernel:
 	@rm -rf kernel/obj
 	@echo Cleaned kernel
 
-.PHONY: install
+.PHONY: install-kernel
 install-kernel: build/bin/kernel.bin
 	@mkdir -p build/iso/boot
 	@cp build/bin/kernel.bin build/iso/boot

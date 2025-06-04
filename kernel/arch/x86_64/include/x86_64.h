@@ -21,4 +21,6 @@ size_t get_multiboot_size(void);
 
 uint8_t *move_to_type(uint32_t type);
 
+#define IA32_EFER 0xC0000080
+
 #endif
