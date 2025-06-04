@@ -1,3 +1,1 @@
-- Make ftos and dtos (float to string and double to string)
-- Make physical memory manager
-- Make virtual memory manager
+- Remember that when you make log base 2 that you should replace all those 21s in the physical memory manager with it

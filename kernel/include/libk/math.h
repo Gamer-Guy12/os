@@ -2,6 +2,7 @@
 #define MATH_H
 
 #include <decls.h>
+#include <stddef.h>
 #include <stdint.h>
 
 uint64_t CONST math_powu8(uint8_t base, uint8_t exp);

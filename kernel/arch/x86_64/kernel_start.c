@@ -35,12 +35,18 @@ void kernel_start(uint8_t *multiboot) {
   // kio_clear();
 
   size_t phys_1 = (size_t)phys_alloc();
+  phys_free((void *)phys_1);
   size_t phys_2 = (size_t)phys_alloc();
+  size_t phys_3 = (size_t)phys_alloc();
+  phys_free((void *)phys_2);
+  size_t phys_4 = (size_t)phys_alloc();
+  phys_free((void *)phys_3);
+  phys_free((void *)phys_4);
 
   extern char end_kernel[];
 
-  kio_printf("Addr 1 %x, 2 %x, diff %x\n", phys_1, phys_2,
-             (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET - phys_1);
+  kio_printf("Addr 1 %x, 2 %x, 3 %x, 4 %x diff %x\n", phys_1, phys_2, phys_3,
+             phys_4, (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET - phys_1);
 
   kernel_main();
 }

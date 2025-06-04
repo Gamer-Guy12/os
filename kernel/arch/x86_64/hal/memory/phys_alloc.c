@@ -151,7 +151,7 @@ static size_t find_pair(block_descriptor_t *descriptor, size_t order) {
 static size_t find_free_page(block_descriptor_t *descriptor) {
   for (size_t i = 0; i < BUDDY_MAX_ORDER; i++) {
     size_t index = find_pair(descriptor, i);
-    kio_printf("Index %x order %x\n", index, i);
+    // kio_printf("Index %x order %x\n", index, i);
 
     if (index < math_powu64(2, BUDDY_MAX_ORDER + 1)) {
       for (size_t j = i; j > 0; j--) {
@@ -231,10 +231,10 @@ void *phys_alloc(void) {
 
   size_t page = find_free_page(descriptor);
 
-  // if (page > math_powu64(2, BUDDY_MAX_ORDER) - 1) {
-  //   kio_printf("No Page Found\n");
-  //   sys_panic(MEMORY_ALLOCATOR_ERR);
-  // }
+  if (page > math_powu64(2, BUDDY_MAX_ORDER) - 1) {
+    kio_printf("No Page Found\n");
+    sys_panic(MEMORY_ALLOCATOR_ERR);
+  }
 
   // kio_printf("Page %x\n", page);
   //
