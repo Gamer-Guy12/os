@@ -10,4 +10,7 @@ void *phys_alloc(void);
 /// Free a physical page
 void phys_free(void *addr);
 
+// Virtual Memory Management
+// see vmm.txt
+
 #endif
