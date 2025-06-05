@@ -16,3 +16,5 @@ vmm_region_t:
     - flags
         - userspace
 Autogen is prolly really unsafe but idgaf
+
+We need a bst!
