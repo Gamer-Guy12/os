@@ -1,4 +1,4 @@
-#include <hal/imemory.h>
+#include <hal/pimemory.h>
 #include <stddef.h>
 
 /// Returns the address of its physical page

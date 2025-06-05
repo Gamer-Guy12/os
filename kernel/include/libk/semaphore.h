@@ -6,7 +6,7 @@
 
 typedef struct {
   uint32_t val;
-  lock_t lock;
+  spinlock_t lock;
 } semaphore_t;
 
 uint32_t semaphore_wait(semaphore_t *semaphore);

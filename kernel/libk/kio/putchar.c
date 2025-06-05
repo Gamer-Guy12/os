@@ -7,7 +7,7 @@ static uint16_t curY = 0;
 static uint16_t width = 0;
 static uint16_t height = 0;
 
-static lock_t charLock;
+static spinlock_t charLock;
 
 void kio_putchar(char c) {
   lock_acquire(&charLock);

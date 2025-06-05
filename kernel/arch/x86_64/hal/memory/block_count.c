@@ -1,4 +1,4 @@
-#include <hal/imemory.h>
+#include <hal/pimemory.h>
 #include <stddef.h>
 
 size_t block_count;

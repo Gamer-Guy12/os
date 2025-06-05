@@ -1,7 +1,7 @@
 #include <libk/kio.h>
 #include <libk/lock.h>
 
-static lock_t strLock;
+static spinlock_t strLock;
 
 void kio_puts(char *c) {
   lock_acquire(&strLock);

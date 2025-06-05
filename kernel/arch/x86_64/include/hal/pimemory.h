@@ -1,5 +1,5 @@
-#ifndef X86_64_MEMORY_H
-#define X86_64_MEMORY_H
+#ifndef X86_64_PIMEMORY_H
+#define X86_64_PIMEMORY_H
 
 #include <hal/memory.h>
 #include <libk/lock.h>
@@ -167,7 +167,7 @@ typedef struct block_descriptor_struct {
 
 /// Mem lock is required to use kernel_gp for writes
 /// Dont care about reads
-lock_t *get_mem_lock(void);
+spinlock_t *get_mem_lock(void);
 
 void init_memory_manager(void);
 

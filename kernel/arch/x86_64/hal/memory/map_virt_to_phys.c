@@ -1,4 +1,4 @@
-#include <hal/imemory.h>
+#include <hal/pimemory.h>
 #include <libk/kio.h>
 #include <stddef.h>
 #include <stdint.h>

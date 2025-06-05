@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-static lock_t printLock;
+static spinlock_t printLock;
 
 /// This is a cut down version of printf
 /// The format specifiers that you can use are:

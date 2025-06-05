@@ -1,6 +1,6 @@
-#include <hal/imemory.h>
+#include <hal/pimemory.h>
 #include <libk/lock.h>
 
-static lock_t lock;
+static spinlock_t lock;
 
-lock_t *get_mem_lock(void) { return &lock; }
+spinlock_t *get_mem_lock(void) { return &lock; }

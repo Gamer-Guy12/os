@@ -1,5 +1,5 @@
-#include <hal/imemory.h>
 #include <hal/memory.h>
+#include <hal/pimemory.h>
 #include <libk/lock.h>
 #include <libk/math.h>
 #include <stddef.h>
