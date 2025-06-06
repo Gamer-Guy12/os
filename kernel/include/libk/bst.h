@@ -22,6 +22,8 @@ bst_node_t *bst_insert(bst_node_t *root, bst_node_t *node);
 /// Does not free node, returns it for you to free
 bst_node_t *bst_delete(bst_node_t *root, uint64_t key);
 
+bst_node_t *bst_delete_node(bst_node_t *node);
+
 void bst_create_node(bst_node_t *node, uint64_t key);
 
 bst_node_t *bst_max(bst_node_t *tree);
