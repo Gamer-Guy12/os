@@ -38,8 +38,8 @@ static block_descriptor_t *get_descriptor(size_t base) {
 }
 
 inline static bool block_of_order_exists(const uint8_t *ptr, size_t order) {
-  size_t start_index = math_powu64(2, BUDDY_MAX_ORDER - order) - 1;
-  size_t end_index = math_powu64(2, BUDDY_MAX_ORDER - order + 1) - 1;
+  size_t start_index = math_powu64(2, PHYS_BUDDY_MAX_ORDER - order) - 1;
+  size_t end_index = math_powu64(2, PHYS_BUDDY_MAX_ORDER - order + 1) - 1;
 
   for (size_t i = 0; i < end_index - start_index; i++) {
     if (check_bit_in_ptr(ptr, start_index + i)) {
@@ -78,8 +78,8 @@ static void reserve_page(size_t block_base, size_t page) {
 
   size_t prev_bit = 0;
 
-  for (size_t i = BUDDY_MAX_ORDER; i > 0; i--) {
-    if (i == BUDDY_MAX_ORDER) {
+  for (size_t i = PHYS_BUDDY_MAX_ORDER; i > 0; i--) {
+    if (i == PHYS_BUDDY_MAX_ORDER) {
       set_bit_in_ptr(descriptor->buddy_data, 0);
       continue;
     }
@@ -103,7 +103,7 @@ static void reserve_page(size_t block_base, size_t page) {
     set_bit_in_ptr(descriptor->buddy_data, prev_bit);
   }
 
-  for (size_t i = BUDDY_MAX_ORDER; i >= 0; i--) {
+  for (size_t i = PHYS_BUDDY_MAX_ORDER; i >= 0; i--) {
     if (block_of_order_exists(descriptor->buddy_data, i)) {
       descriptor->largest_region_order = i;
       return;
@@ -114,14 +114,14 @@ static void reserve_page(size_t block_base, size_t page) {
 }
 
 static size_t find_pair(block_descriptor_t *descriptor, size_t order) {
-  if (order == BUDDY_MAX_ORDER)
+  if (order == PHYS_BUDDY_MAX_ORDER)
     return 0;
 
-  size_t start_index = math_powu64(2, BUDDY_MAX_ORDER - order) - 1;
-  size_t end_index = math_powu64(2, BUDDY_MAX_ORDER - order + 1) - 1;
+  size_t start_index = math_powu64(2, PHYS_BUDDY_MAX_ORDER - order) - 1;
+  size_t end_index = math_powu64(2, PHYS_BUDDY_MAX_ORDER - order + 1) - 1;
   if (order == 0) {
     // Well end index is the start of the next region so ja
-    end_index = math_powu64(2, BUDDY_MAX_ORDER + 1);
+    end_index = math_powu64(2, PHYS_BUDDY_MAX_ORDER + 1);
   }
 
   // kio_printf("Start %x end %x\n", start_index, end_index);
@@ -145,21 +145,21 @@ static size_t find_pair(block_descriptor_t *descriptor, size_t order) {
     }
   }
 
-  return math_powu64(2, BUDDY_MAX_ORDER + 1);
+  return math_powu64(2, PHYS_BUDDY_MAX_ORDER + 1);
 }
 
 static size_t find_free_page(block_descriptor_t *descriptor) {
-  for (size_t i = 0; i < BUDDY_MAX_ORDER; i++) {
+  for (size_t i = 0; i < PHYS_BUDDY_MAX_ORDER; i++) {
     size_t index = find_pair(descriptor, i);
     // kio_printf("Index %x order %x\n", index, i);
 
-    if (index < math_powu64(2, BUDDY_MAX_ORDER + 1)) {
+    if (index < math_powu64(2, PHYS_BUDDY_MAX_ORDER + 1)) {
       for (size_t j = i; j > 0; j--) {
         index = index * 2 + 1;
       }
 
       // Index currently has the index into the array but we need the page index
-      return index - (math_powu64(2, BUDDY_MAX_ORDER) - 1);
+      return index - (math_powu64(2, PHYS_BUDDY_MAX_ORDER) - 1);
     }
   }
 
@@ -168,7 +168,7 @@ static size_t find_free_page(block_descriptor_t *descriptor) {
     return 0;
   }
 
-  return math_powu64(2, BUDDY_MAX_ORDER);
+  return math_powu64(2, PHYS_BUDDY_MAX_ORDER);
 }
 
 // static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
@@ -176,8 +176,8 @@ static size_t find_free_page(block_descriptor_t *descriptor) {
 //
 //  size_t prev_bit = 0;
 //
-//  for (size_t i = BUDDY_MAX_ORDER; i > 0; i--) {
-//    if (i == BUDDY_MAX_ORDER) {
+//  for (size_t i = PHYS_BUDDY_MAX_ORDER; i > 0; i--) {
+//    if (i == PHYS_BUDDY_MAX_ORDER) {
 //      if (!(data[0] & 1)) {
 //        // kio_printf("Index %x\n", i);
 //        return false;
@@ -231,7 +231,7 @@ void *phys_alloc(void) {
 
   size_t page = find_free_page(descriptor);
 
-  if (page > math_powu64(2, BUDDY_MAX_ORDER) - 1) {
+  if (page > math_powu64(2, PHYS_BUDDY_MAX_ORDER) - 1) {
     kio_printf("No Page Found\n");
     sys_panic(MEMORY_ALLOCATOR_ERR);
   }

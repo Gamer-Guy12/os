@@ -1,0 +1,60 @@
+Virtual Memory Management:
+
+The core of this is the fact that memory is split into 8 mebibyte regions that contain a buddy system in the first page that is used to allocate the rest.
+There will be a virtual block descriptor that keeps track of free pages and largest regions and shit like that. Pretty much its the same as the old block descriptor used for physical
+
+Bottom 23 bits are not needed which could be used for page count
+
+vmm_block_descriptor_t:
+    - void* start
+    - void* end
+    - uint32_t free_page_count (within start)
+    - uint32_t flags (within end)
+
+When VMM wants to allocate it creates a block descriptor in the area and then
+create a region that contains all the pages within and use those pages as it wishes
+
+allocation:
+find the block descriptor that contains the address (use bst because there could be a shit ton of addresses)
+mark the page as used in the descriptor
+
+how to use a stack with this system
+there can be multiple stacks that return different amounts of pages
+each stack has preallocated some pages and will continue to preallocate as needed
+it doesn't map it until the mapping is requested and then it should lock the page structures
+or maybe only have a stack for single pages and for multipages just do it better
+
+Where to store the block descriptors?
+idfk
+dont do block descriptors except for the places that need it which i will find later
+
+make one address space descriptor and just store it on the stack or smth
+or in the tcb
+
+How to allocate for each thingy:
+Stack:
+If there is a page fault when rsp is incremented, then map another stack page
+
+Break:
+When ever the brk is incremented or moved, map all the necessary pages to do so
+
+Code:
+When the code start and end are set, map all the pages
+
+Data:
+When the data start and end are set map all the pages
+
+Read Only:
+Same as code and data
+
+Autogen:
+Same as heap
+
+MMap:
+Find a free page, if none add another page to the lists and then allocate it
+
+It goes code, data, read only, break autogen, mmap, stack
+
+stack and autogen grow downwards
+
+After userspace ill make the mmap thingy

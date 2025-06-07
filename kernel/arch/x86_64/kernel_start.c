@@ -1,3 +1,4 @@
+#include "hal/vimemory.h"
 #include <hal/memory.h>
 #include <hal/pimemory.h>
 #include <libk/bst.h>
@@ -49,15 +50,11 @@ void kernel_start(uint8_t *multiboot) {
   kio_printf("Addr 1 %x, 2 %x, 3 %x, 4 %x diff %x\n", phys_1, phys_2, phys_3,
              phys_4, (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET - phys_1);
 
-  bst_node_t root;
-  bst_node_t children[64];
+  uint64_t *page = map_page((void *)GB, PT_READ_WRITE, 0);
+  *page = 48;
+  map_page((void *)(GB + PAGE_SIZE), PT_READ_WRITE, 1);
 
-  bst_create_node(&root, 548);
-
-  for (size_t i = 0; i < 64; i++) {
-    bst_create_node(&children[i], i * 10);
-    bst_insert(&root, &children[i]);
-  }
+  kio_printf("Addr %x, value %x\n", (size_t)page, *page);
 
   kernel_main();
 }

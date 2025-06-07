@@ -123,8 +123,8 @@ static void create_page_tables(void) {
 
 static inline void create_block_descriptor(block_descriptor_t *descriptor,
                                            size_t base) {
-  descriptor->free_pages = (BLOCK_SIZE / PAGE_SIZE);
-  descriptor->largest_region_order = BUDDY_MAX_ORDER;
+  descriptor->free_pages = (PHYS_BLOCK_SIZE / PAGE_SIZE);
+  descriptor->largest_region_order = PHYS_BUDDY_MAX_ORDER;
   descriptor->buddy_data = NULL;
   descriptor->flags = 0;
   descriptor->addr = base >> 21;
@@ -149,15 +149,15 @@ static size_t create_block_descriptors(block_descriptor_t *descriptors) {
   size_t block_count = 0;
 
   for (size_t i = 0; i < entry_count; i++) {
-    if (map[i].len < BLOCK_SIZE) {
+    if (map[i].len < PHYS_BLOCK_SIZE) {
       continue;
     }
 
     if (map[i].type != 1)
       continue;
 
-    const uint64_t len = ROUND_DOWN(map[i].len, BLOCK_SIZE);
-    const uint64_t cur_count = len / BLOCK_SIZE;
+    const uint64_t len = ROUND_DOWN(map[i].len, PHYS_BLOCK_SIZE);
+    const uint64_t cur_count = len / PHYS_BLOCK_SIZE;
 
     block_count += cur_count;
   }
@@ -167,16 +167,16 @@ static size_t create_block_descriptors(block_descriptor_t *descriptors) {
   }
 
   for (size_t i = 0; i < entry_count; i++) {
-    if (map[i].len < BLOCK_SIZE) {
+    if (map[i].len < PHYS_BLOCK_SIZE) {
       continue;
     }
 
     if (map[i].type != 1)
       continue;
 
-    const uint64_t base = ROUND_UP(map[i].base, BLOCK_SIZE);
-    const uint64_t len = ROUND_DOWN(map[i].len, BLOCK_SIZE);
-    const uint64_t block_count = len / BLOCK_SIZE;
+    const uint64_t base = ROUND_UP(map[i].base, PHYS_BLOCK_SIZE);
+    const uint64_t len = ROUND_DOWN(map[i].len, PHYS_BLOCK_SIZE);
+    const uint64_t block_count = len / PHYS_BLOCK_SIZE;
 
     if (block_count == 0)
       continue;
@@ -189,7 +189,8 @@ static size_t create_block_descriptors(block_descriptor_t *descriptors) {
       if (block_index >= MAX_BLOCK_COUNT)
         break;
 
-      create_block_descriptor(&descriptors[block_index], base + i * BLOCK_SIZE);
+      create_block_descriptor(&descriptors[block_index],
+                              base + i * PHYS_BLOCK_SIZE);
       block_index++;
     }
 
@@ -384,7 +385,7 @@ static void map_buddy_memory(void) {
   const size_t block_count = get_block_count();
   // kio_printf("Block Count: %x\n", block_count);
 
-  const size_t bytes_taken = math_powu64(2, BUDDY_MAX_ORDER) * 2 / 8;
+  const size_t bytes_taken = math_powu64(2, PHYS_BUDDY_MAX_ORDER) * 2 / 8;
 
   for (size_t i = 0; i < block_count; i++) {
     bool make_pdt = ((i * bytes_taken) % (PAGE_SIZE * 512 * 512)) == 0;
@@ -443,7 +444,7 @@ static void modify_descriptors(void) {
 
   size_t buddy_ptr = BLOCK_DESCRIPTORS_ADDR + PAGE_SIZE;
 
-  const size_t bytes_taken = math_powu64(2, BUDDY_MAX_ORDER) * 2 / 8;
+  const size_t bytes_taken = math_powu64(2, PHYS_BUDDY_MAX_ORDER) * 2 / 8;
 
   for (size_t i = 0; i < block_descriptor_count; i++) {
     descriptors[i].buddy_data = (void *)(buddy_ptr + bytes_taken * i);
@@ -476,8 +477,8 @@ inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
 }
 
 inline static bool block_of_order_exists(const uint8_t *ptr, size_t order) {
-  size_t start_index = math_powu64(2, BUDDY_MAX_ORDER - order) - 1;
-  size_t end_index = math_powu64(2, BUDDY_MAX_ORDER - order + 1) - 1;
+  size_t start_index = math_powu64(2, PHYS_BUDDY_MAX_ORDER - order) - 1;
+  size_t end_index = math_powu64(2, PHYS_BUDDY_MAX_ORDER - order + 1) - 1;
 
   for (size_t i = 0; i < end_index - start_index; i++) {
     if (check_bit_in_ptr(ptr, start_index + i)) {
@@ -527,8 +528,8 @@ static void reserve_page(size_t block_base, size_t page) {
   // Top level block is destroyed
   size_t previous_bit = 0;
 
-  for (size_t i = BUDDY_MAX_ORDER; i > 0; i--) {
-    if (i == BUDDY_MAX_ORDER) {
+  for (size_t i = PHYS_BUDDY_MAX_ORDER; i > 0; i--) {
+    if (i == PHYS_BUDDY_MAX_ORDER) {
       data[0] |= 1;
       continue;
     }
@@ -554,7 +555,7 @@ static void reserve_page(size_t block_base, size_t page) {
     set_bit_in_ptr(data, previous_bit);
   }
 
-  for (size_t i = BUDDY_MAX_ORDER; i > 0; i++) {
+  for (size_t i = PHYS_BUDDY_MAX_ORDER; i > 0; i++) {
     if (block_of_order_exists(data, i)) {
       descriptor->largest_region_order = i;
       return;
@@ -569,8 +570,8 @@ static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
 
   size_t prev_bit = 0;
 
-  for (size_t i = BUDDY_MAX_ORDER; i > 0; i--) {
-    if (i == BUDDY_MAX_ORDER) {
+  for (size_t i = PHYS_BUDDY_MAX_ORDER; i > 0; i--) {
+    if (i == PHYS_BUDDY_MAX_ORDER) {
       if (!(data[0] & 1)) {
         // kio_printf("Index %x\n", i);
         return false;
@@ -620,21 +621,22 @@ static void reserve_kernel_structures(void) {
   extern char end_kernel[];
   const size_t kernel_end = (size_t)(void *)end_kernel;
   const size_t kernel_block_count =
-      (kernel_end - KERNEL_CODE_OFFSET) / BLOCK_SIZE;
+      (kernel_end - KERNEL_CODE_OFFSET) / PHYS_BLOCK_SIZE;
 
   for (size_t i = 0; i < kernel_block_count; i++) {
-    reserve_block(i * BLOCK_SIZE);
+    reserve_block(i * PHYS_BLOCK_SIZE);
   }
 
   size_t prev_base = 0;
 
   for (size_t i = 0; i < used_page_count; i++) {
-    size_t block_base = ROUND_DOWN(i, BLOCKS_PER_PAGE) * BLOCK_SIZE +
-                        kernel_block_count * BLOCK_SIZE;
+    size_t block_base = ROUND_DOWN(i, BLOCKS_PER_PAGE) * PHYS_BLOCK_SIZE +
+                        kernel_block_count * PHYS_BLOCK_SIZE;
 
     if (prev_base != block_base) {
       block_descriptor_t *descriptor = get_descriptor(block_base);
-      memset(descriptor->buddy_data, 0, math_powu64(2, BUDDY_MAX_ORDER + 1));
+      memset(descriptor->buddy_data, 0,
+             math_powu64(2, PHYS_BUDDY_MAX_ORDER + 1));
       prev_base = block_base;
     }
 
@@ -642,7 +644,8 @@ static void reserve_kernel_structures(void) {
 
     reserve_page(block_base, page);
   }
-  uint8_t *data = get_descriptor(kernel_block_count * BLOCK_SIZE)->buddy_data;
+  uint8_t *data =
+      get_descriptor(kernel_block_count * PHYS_BLOCK_SIZE)->buddy_data;
 
   for (size_t i = 0; i < 128; i += 8) {
     kio_printf("Data: %x %x %x %x %x %x %x %x\n", data[i], data[i + 1],
@@ -651,10 +654,11 @@ static void reserve_kernel_structures(void) {
   }
 
   for (size_t i = 0; i < used_page_count; i++) {
-    if (!check_page_index(get_descriptor(kernel_block_count * BLOCK_SIZE), i)) {
+    if (!check_page_index(get_descriptor(kernel_block_count * PHYS_BLOCK_SIZE),
+                          i)) {
       kio_printf("Page %x is %x\n", i,
                  (size_t)check_page_index(
-                     get_descriptor(kernel_block_count * BLOCK_SIZE), i));
+                     get_descriptor(kernel_block_count * PHYS_BLOCK_SIZE), i));
     }
   }
 }
