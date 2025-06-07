@@ -1,5 +1,6 @@
 #include <hal/memory.h>
 #include <hal/pimemory.h>
+#include <libk/bst.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/lock.h>
@@ -47,6 +48,16 @@ void kernel_start(uint8_t *multiboot) {
 
   kio_printf("Addr 1 %x, 2 %x, 3 %x, 4 %x diff %x\n", phys_1, phys_2, phys_3,
              phys_4, (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET - phys_1);
+
+  bst_node_t root;
+  bst_node_t children[64];
+
+  bst_create_node(&root, 548);
+
+  for (size_t i = 0; i < 64; i++) {
+    bst_create_node(&children[i], i * 10);
+    bst_insert(&root, &children[i]);
+  }
 
   kernel_main();
 }
