@@ -26,5 +26,7 @@ void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
 
   // kio_printf("The entry created is this %x\n", entries[index].full_entry);
 
+  __asm__ volatile("invlpg (%0)" : : "r"(virt_bits) : "memory");
+
   return virt;
 }

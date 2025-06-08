@@ -83,9 +83,12 @@ typedef struct vmm_kernel_region_struct {
 /// Returns the address u are mapping
 /// If its different then there was an error
 void *map_page(void *addr, uint16_t flags, bool not_executable);
+void *unmap_page(void *addr);
 
 /// Kernel side
 void create_kernel_region(vmm_kernel_region_t *region);
-void increment_kernel_brk(vmm_kernel_region_t *region, size_t amount);
+/// Input a negative number to move backwards
+/// Returns the break
+void *increment_kernel_brk(vmm_kernel_region_t *region, int64_t amount);
 
 #endif

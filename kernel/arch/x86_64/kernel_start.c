@@ -55,6 +55,8 @@ void kernel_start(uint8_t *multiboot) {
   map_page((void *)(GB + PAGE_SIZE), PT_READ_WRITE, 1);
 
   kio_printf("Addr %x, value %x\n", (size_t)page, *page);
+  unmap_page((void *)GB);
+  unmap_page((void *)(GB + PAGE_SIZE));
 
   kernel_main();
 }
