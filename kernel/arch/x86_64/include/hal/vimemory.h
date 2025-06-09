@@ -62,7 +62,7 @@ typedef struct vmm_region_struct {
 /// Autogen grows down to meet the break
 typedef struct vmm_kernel_region_struct {
   void *start_brk;
-  void *end_brk;
+  void *brk;
 
   void *start_mmap;
   void *end_mmap;

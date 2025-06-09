@@ -58,5 +58,14 @@ void kernel_start(uint8_t *multiboot) {
   unmap_page((void *)GB);
   unmap_page((void *)(GB + PAGE_SIZE));
 
+  vmm_kernel_region_t region;
+  create_kernel_region(&region);
+
+  uint64_t *num = increment_kernel_brk(&region, 0);
+  increment_kernel_brk(&region, 8);
+  *num = 49;
+
+  kio_printf("Num %u\n", *num);
+
   kernel_main();
 }
