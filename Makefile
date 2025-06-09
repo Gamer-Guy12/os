@@ -1,6 +1,10 @@
 ARCH?=x86_64
 DECLS?=
 
+ifeq (,$(wildcard ./fart.txt))
+$(error Must have fart.txt (according to bluehalooo))
+endif
+
 .PHONY: all
 all: build/bin/kernel.bin build/os.iso
 
