@@ -87,8 +87,7 @@ void *unmap_page(void *addr);
 
 /// Kernel side
 void create_kernel_region(vmm_kernel_region_t *region);
-/// Input a negative number to move backwards
-/// Returns the break
-void *increment_kernel_brk(vmm_kernel_region_t *region, int64_t amount);
+void *increment_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
+void *decrement_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
 
 #endif

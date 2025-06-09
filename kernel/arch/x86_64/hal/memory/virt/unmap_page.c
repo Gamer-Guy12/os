@@ -1,4 +1,3 @@
-#include "libk/kio.h"
 #include <hal/memory.h>
 #include <hal/pimemory.h>
 #include <hal/vimemory.h>
@@ -12,7 +11,8 @@ inline static void check_pdpt(void *addr);
 inline static void check_pml4(void *addr);
 
 void *unmap_page(void *addr) {
-  phys_free(unmap_virt(addr));
+  void *phys = unmap_virt(addr);
+  phys_free(phys);
   // Check if there are any other pages in the pt
   check_pt(addr);
   check_pdt(addr);
@@ -25,25 +25,24 @@ void *unmap_page(void *addr) {
 inline static void check_pt(void *addr) {
   const size_t addr_bits = (size_t)addr;
 
-  const size_t mask = 0x1ff000;
+  // Which pt in the pdt (Skip over a page for every one because each page
+  // contains the contents of one pt so this contains the contents of one pdt
+  // which means u need to skip)
+  const size_t pdt_index = (addr_bits >> 21) & 0x1ff;
+  const size_t pdpt_index = (addr_bits >> 30) & 0x1ff;
+  const size_t pml4_index = (addr_bits >> 39) & 0x1ff;
 
-  PT_entry_t *entries = (PT_entry_t *)PT_ADDR;
-  size_t index = (addr_bits & UNCANONICALIZER & mask) / PAGE_SIZE;
+  PT_entry_t *entries_to_check =
+      (PT_entry_t *)(PT_ADDR + pdt_index * PAGE_SIZE +
+                     pdpt_index * PAGE_SIZE * 512 +
+                     pml4_index * PAGE_SIZE * 512 * 512);
 
   for (size_t i = 0; i < 512; i++) {
-    if (!(entries[index + i].full_entry & PT_PRESENT)) {
-      // Delete the pt
-      void *addr = (void *)(PT_ADDR + index * 8);
-      void *phys = (void *)virt_to_phys((size_t)addr);
-
-      unmap_virt(addr);
+    if (entries_to_check[i].full_entry & PT_PRESENT)
       return;
-      phys_free(phys);
-      kio_printf("Remove PT\n");
-
-      return;
-    }
   }
+
+  unmap_virt(entries_to_check);
 }
 
 inline static void check_pdt(void *addr) {}
