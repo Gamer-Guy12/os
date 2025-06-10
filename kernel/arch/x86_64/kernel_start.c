@@ -4,7 +4,7 @@
 #include <libk/bst.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
-#include <libk/lock.h>
+#include <libk/spinlock.h>
 #include <libk/string.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -61,11 +61,18 @@ void kernel_start(uint8_t *multiboot) {
   vmm_kernel_region_t region;
   create_kernel_region(&region);
 
+  increment_kernel_brk(&region, 0x4001);
   uint64_t *num = increment_kernel_brk(&region, 0);
-  increment_kernel_brk(&region, 8);
   *num = 49;
 
   kio_printf("Num %u\n", *num);
+
+  decrement_kernel_brk(&region, 0x4001);
+  // Uncomment to make the kernel fault to show that moving the break backwards
+  // unmaps the pages
+  //*num = 49;
+  //
+  // kio_printf("Num %u\n", *num);
 
   kernel_main();
 }

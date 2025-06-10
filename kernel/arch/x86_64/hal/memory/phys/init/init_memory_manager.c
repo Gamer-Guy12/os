@@ -5,9 +5,9 @@
 #include <libk/bit.h>
 #include <libk/err.h>
 #include <libk/kio.h>
-#include <libk/lock.h>
 #include <libk/math.h>
 #include <libk/mem.h>
+#include <libk/spinlock.h>
 #include <libk/sys.h>
 #include <stdbool.h>
 #include <stddef.h>

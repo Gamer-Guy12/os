@@ -1,7 +1,7 @@
 #ifndef SEMAPHORE_H
 #define SEMAPHORE_H
 
-#include <libk/lock.h>
+#include <libk/spinlock.h>
 #include <stdint.h>
 
 typedef struct {

@@ -1,5 +1,5 @@
 #include <libk/kio.h>
-#include <libk/lock.h>
+#include <libk/spinlock.h>
 #include <libk/string.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -11,7 +11,7 @@ static spinlock_t printLock;
 /// %d (assumed to be 64 bit), %u (assumed to be 64 bit), %x, %f (not yet)
 /// (assumes double), %c, %s, %%
 void kio_printf(const char *format, ...) {
-  lock_acquire(&printLock);
+  spinlock_acquire(&printLock);
 
   uint16_t index = 0;
   va_list args;
@@ -61,5 +61,5 @@ void kio_printf(const char *format, ...) {
   }
 
   va_end(args);
-  lock_release(&printLock);
+  spinlock_release(&printLock);
 }

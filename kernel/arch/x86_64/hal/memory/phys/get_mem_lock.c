@@ -1,5 +1,5 @@
 #include <hal/pimemory.h>
-#include <libk/lock.h>
+#include <libk/spinlock.h>
 
 static spinlock_t lock;
 

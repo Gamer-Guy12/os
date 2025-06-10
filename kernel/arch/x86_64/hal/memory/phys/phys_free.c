@@ -1,7 +1,7 @@
 #include <hal/memory.h>
 #include <hal/pimemory.h>
-#include <libk/lock.h>
 #include <libk/math.h>
+#include <libk/spinlock.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -70,7 +70,7 @@ static void free_page_index(block_descriptor_t *descriptor, size_t page_index) {
 }
 
 void phys_free(void *addr) {
-  lock_acquire(get_mem_lock());
+  spinlock_acquire(get_mem_lock());
 
   size_t addr_bits = (size_t)addr;
   size_t block_base = addr_bits & ~0x1FFFFF;
@@ -79,5 +79,5 @@ void phys_free(void *addr) {
 
   free_page_index(descriptor, page_index);
 
-  lock_release(get_mem_lock());
+  spinlock_release(get_mem_lock());
 }

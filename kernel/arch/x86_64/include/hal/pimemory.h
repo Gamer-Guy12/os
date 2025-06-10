@@ -2,9 +2,9 @@
 #define X86_64_PIMEMORY_H
 
 #include <hal/memory.h>
-#include <libk/lock.h>
 #include <libk/math.h>
 #include <libk/mem.h>
+#include <libk/spinlock.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

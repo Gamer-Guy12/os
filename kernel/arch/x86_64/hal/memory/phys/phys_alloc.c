@@ -2,8 +2,8 @@
 #include <hal/pimemory.h>
 #include <libk/err.h>
 #include <libk/kio.h>
-#include <libk/lock.h>
 #include <libk/math.h>
+#include <libk/spinlock.h>
 #include <libk/sys.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -222,7 +222,7 @@ static size_t find_free_page(block_descriptor_t *descriptor) {
 //  }
 
 void *phys_alloc(void) {
-  lock_acquire(get_mem_lock());
+  spinlock_acquire(get_mem_lock());
 
   block_descriptor_t *descriptor = get_free_descriptor();
 
@@ -252,7 +252,7 @@ void *phys_alloc(void) {
 
   reserve_page(descriptor->addr << 21, page);
 
-  lock_release(get_mem_lock());
+  spinlock_release(get_mem_lock());
 
   return (void *)(page * PAGE_SIZE + (descriptor->addr << 21));
 }

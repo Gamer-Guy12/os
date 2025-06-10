@@ -1,8 +1,8 @@
 BITS 64
 
-global lock_release:function
+global spinlock_release:function
 
 section .text
-lock_release:
+spinlock_release:
     mov word [rdi], 0
     ret
