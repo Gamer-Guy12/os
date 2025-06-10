@@ -1,10 +1,10 @@
-#ifndef X86_64_MEMORY_H
-#define X86_64_MEMORY_H
+#ifndef X86_64_PIMEMORY_H
+#define X86_64_PIMEMORY_H
 
 #include <hal/memory.h>
-#include <libk/lock.h>
 #include <libk/math.h>
 #include <libk/mem.h>
+#include <libk/spinlock.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -13,9 +13,9 @@
 #define PAGE_SIZE 0x1000
 /// A block is 2mb and is used in the buddy system
 /// If you change this, update the block descriptor and nuke one of the flags
-#define BUDDY_MAX_ORDER 9
-#define BLOCK_SIZE (PAGE_SIZE * math_powu64(2, BUDDY_MAX_ORDER))
-#define BLOCKS_PER_PAGE (BLOCK_SIZE / PAGE_SIZE)
+#define PHYS_BUDDY_MAX_ORDER 9
+#define PHYS_BLOCK_SIZE (PAGE_SIZE * math_powu64(2, PHYS_BUDDY_MAX_ORDER))
+#define BLOCKS_PER_PAGE (PHYS_BLOCK_SIZE / PAGE_SIZE)
 
 #define BLOCK_DESCRIPTORS_ADDR 0xFFFF800000000000
 
@@ -24,7 +24,7 @@
 #define PDPT_ADDR 0xFFFFFF7FBFC00000
 #define PML4_ADDR 0xFFFFFF7FBFDFE000
 
-#define MAX_BLOCK_COUNT (GB * 512ull / BLOCK_SIZE)
+#define MAX_BLOCK_COUNT (GB * 512ull / PHYS_BLOCK_SIZE)
 
 #define INDICES_TO_ADDR(pt, pdt, pdpt, pml4)                                   \
   ((((pt) << 12ull) | ((pdt) << 21ull) | ((pdpt) << 30ull) |                   \
@@ -167,7 +167,7 @@ typedef struct block_descriptor_struct {
 
 /// Mem lock is required to use kernel_gp for writes
 /// Dont care about reads
-lock_t *get_mem_lock(void);
+spinlock_t *get_mem_lock(void);
 
 void init_memory_manager(void);
 

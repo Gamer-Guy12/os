@@ -1,10 +1,10 @@
-#include <libk/lock.h>
 #include <libk/semaphore.h>
+#include <libk/spinlock.h>
 
 void semaphore_signal(semaphore_t *semaphore) {
-  lock_acquire(&semaphore->lock);
+  spinlock_acquire(&semaphore->lock);
 
   semaphore->val++;
 
-  lock_release(&semaphore->lock);
+  spinlock_release(&semaphore->lock);
 }

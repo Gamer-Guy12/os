@@ -1,7 +1,7 @@
-#include <hal/imemory.h>
 #include <hal/memory.h>
-#include <libk/lock.h>
+#include <hal/pimemory.h>
 #include <libk/math.h>
+#include <libk/spinlock.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -37,7 +37,7 @@ inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
 
 static void free_page_index(block_descriptor_t *descriptor, size_t page_index) {
   // Start by clearing the bit at the bottom and then go on to merge up the tree
-  size_t full_index = page_index + math_powu64(2, BUDDY_MAX_ORDER) - 1;
+  size_t full_index = page_index + math_powu64(2, PHYS_BUDDY_MAX_ORDER) - 1;
 
   // Clear bottom bit
   clear_bit_in_ptr(descriptor->buddy_data, full_index);
@@ -45,7 +45,7 @@ static void free_page_index(block_descriptor_t *descriptor, size_t page_index) {
   // Clear the bits above
   // Every index clears the bit above it
   size_t previous_bit = full_index;
-  for (size_t i = 0; i < BUDDY_MAX_ORDER; i++) {
+  for (size_t i = 0; i < PHYS_BUDDY_MAX_ORDER; i++) {
     size_t size_by_2 = math_powu64(2, i + 1);
     bool is_lower = page_index % size_by_2 < size_by_2 / 2;
 
@@ -70,7 +70,7 @@ static void free_page_index(block_descriptor_t *descriptor, size_t page_index) {
 }
 
 void phys_free(void *addr) {
-  lock_acquire(get_mem_lock());
+  spinlock_acquire(get_mem_lock());
 
   size_t addr_bits = (size_t)addr;
   size_t block_base = addr_bits & ~0x1FFFFF;
@@ -79,5 +79,5 @@ void phys_free(void *addr) {
 
   free_page_index(descriptor, page_index);
 
-  lock_release(get_mem_lock());
+  spinlock_release(get_mem_lock());
 }

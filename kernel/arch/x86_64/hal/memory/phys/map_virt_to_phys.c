@@ -1,4 +1,4 @@
-#include <hal/imemory.h>
+#include <hal/pimemory.h>
 #include <libk/kio.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -25,6 +25,8 @@ void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
   entries[index].not_executable = not_executable;
 
   // kio_printf("The entry created is this %x\n", entries[index].full_entry);
+
+  __asm__ volatile("invlpg (%0)" : : "r"(virt_bits) : "memory");
 
   return virt;
 }

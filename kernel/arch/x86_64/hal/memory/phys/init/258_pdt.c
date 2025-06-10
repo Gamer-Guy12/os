@@ -1,4 +1,4 @@
-#include <hal/imemory.h>
+#include <hal/pimemory.h>
 #include <stddef.h>
 
 size_t used_count = 0;
