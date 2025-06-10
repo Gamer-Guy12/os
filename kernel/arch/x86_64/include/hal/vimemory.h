@@ -91,5 +91,6 @@ void *unmap_page(void *addr);
 void create_kernel_region(vmm_kernel_region_t *region);
 void *increment_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
 void *decrement_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
+void *move_kernel_brk(vmm_kernel_region_t *region, int64_t amount);
 
 #endif
