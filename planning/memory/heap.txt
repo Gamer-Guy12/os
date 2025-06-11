@@ -18,6 +18,57 @@ Advantages
 Disadvantages:
     - Wastes memory if it wasn't used recently
         - May not matter because heap should probably contain memory that works like a stack but bigger
-    - Inconsistent speeds
+    - Inconsistent speeds (doesn't matter that much)
         - Sometimes allocation takes longer than other times
 
+Add-on:
+Make it so that the allocator starts at the top and tries to find a free section to use instead
+Free sections can be coalesced and the metadata can be reclaimed
+
+Advantages:
+    - Wastes less memory
+Disadvantages:
+    - More complexity
+    - Search during the allocation takes longer
+
+Add-on:
+Recently freed chunks are stored in a static array that can be quickly passed back
+Should those chunks be allowed to merge?
+No cuz likely will be used again and could end up merging and then splitting when not used
+New metadata bits:
+Bit 1: Free
+Bit 2: Cached
+
+If free and not cached the block can be merged
+If not free but cached, error
+If free and cached, just leave it cuz cached
+If Not free and not cached, its used
+
+Cache should use best fit and also do splitting
+Non cache should use first fit
+
+How to fill the cache:
+Have an index into the cache that shows where to place the next one
+if that index is the same as the amount of cache slots there are, reset the index and make sure to clear remember to un cache info when replaced
+
+How does the index work with cache spots that were freed:
+Option 1: just don't change the index and it will fill as needed
+    - Advantages
+        - Goes faster
+    - Disadvantages
+        - Wastes cache spots so actually not faster
+Option 2: Search the cache for free spots before using the index (Do this)
+    - Advantages
+        - Doesn't waste cache spots
+    - Disadvantages
+        - Can take longer to search the cache
+
+minimum information required per allocation:
+Base Addr
+    - Can be encoded as the information with a static offset
+Length
+Optional: Pointer to next info
+    - Not necessary if the pointer can be obtained by using the base addr and the Length
+
+minimum Allocation size:
+8 bytes
