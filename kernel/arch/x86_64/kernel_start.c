@@ -1,11 +1,11 @@
-#include "hal/vimemory.h"
-#include <hal/memory.h>
-#include <hal/pimemory.h>
 #include <libk/bst.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/spinlock.h>
 #include <libk/string.h>
+#include <mem/memory.h>
+#include <mem/pimemory.h>
+#include <mem/vimemory.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <x86_64.h>

@@ -1,4 +1,4 @@
-#include <hal/pimemory.h>
+#include <mem/pimemory.h>
 
 const static block_descriptor_t *ptr = NULL;
 

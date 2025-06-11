@@ -1,7 +1,7 @@
-#include <hal/pimemory.h>
-#include <hal/vimemory.h>
 #include <libk/math.h>
 #include <libk/spinlock.h>
+#include <mem/pimemory.h>
+#include <mem/vimemory.h>
 #include <stddef.h>
 
 void *increment_kernel_brk(vmm_kernel_region_t *region, uint64_t amount) {

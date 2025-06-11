@@ -1,4 +1,4 @@
-#include <hal/vimemory.h>
+#include <mem/memory.h>
 
 void *move_kernel_brk(vmm_kernel_region_t *region, int64_t amount) {
   if (amount >= 0) {

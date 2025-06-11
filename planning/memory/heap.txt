@@ -1,0 +1,23 @@
+Heap Allocation:
+
+Stack Based:
+Make minimum allocation size 8 bytes
+Add an extra 8 bytes before each allocation
+It contains the size in multiples of 8 bytes
+The bottom three bits are unused and so are used for metadata
+bit 0: not Top of Heap
+This one says whether this is the top of the heap, the previous allocation has this bit set when an allocation is made
+bit 1: Free
+Says whether thingy is Free
+if it is also the top of the heap, it will be freed and everything below it will recusrivly be freed
+
+The address is passed in and then 8 bytes is subtracted to find the metadata
+
+Advantages
+    - Simple
+Disadvantages:
+    - Wastes memory if it wasn't used recently
+        - May not matter because heap should probably contain memory that works like a stack but bigger
+    - Inconsistent speeds
+        - Sometimes allocation takes longer than other times
+

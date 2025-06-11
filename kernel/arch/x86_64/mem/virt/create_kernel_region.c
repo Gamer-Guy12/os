@@ -1,7 +1,7 @@
-#include "hal/pimemory.h"
-#include <hal/vimemory.h>
 #include <libk/mem.h>
 #include <libk/spinlock.h>
+#include <mem/pimemory.h>
+#include <mem/vimemory.h>
 
 void create_kernel_region(vmm_kernel_region_t *region) {
   spinlock_acquire(&region->global_lock);
