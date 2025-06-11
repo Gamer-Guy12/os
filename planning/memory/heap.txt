@@ -27,6 +27,7 @@ Free sections can be coalesced and the metadata can be reclaimed
 
 Advantages:
     - Wastes less memory
+    - Faster
 Disadvantages:
     - More complexity
     - Search during the allocation takes longer
