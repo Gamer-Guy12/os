@@ -96,3 +96,4 @@ Cache Structure
 Downside is that 60% of the cache structure is used purely for the bst but thats fine
 Even better, the address could be used so that it would be a normal bst and shit
 The cache structure would be put onto the heap
+wait no we can't because the size is the index that is searched for but we have to find it by address

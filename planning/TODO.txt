@@ -1,1 +1,5 @@
 - Remember that when you make log base 2 that you should replace all those 21s in the physical memory manager with it
+- How do u store the vmm_region_t
+   - Solution 1: Group it into the TCB and figure that out
+   - Solution 2: Reserve another spot in the 258 pdt (not cross-platform)
+   - 
