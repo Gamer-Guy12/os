@@ -73,3 +73,26 @@ Optional: Pointer to next info
 
 minimum Allocation size:
 8 bytes
+
+Issues above
+    - Cache is slow and therefore not rlly a cache
+    - Checking the entire heap for a free location before adding more is slow
+
+Improve it by:
+Getting rid of cache and just storing sets of single sizes (like cache sizes)
+Don't do merging
+Don't return memory
+
+The different free nodes can be stored in a linked list and then the used ones can all be stored as one linked list
+Caches could be stored as a BST
+
+Cache Structure
+   - Size
+   - Parent
+   - Right
+   - Left
+   - First Node
+
+Downside is that 60% of the cache structure is used purely for the bst but thats fine
+Even better, the address could be used so that it would be a normal bst and shit
+The cache structure would be put onto the heap
