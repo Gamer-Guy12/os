@@ -3,6 +3,7 @@
 #include <libk/kio.h>
 #include <libk/spinlock.h>
 #include <libk/string.h>
+#include <mem/kheap.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
@@ -68,6 +69,7 @@ void kernel_start(uint8_t *multiboot) {
   kio_printf("Num %u\n", *num);
 
   decrement_kernel_brk(&region, 0x4001);
+  init_heap();
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
   //*num = 49;
