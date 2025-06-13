@@ -71,6 +71,12 @@ void kernel_start(uint8_t *multiboot) {
   // kio_printf("Num %u\n", *num);
   //
   // decrement_kernel_brk(&region, 0x4001);
+
+  vmm_kernel_region_t region;
+  create_kernel_region(&region);
+  vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
+  *region_ptr = &region;
+
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
 
