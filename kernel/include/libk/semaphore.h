@@ -1,12 +1,12 @@
 #ifndef SEMAPHORE_H
 #define SEMAPHORE_H
 
-#include <libk/lock.h>
+#include <libk/spinlock.h>
 #include <stdint.h>
 
 typedef struct {
   uint32_t val;
-  lock_t lock;
+  spinlock_t lock;
 } semaphore_t;
 
 uint32_t semaphore_wait(semaphore_t *semaphore);

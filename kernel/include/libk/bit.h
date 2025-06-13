@@ -1,6 +1,7 @@
 #ifndef BIT_H
 #define BIT_H
 
+#include <decls.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -15,9 +16,18 @@ inline uint8_t find_zero8(uint8_t num) {
   return 0xFF;
 }
 
-inline bool check_bit(uint8_t num, uint8_t pos) { return (num & 1 << pos) > 0; }
+inline bool CONST check_bit(uint8_t num, uint8_t pos) {
+  return (num & 1 << pos) > 0;
+}
 
-inline uint64_t set_bits(uint64_t num, uint64_t bits) { return num | bits; }
-inline uint64_t unset_bits(uint64_t num, uint64_t bits) { return num & ~bits; }
+inline uint64_t CONST set_bits(uint64_t num, uint64_t bits) {
+  return num | bits;
+}
+inline uint64_t CONST unset_bits(uint64_t num, uint64_t bits) {
+  return num & ~bits;
+}
+
+// This is only here because I get confused about the ^ operator
+#define XOR(first, second) (first ^ second)
 
 #endif

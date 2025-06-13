@@ -4,7 +4,7 @@ OUTPUT_FORMAT(elf64-x86-64)
 SECTIONS {
 	. = 0x100000;
 
-	.loading : ALIGN(4K) 
+	.loading ALIGN(4K) :
 	{
 		_loading = .;
 
@@ -16,7 +16,7 @@ SECTIONS {
 	}
 
 	/* All these page tables will be replaced later on */
-	.page_tables (NOLOAD) : ALIGN(4K) 
+	.page_tables (NOLOAD) : ALIGN(4K)
 	{
 		_page_tables = .;
 		_l4_page = .;
@@ -42,14 +42,17 @@ SECTIONS {
 
 	. += 0xFFFFFFFF80000000;
 
+	start_kernel = .;
+
     .text ALIGN(4k) : AT(ADDR(.text) - 0xFFFFFFFF80000000)
 	{
-        _text = .;
 		
-		. = 0x200000;
+		. += 0x200000;
+        _text = .;
 
 		*(.startup)
 		*(.text)
+		_text_end = .;
     }
 
     .rodata ALIGN(4k) : AT(ADDR(.rodata) - 0xFFFFFFFF80000000)
@@ -84,15 +87,17 @@ SECTIONS {
 		*(COMMON)
 	}
 
+	. = ALIGN(4k);
+	. = 0xFFFFFFFF80000000 + 0x1000000;
 	end_kernel = .;
-	. = 0x1000000 + 0xFFFFFFFF80000000;
-	kernel_mem_end = .;
+	
+	kernel_gp = .;
 
  	/* This is general purpose kernel memory, on x86_64 this is just used for the physical memory allocator and maybe later virtual memory allocator */
 	/* This space should only be used for the initial memory managment bootstrap before something new is created */
 	/* This is just here to clear some space and provide consistent addressing */
 	/* Can and should be allocated over in physical memory */
-	kernel_gp = .;
-	. = 0x2000000 + 0xFFFFFFFF80000000;
+	. = kernel_gp + 0x1000000;
+	. = ALIGN(2M);
 	kernel_gp_end = .;
 }

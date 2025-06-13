@@ -1,9 +1,9 @@
 BITS 64
 
-global lock_acquire:function
+global spinlock_acquire:function
 
 section .text
-lock_acquire:
+spinlock_acquire:
     lock bts word [rdi], 0
     jc .spin
     ret
@@ -12,4 +12,4 @@ lock_acquire:
     pause
     test word [rdi], 1
     jnz .spin
-    jmp lock_acquire
+    jmp spinlock_acquire

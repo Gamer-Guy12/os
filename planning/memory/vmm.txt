@@ -1,0 +1,20 @@
+Virtual memory management:
+im fucking tired so imma play minecraft
+idgaf that im behind
+
+vmm_region_t is a region such as for user and kernel space
+vmm_region_t:
+    - start addr
+    - end addr
+    - code start and end (exec no write)
+    - data start and end (write no exec)
+    - read only start and end (no exec no write)
+    - autogen code start and end (exec and write (will not be loaded and will be zeroed out to start))
+    - program break start and end (heap)
+    - stack top and bottom (stack bottom is the start and stack top grows down)
+    - spinlock_t for each section
+    - flags
+        - userspace
+Autogen is prolly really unsafe but idgaf
+
+We need a bst!

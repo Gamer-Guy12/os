@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-typedef struct  {
-    uint16_t width;
-    uint16_t height;
+typedef struct {
+  uint16_t width;
+  uint16_t height;
 } KGFXProperties;
 
 KGFXProperties kgfx_getproperties(void);
