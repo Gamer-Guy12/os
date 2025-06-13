@@ -22,6 +22,9 @@ int64_t math_absi(int64_t input);
 
 int64_t math_log(int64_t input, int64_t base);
 
+float math_sqrtffast(float x);
+double math_sqrtdfast(double input);
+
 #define ROUND_UP(num, to) ((num) + ((to) - ((num) % (to))))
 #define ROUND_DOWN(num, to) ((num) - ((num) % (to)))
 
