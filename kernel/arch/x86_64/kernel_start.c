@@ -1,3 +1,4 @@
+#include "gdt.h"
 #include <libk/bst.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
@@ -70,8 +71,17 @@ void kernel_start(uint8_t *multiboot) {
   // kio_printf("Num %u\n", *num);
   //
   // decrement_kernel_brk(&region, 0x4001);
+
+  vmm_kernel_region_t region;
+  create_kernel_region(&region);
+  vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
+  *region_ptr = &region;
+
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
+
+  create_gdt();
+  kio_printf("Created the GDT\n");
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
   //*num = 49;
