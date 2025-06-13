@@ -1,0 +1,99 @@
+Heap Allocation:
+
+Stack Based:
+Make minimum allocation size 8 bytes
+Add an extra 8 bytes before each allocation
+It contains the size in multiples of 8 bytes
+The bottom three bits are unused and so are used for metadata
+bit 0: not Top of Heap
+This one says whether this is the top of the heap, the previous allocation has this bit set when an allocation is made
+bit 1: Free
+Says whether thingy is Free
+if it is also the top of the heap, it will be freed and everything below it will recusrivly be freed
+
+The address is passed in and then 8 bytes is subtracted to find the metadata
+
+Advantages
+    - Simple
+Disadvantages:
+    - Wastes memory if it wasn't used recently
+        - May not matter because heap should probably contain memory that works like a stack but bigger
+    - Inconsistent speeds (doesn't matter that much)
+        - Sometimes allocation takes longer than other times
+
+Add-on:
+Make it so that the allocator starts at the top and tries to find a free section to use instead
+Free sections can be coalesced and the metadata can be reclaimed
+
+Advantages:
+    - Wastes less memory
+    - Faster
+Disadvantages:
+    - More complexity
+    - Search during the allocation takes longer
+
+Add-on:
+Recently freed chunks are stored in a static array that can be quickly passed back
+Should those chunks be allowed to merge?
+No cuz likely will be used again and could end up merging and then splitting when not used
+New metadata bits:
+Bit 1: Free
+Bit 2: Cached
+
+If free and not cached the block can be merged
+If not free but cached, error
+If free and cached, just leave it cuz cached
+If Not free and not cached, its used
+
+Cache should use best fit and also do splitting
+Non cache should use first fit
+
+How to fill the cache:
+Have an index into the cache that shows where to place the next one
+if that index is the same as the amount of cache slots there are, reset the index and make sure to clear remember to un cache info when replaced
+
+How does the index work with cache spots that were freed:
+Option 1: just don't change the index and it will fill as needed
+    - Advantages
+        - Goes faster
+    - Disadvantages
+        - Wastes cache spots so actually not faster
+Option 2: Search the cache for free spots before using the index (Do this)
+    - Advantages
+        - Doesn't waste cache spots
+    - Disadvantages
+        - Can take longer to search the cache
+
+minimum information required per allocation:
+Base Addr
+    - Can be encoded as the information with a static offset
+Length
+Optional: Pointer to next info
+    - Not necessary if the pointer can be obtained by using the base addr and the Length
+
+minimum Allocation size:
+8 bytes
+
+Issues above
+    - Cache is slow and therefore not rlly a cache
+    - Checking the entire heap for a free location before adding more is slow
+
+Improve it by:
+Getting rid of cache and just storing sets of single sizes (like cache sizes)
+Don't do merging
+Don't return memory
+
+The different free nodes can be stored in a linked list and then the used ones can all be stored as one linked list
+Caches could be stored as a BST
+
+Cache Structure
+   - Size
+   - Parent
+   - Right
+   - Left
+   - First Node
+
+Downside is that 60% of the cache structure is used purely for the bst but thats fine
+Even better, the address could be used so that it would be a normal bst and shit
+The cache structure would be put onto the heap
+wait no we can't because the size is the index that is searched for but we have to find it by address

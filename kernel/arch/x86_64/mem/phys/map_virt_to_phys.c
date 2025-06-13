@@ -1,5 +1,5 @@
-#include <hal/pimemory.h>
 #include <libk/kio.h>
+#include <mem/pimemory.h>
 #include <stddef.h>
 #include <stdint.h>
 

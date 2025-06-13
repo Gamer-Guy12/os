@@ -1,5 +1,5 @@
-#ifndef X86_64_VIMEMORY_H
-#define X86_64_VIMEMORY_H
+#ifndef MEMORY_H
+#define MEMORY_H
 
 #include <libk/bst.h>
 #include <libk/spinlock.h>
@@ -79,17 +79,31 @@ typedef struct vmm_kernel_region_struct {
   bst_node_t *mmap_regions;
 } vmm_kernel_region_t;
 
-/// Gets all the physical addresses necessary
-/// Returns the address u are mapping
-/// If its different then there was an error
-/// Does not check if page exists already
-void *map_page(void *addr, uint16_t flags, bool not_executable);
-/// Does not check if page exists already
-void *unmap_page(void *addr);
+/// Allocate a physical page
+void *phys_alloc(void);
+
+/// Free a physical page
+void phys_free(void *addr);
+
+// Virtual Memory Management
+// see vmm.txt
+
+// Kmalloc (kernel malloc)
+typedef enum {
+  /// Tells the allocator to not go to the page mapping if this is big
+  KMALLOC_BRK = 1,
+} kmalloc_flags_t;
+
+/// Use like malloc but for kernel
+void *kmalloc(size_t size, uint8_t flags);
+
+/// Use like free but for kernel
+void kfree(void *addr);
 
 /// Kernel side
 void create_kernel_region(vmm_kernel_region_t *region);
 void *increment_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
 void *decrement_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
+void *move_kernel_brk(vmm_kernel_region_t *region, int64_t amount);
 
 #endif

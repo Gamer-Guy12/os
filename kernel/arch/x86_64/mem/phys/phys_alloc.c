@@ -1,10 +1,10 @@
-#include <hal/memory.h>
-#include <hal/pimemory.h>
 #include <libk/err.h>
 #include <libk/kio.h>
 #include <libk/math.h>
 #include <libk/spinlock.h>
 #include <libk/sys.h>
+#include <mem/memory.h>
+#include <mem/pimemory.h>
 #include <stddef.h>
 #include <stdint.h>
 

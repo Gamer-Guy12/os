@@ -1,5 +1,5 @@
-#ifndef LOCK_H
-#define LOCK_H
+#ifndef SPINLOCK_H
+#define SPINLOCK_H
 
 #include <stdint.h>
 

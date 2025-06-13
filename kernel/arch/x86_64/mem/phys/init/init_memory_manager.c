@@ -1,7 +1,5 @@
 #include <asm.h>
 #include <decls.h>
-#include <hal/memory.h>
-#include <hal/pimemory.h>
 #include <libk/bit.h>
 #include <libk/err.h>
 #include <libk/kio.h>
@@ -9,6 +7,8 @@
 #include <libk/mem.h>
 #include <libk/spinlock.h>
 #include <libk/sys.h>
+#include <mem/memory.h>
+#include <mem/pimemory.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

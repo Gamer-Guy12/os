@@ -1,6 +1,6 @@
-#include <hal/memory.h>
-#include <hal/pimemory.h>
-#include <hal/vimemory.h>
+#include <mem/memory.h>
+#include <mem/pimemory.h>
+#include <mem/vimemory.h>
 #include <stddef.h>
 
 #define UNCANONICALIZER 0x0000fffffffff000
