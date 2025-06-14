@@ -5,6 +5,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define DESCRIPTOR_COUNT 4
+
+#define CREATE_SELECTOR(index, table, rpl) ((index << 3) | (table << 2) | rpl)
+
+#define KERNEL_CODE_SELECTOR CREATE_SELECTOR(0, 0, 0)
+#define KERNEL_DATA_SELECTOR CREATE_SELECTOR(1, 0, 0)
+#define USER_CODE_SELECTOR CREATE_SELECTOR(2, 0, 3)
+#define USER_DATA_SELECTOR CREATE_SELECTOR(3, 0, 3)
+
 typedef enum {
   GDT_LONG_MODE = 1 << 1,
   GDT_SIZE = 1 << 2,
