@@ -6,7 +6,6 @@
 gdt_pointer_t create_descriptors(void) {
   // Create a user and kernel code and a user and kernel data
   // 4 in total
-#define DESCRIPTOR_COUNT 4
   gdt_descriptor_t *descriptors =
       kmalloc(sizeof(gdt_descriptor_t) * DESCRIPTOR_COUNT, 0);
   memset(descriptors, 0, sizeof(gdt_descriptor_t) * DESCRIPTOR_COUNT);
