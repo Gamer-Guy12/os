@@ -7,7 +7,8 @@
 
 #define DESCRIPTOR_COUNT 4
 
-#define CREATE_SELECTOR(index, table, rpl) ((index << 3) | (table << 2) | rpl)
+#define CREATE_SELECTOR(index, table, rpl)                                     \
+  (uint16_t)((index << 3) | (table << 2) | rpl)
 
 #define KERNEL_CODE_SELECTOR CREATE_SELECTOR(0, 0, 0)
 #define KERNEL_DATA_SELECTOR CREATE_SELECTOR(1, 0, 0)
