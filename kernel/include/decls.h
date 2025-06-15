@@ -6,6 +6,7 @@
 #define NORETURN
 #define CONSTRUCTOR
 #define DESTRUCTOR
+#define ALIGN(to)
 
 #define LOOP while (1)
 
@@ -25,6 +26,9 @@
 
 #undef DESTRUCTOR
 #define DESTRUCTOR __attribute__((destructor))
+
+#undef ALIGN
+#define ALIGN(to) __attribute__((aligned(to)))
 
 #endif
 
