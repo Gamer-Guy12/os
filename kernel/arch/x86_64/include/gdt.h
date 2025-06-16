@@ -5,15 +5,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define DESCRIPTOR_COUNT 4
+// We need the null descriptor which adds 1
+#define DESCRIPTOR_COUNT 5
 
 #define CREATE_SELECTOR(index, table, rpl)                                     \
   (uint16_t)((index << 3) | (table << 2) | rpl)
 
-#define KERNEL_CODE_SELECTOR CREATE_SELECTOR(0, 0, 0)
-#define KERNEL_DATA_SELECTOR CREATE_SELECTOR(1, 0, 0)
-#define USER_CODE_SELECTOR CREATE_SELECTOR(2, 0, 3)
-#define USER_DATA_SELECTOR CREATE_SELECTOR(3, 0, 3)
+#define KERNEL_CODE_SELECTOR CREATE_SELECTOR(1, 0, 0)
+#define KERNEL_DATA_SELECTOR CREATE_SELECTOR(2, 0, 0)
+#define USER_CODE_SELECTOR CREATE_SELECTOR(3, 0, 3)
+#define USER_DATA_SELECTOR CREATE_SELECTOR(4, 0, 3)
 
 typedef enum {
   GDT_LONG_MODE = 1 << 1,
