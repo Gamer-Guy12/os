@@ -5,4 +5,5 @@ void string_strcpy(char *dest, const char *src) {
     while (src[i++]) {
         dest[i]=src[i];
     }
+    dest[i]= '\0'
 }
