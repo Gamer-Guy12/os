@@ -1,10 +1,10 @@
 #include <libk/string.h>
 
-void string_strcpy(string dest, const string src) {
+void string_strcpy(char *dest, const char *src) {
+    char *buffer = dest;
     int i = 0;
-    while (i < strlen(src)) {
-        dest[i] = src[i];
-        i++;
+    while (src[i++]) {
+        buffer[i]=src[i]
     }
-    dest[i] = '\0';
+    return buffer;
 }
