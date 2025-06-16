@@ -55,6 +55,6 @@ uint16_t strlen(char *buf);
 void strrev(char *buf);
 bool strcmp(char *str1, char *str2, size_t length);
 
-void string_strcpy(char *dest, const char *src)
+void strcpy(char *dest, const char *src)
 
 #endif
