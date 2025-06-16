@@ -10,6 +10,7 @@ void NORETURN sys_panic(uint64_t error_code) {
   kio_printf("Isolated Code %x\n", GET_CODE(error_code));
 
   // Wait infinitely
-  while (true)
-    ;
+  while (true) {
+    __asm__ volatile("cli; hlt;");
+  }
 }

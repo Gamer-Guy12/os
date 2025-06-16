@@ -1,4 +1,5 @@
-#include "gdt.h"
+#include <gdt.h>
+#include <interrupts.h>
 #include <libk/bst.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
@@ -87,6 +88,9 @@ void kernel_start(uint8_t *multiboot) {
   //*num = 49;
   //
   // kio_printf("Num %u\n", *num);
+
+  init_interrupts();
+  kio_printf("Initialized Interrupts\n");
 
   kernel_main();
 }
