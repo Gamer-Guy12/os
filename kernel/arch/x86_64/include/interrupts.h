@@ -40,14 +40,17 @@ typedef struct {
   // uint64_t rsp, ss;
 } PACKED idt_registers_t;
 
+typedef void (*interrupt_handler_t)(idt_registers_t *registers);
+
 void set_descriptor_offset(idt_gate_descriptor_t *descriptor, uint64_t offset);
 
 /// Common Interrupt Handler
 ///
 void common_interrupt_handler(idt_registers_t *registers);
 
-void set_idt_gate(uint8_t gate_number, void (*handler)(void), uint16_t seg_descriptor,
-                  uint8_t gate_type, bool present, uint8_t dpl, uint8_t ist);
+void set_idt_gate(uint8_t gate_number, void (*handler)(void),
+                  uint16_t seg_descriptor, uint8_t gate_type, bool present,
+                  uint8_t dpl, uint8_t ist);
 void enable_idt_gate(uint8_t gate_number);
 
 void register_handlers(void);
@@ -55,5 +58,9 @@ void register_handlers(void);
 void init_interrupts(void);
 
 void load_idt(void);
+
+// If handler already exists it just sets it to a new one, so make sure u don't
+// already have things
+void register_interrupt_handler(interrupt_handler_t handler, uint8_t index);
 
 #endif
