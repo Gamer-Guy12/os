@@ -1,5 +1,7 @@
 #include "libk/kio.h"
+#include "libk/mem.h"
 #include <interrupts.h>
+#include <stdint.h>
 
 void init_interrupts(void) {
   register_handlers();
@@ -7,5 +9,5 @@ void init_interrupts(void) {
   load_idt();
 
   kio_printf("Calling\n");
-  // __asm__ volatile("int $0x50");
+  __asm__ volatile("int $0x50");
 }
