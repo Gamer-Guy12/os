@@ -4,11 +4,6 @@ extern common_interrupt_handler
 
 global idt_handler_%1
 idt_handler_%1:
-.stop:
-   cli
-   hlt
-   jmp .stop
-
    cli
 
    ; Push error code
@@ -40,8 +35,8 @@ idt_handler_%1:
 
    xor rax, rax
    ; Change Data Segment
-   ; Data Segment is selected with 0x8
-   mov ax, 0x8
+   ; Data Segment is selected with 0x10
+   mov ax, 0x10
    mov ds, ax
    mov es, ax
    mov fs, ax

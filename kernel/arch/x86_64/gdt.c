@@ -1,4 +1,4 @@
-#include "libk/kio.h"
+#include <libk/kio.h>
 #include <decls.h>
 #include <gdt.h>
 #include <libk/mem.h>
@@ -42,5 +42,6 @@ void create_gdt(void) {
   // Load them here
   __asm__ volatile("lgdt (%0)" : : "r"(&ptr));
 
-  kio_printf("ptr.offset %x and size %x\n", ptr.offset, (size_t)ptr.size);
+  // GDT no work without this
+  kio_printf("");
 }
