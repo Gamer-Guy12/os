@@ -1,5 +1,5 @@
-#include "gdt.h"
-#include "interrupts.h"
+#include <gdt.h>
+#include <interrupts.h>
 #include <libk/bst.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>

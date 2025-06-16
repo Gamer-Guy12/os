@@ -30,27 +30,10 @@ void load_idt(void) {
   descriptor.size = sizeof(idt_gate_descriptor_t) * 256 - 1;
   descriptor.offset = (size_t)idt;
 
-  kio_printf("IDT Addr %x, IDT Size %x\n", descriptor.offset,
-             (size_t)descriptor.size + 1);
-
-  for (size_t i = 0; i < 256; i++) {
-    if (idt[i].present) {
-      kio_printf("IDT %x is present\n", i);
-      kio_printf("Selector %x\n", (size_t)idt[i].selector);
-      kio_printf("dpl: %x\n", (size_t)idt[i].dpl);
-      kio_printf("Gate Type %x\n", idt[i].gate_type);
-
-      size_t full_addr = idt[i].offset_1 | ((uint32_t)idt[i].offset_2 << 16) |
-                         ((uint64_t)idt[i].offset_3 << 32);
-
-      kio_printf("Addr is %x\n", full_addr);
-    }
-  }
+  // Interrupts no work without this
+  kio_printf("");
 
   __asm__ volatile("lidt (%0)" : : "r"(&descriptor));
 }
 
-void enable_idt_gate(uint8_t gate_number) {
-  kio_printf("Setting %x\n", (size_t)gate_number);
-  idt[gate_number].present = 1;
-}
+void enable_idt_gate(uint8_t gate_number) { idt[gate_number].present = 1; }
