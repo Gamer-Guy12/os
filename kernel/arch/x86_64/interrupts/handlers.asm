@@ -5,6 +5,11 @@ extern common_interrupt_handler
 global idt_handler_%1
 idt_handler_%1:
 
+.stop:
+   cli
+   hlt
+   jmp .stop
+
    cli
 
    ; Push error code
