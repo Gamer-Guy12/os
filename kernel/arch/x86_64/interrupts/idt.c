@@ -37,6 +37,13 @@ void load_idt(void) {
     if (idt[i].present) {
       kio_printf("IDT %x is present\n", i);
       kio_printf("Selector %x\n", (size_t)idt[i].selector);
+      kio_printf("dpl: %x\n", (size_t)idt[i].dpl);
+      kio_printf("Gate Type %x\n", idt[i].gate_type);
+
+      size_t full_addr = idt[i].offset_1 | ((uint32_t)idt[i].offset_2 << 16) |
+                         ((uint64_t)idt[i].offset_3 << 32);
+
+      kio_printf("Addr is %x\n", full_addr);
     }
   }
 

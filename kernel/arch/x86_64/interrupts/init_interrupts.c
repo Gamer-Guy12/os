@@ -1,5 +1,4 @@
 #include "libk/kio.h"
-#include "libk/mem.h"
 #include <interrupts.h>
 #include <stdint.h>
 

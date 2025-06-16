@@ -262,13 +262,13 @@ extern void idt_handler_255(void);
 void register_handlers(void) {
   set_idt_gate(0, &idt_handler_0, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
                0, 0);
-  set_idt_gate(1, &idt_handler_1, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
+  set_idt_gate(1, &idt_handler_1, KERNEL_CODE_SELECTOR, IDT_TRAP_GATE, 0,
                0, 0);
   set_idt_gate(2, &idt_handler_2, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
                0, 0);
-  set_idt_gate(3, &idt_handler_3, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
+  set_idt_gate(3, &idt_handler_3, KERNEL_CODE_SELECTOR, IDT_TRAP_GATE, 0,
                0, 0);
-  set_idt_gate(4, &idt_handler_4, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
+  set_idt_gate(4, &idt_handler_4, KERNEL_CODE_SELECTOR, IDT_TRAP_GATE, 0,
                0, 0);
   set_idt_gate(5, &idt_handler_5, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
                0, 0);

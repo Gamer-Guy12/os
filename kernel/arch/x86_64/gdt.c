@@ -1,12 +1,12 @@
-#include "decls.h"
 #include "libk/kio.h"
+#include <decls.h>
 #include <gdt.h>
 #include <libk/mem.h>
 #include <mem/memory.h>
 #include <stddef.h>
 #include <stdint.h>
 
-gdt_descriptor_t gdt[DESCRIPTOR_COUNT];
+ALIGN(0x8) gdt_descriptor_t gdt[DESCRIPTOR_COUNT];
 
 gdt_pointer_t create_descriptors(void) {
 
@@ -33,6 +33,18 @@ gdt_pointer_t create_descriptors(void) {
   ptr.size = sizeof(gdt_descriptor_t) * DESCRIPTOR_COUNT - 1;
   ptr.offset = (size_t)gdt;
 
+  union {
+     gdt_descriptor_t descriptor;
+     struct {
+        uint64_t first;
+        uint64_t second;
+     };
+  } dou;
+
+  dou.descriptor = gdt[1];
+
+  kio_printf("GDT[1] second %x, first %x\n", dou.second, dou.first);
+
   return ptr;
 }
 
@@ -42,6 +54,5 @@ void create_gdt(void) {
   // Load them here
   __asm__ volatile("lgdt (%0)" : : "r"(&ptr));
 
-  kio_printf("ptr.offset %x\n", ptr.offset);
-
+  kio_printf("ptr.offset %x and size %x\n", ptr.offset, (size_t)ptr.size);
 }
