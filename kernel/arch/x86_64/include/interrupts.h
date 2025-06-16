@@ -2,10 +2,11 @@
 #define X86_64_INTERRUPTS
 
 #include <decls.h>
+#include <stdbool.h>
 #include <stdint.h>
 
-#define IDT_INTERRUPT_GATE 0b1110
-#define IDT_TRAP_GATE 0b1111
+#define IDT_INTERRUPT_GATE 0xE
+#define IDT_TRAP_GATE 0xF
 
 typedef struct {
   uint16_t offset_1;
@@ -25,10 +26,11 @@ typedef struct {
   /// Size - 1
   uint16_t size;
   uint64_t offset;
-} PACKED idt_descriptor;
+} PACKED idt_descriptor_t;
 
 /// Everything is pushed to the stack in reverse order
 typedef struct {
+  uint64_t ds;
   uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
   uint64_t rsi, rdi, rbp, rdx, rcx, rbx, rax;
   uint64_t interrupt_number;
@@ -43,5 +45,15 @@ void set_descriptor_offset(idt_gate_descriptor_t *descriptor, uint64_t offset);
 /// Common Interrupt Handler
 ///
 void common_interrupt_handler(idt_registers_t *registers);
+
+void set_idt_gate(uint8_t gate_number, void (*handler)(void), uint16_t seg_descriptor,
+                  uint8_t gate_type, bool present, uint8_t dpl, uint8_t ist);
+void enable_idt_gate(uint8_t gate_number);
+
+void register_handlers(void);
+
+void init_interrupts(void);
+
+void load_idt(void);
 
 #endif
