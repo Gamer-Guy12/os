@@ -33,18 +33,6 @@ gdt_pointer_t create_descriptors(void) {
   ptr.size = sizeof(gdt_descriptor_t) * DESCRIPTOR_COUNT - 1;
   ptr.offset = (size_t)gdt;
 
-  union {
-     gdt_descriptor_t descriptor;
-     struct {
-        uint64_t first;
-        uint64_t second;
-     };
-  } dou;
-
-  dou.descriptor = gdt[1];
-
-  kio_printf("GDT[1] second %x, first %x\n", dou.second, dou.first);
-
   return ptr;
 }
 

@@ -4,7 +4,6 @@ extern common_interrupt_handler
 
 global idt_handler_%1
 idt_handler_%1:
-
 .stop:
    cli
    hlt
@@ -39,6 +38,7 @@ idt_handler_%1:
    mov ax, ds
    push rax
 
+   xor rax, rax
    ; Change Data Segment
    ; Data Segment is selected with 0x8
    mov ax, 0x8

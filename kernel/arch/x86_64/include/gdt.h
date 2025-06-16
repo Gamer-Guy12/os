@@ -39,8 +39,6 @@ typedef struct {
   uint64_t limit_2 : 4;
   uint64_t flags : 4;
   uint64_t base_3 : 8;
-  uint32_t base_4;
-  uint32_t reserved;
 } PACKED gdt_descriptor_t;
 
 typedef struct {
