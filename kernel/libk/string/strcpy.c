@@ -6,5 +6,5 @@ void strcpy(char *dest, const char *src) {
         dest[i]=src[i];
         i++;
     }
-    dest[i]= '\0'
+    dest[i]= '\0';
 }
