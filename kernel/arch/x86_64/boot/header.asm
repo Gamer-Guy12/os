@@ -22,6 +22,19 @@ dd 16
 dd 8
 info_request_end:
 
+; Frame buffer request
+framebuffer_request:
+dw 5
+dw 0
+dd framebuffer_request_end - framebuffer_request
+dd 1024
+dd 768
+dd 24
+framebuffer_request_end:
+; Padding to make this 8 byte aligned
+dd 0
+
+
 ; End tag
 dw 0
 dw 0

@@ -11,7 +11,7 @@ global multiboot_ptr
 
 section .loading
 _start:
-
+  cli
     mov dword [multiboot_ptr], ebx
 
     ; This checks if long mode is supported
@@ -68,7 +68,7 @@ after_paging:
 BITS 32
 no_long:
     ; This says NL (no longmode)
-    mov dword [0xb8000], 0x0f4c0f4e
+    ; mov dword [0xb8000], 0x0f4c0f4e
 
 ; This code stops interupts, stops the cpu, and then if the cpu restarts it jumps to stop to redo the process
 stop:

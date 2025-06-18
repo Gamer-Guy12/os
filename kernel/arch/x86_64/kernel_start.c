@@ -1,3 +1,5 @@
+#include "libk/math.h"
+#include <decls.h>
 #include <gdt.h>
 #include <interrupts.h>
 #include <libk/bst.h>
@@ -30,7 +32,47 @@ static void handle_init_array(void) {
 }
 #pragma endregion
 
+typedef struct {
+  uint32_t total_size;
+  uint32_t reserved;
+} PACKED multiboot_header_t;
+
+typedef struct {
+  uint32_t type;
+  uint32_t size;
+} PACKED multiboot_tag_t;
+
+void test_print(uint8_t *multiboot) {
+  //  multiboot_header_t *header = (multiboot_header_t *)multiboot;
+
+  // Skip over the header
+  multiboot += 8;
+
+  multiboot_tag_t *cur_tag = (multiboot_tag_t *)multiboot;
+
+  while (cur_tag->type != 0) {
+    uint32_t true_size = ROUND_UP(cur_tag->size, 8);
+
+    // Fault if framebuffer_found
+    if (cur_tag->type == 8) {
+      uint8_t *ptr = (uint8_t *)0x1000000000000;
+      *ptr = 94;
+    }
+
+    multiboot += true_size;
+    cur_tag = (multiboot_tag_t *)multiboot;
+  }
+}
+
 void kernel_start(uint8_t *multiboot) {
+  // Remember to delete once efi port is done
+  uint8_t *ptr = (uint8_t *)0x1000000000000;
+  *ptr = 94;
+
+  test_print(multiboot);
+
+  while (1) {
+  }
   handle_init_array();
   kio_printf("Called Global Constructors\n");
   init_multiboot(multiboot);
