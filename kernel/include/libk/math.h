@@ -21,7 +21,7 @@ double CONST math_powd(double base, double exp);
 int64_t math_absi(int64_t input);
 float math_absf(float input);
 
-int64_t math_log(int64_t input, int64_t base);
+int64_t CONST math_log(int64_t input, int64_t base);
 
 float math_sqrtffast(float x);
 double math_sqrtdfast(double input);

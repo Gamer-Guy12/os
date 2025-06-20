@@ -8,3 +8,4 @@ Bit 1: Missing Block
 ERR 0: Memory Allocator Error
 ERR 1: Multiboot Error
 ERR 2: Memory Init Error
+ERR 3: No interrupt handler

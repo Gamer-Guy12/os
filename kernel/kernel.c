@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void kernel_main(void) {
+void NORETURN kernel_main(void) {
   // kio_clear();
   kio_printf("We are in Kernel Main!\n");
 
@@ -30,4 +30,7 @@ void kernel_main(void) {
   // *num3 = 48;
   // kio_printf("Malloc %u\n", *num1);
   // kio_printf("Malloc %u\n", *num3);
+
+  while (1) {
+  }
 }
