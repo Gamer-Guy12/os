@@ -1,3 +1,5 @@
+BITS 64
+
 global extend
 extern extend_ret
 

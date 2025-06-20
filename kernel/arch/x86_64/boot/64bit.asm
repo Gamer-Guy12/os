@@ -30,7 +30,7 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
-jmp extend:
+jmp extend
 extend_ret:
 
 mov rcx, 510
