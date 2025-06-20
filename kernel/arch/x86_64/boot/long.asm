@@ -11,7 +11,8 @@ global multiboot_ptr
 
 section .loading
 _start:
-  cli
+
+    cli
     mov dword [multiboot_ptr], ebx
 
     ; This checks if long mode is supported
