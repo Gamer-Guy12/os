@@ -30,9 +30,6 @@ mov es, ax
 mov fs, ax
 mov gs, ax
 
-jmp extend
-extend_ret:
-
 mov rcx, 510
 .l2_loop:
     
@@ -97,6 +94,9 @@ mov [_l4_page + 511 * 8], rax
 
 mov rax, _l4_page
 mov cr3, rax
+
+jmp extend
+extend_ret:
 
 call kernel_early_start
 
