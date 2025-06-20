@@ -18,16 +18,16 @@ int64_t CONST math_powi64(int64_t base, int64_t exp);
 double CONST math_powf(float base, float exp);
 double CONST math_powd(double base, double exp);
 
-int64_t math_absi(int64_t input);
-float math_absf(float input);
+int64_t CONST math_absi(int64_t input);
+float CONST math_absf(float input);
 
 int64_t CONST math_log(int64_t input, int64_t base);
 
-float math_sqrtffast(float x);
-double math_sqrtdfast(double input);
+float CONST math_sqrtffast(float x);
+double CONST math_sqrtdfast(double input);
 
-float math_sqrtf(float input);
-double math_sqrtd(double input);
+float CONST math_sqrtf(float input);
+double CONST math_sqrtd(double input);
 
 #define ROUND_UP(num, to) ((num) + ((to) - ((num) % (to))))
 #define ROUND_DOWN(num, to) ((num) - ((num) % (to)))
