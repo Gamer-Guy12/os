@@ -8,6 +8,9 @@ extern kernel_gp_end
 extern _higher_l2_page
 extern _higher_l1_page
 
+global extend_ret
+extern extend
+
 extern _l4_page
 extern _l3_page
 extern _l2_page
@@ -26,6 +29,9 @@ mov ds, ax
 mov es, ax
 mov fs, ax
 mov gs, ax
+
+jmp extend:
+extend_ret:
 
 mov rcx, 510
 .l2_loop:

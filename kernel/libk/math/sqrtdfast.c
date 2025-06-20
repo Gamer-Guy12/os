@@ -8,3 +8,4 @@ double math_sqrtdfast(double input) {
     y = 0.5 * (y + input / y);
     return y;
 }
+

@@ -4,7 +4,7 @@ DECLS?=
 ifeq ($(ARCH), x86_64)
 CC=x86_64-elf-gcc
 INCLUDE := kernel/include
-CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c -I $(INCLUDE) -std=c11 -mcmodel=kernel -no-pie -mno-sse -mno-avx
+CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c -I $(INCLUDE) -std=c11 -mcmodel=kernel -no-pie -mmmx -msse -mno-avx
 
 ASM := nasm
 ASMFLAGS?=-felf64
