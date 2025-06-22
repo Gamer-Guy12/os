@@ -54,22 +54,24 @@ void test_print(uint8_t *multiboot) {
 
   multiboot_tag_t *cur_tag = (multiboot_tag_t *)multiboot;
 
+  kio_printf("Found multiboot tags: ");
+
   while (cur_tag->type != 0) {
     uint32_t true_size = ROUND_UP(cur_tag->size, 8);
 
-    // Fault if framebuffer_found
-    if (cur_tag->type == 8) {
-      uint8_t *ptr = (uint8_t *)0x1000000000000;
-      *ptr = 94;
-    }
+    kio_printf("%u, ", (size_t)cur_tag->type);
 
     multiboot += true_size;
     cur_tag = (multiboot_tag_t *)multiboot;
   }
+
+  kio_printf("\n");
 }
 
 void kernel_start(uint8_t *multiboot) {
 
+//  test_print(multiboot);
+  
   handle_init_array();
   kio_printf("Called Global Constructors\n");
   init_multiboot(multiboot);
@@ -127,13 +129,16 @@ void kernel_start(uint8_t *multiboot) {
   //*num = 49;
   //
   // kio_printf("Num %u\n", *num);
-
+  
   init_interrupts();
+  __asm__ volatile("sti");
+  register_interrupt_handler(handle_interrupt, 0x8);
+while (1) {}
+  // Enable interrupts
   kio_printf("Initialized Interrupts\n");
-
   register_interrupt_handler(handle_interrupt, 0x50);
 
-  __asm__ volatile("movq $65, %%rax; int $0x50" ::: "rax");
+//  __asm__ volatile("movq $65, %%rax; int $0x50" ::: "rax");
 
   kernel_main();
 }

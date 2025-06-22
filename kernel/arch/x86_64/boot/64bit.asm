@@ -92,8 +92,6 @@ mov [_l4_page + 511 * 8], rax
 mov rax, _l4_page
 mov cr3, rax
 
-sti
-
 call kernel_early_start
 
 stop:

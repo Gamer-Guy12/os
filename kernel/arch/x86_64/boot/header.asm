@@ -16,23 +16,27 @@ info_request:
 dw 1
 dw 0
 dd info_request_end - info_request
+; Memory map
 dd 6
+; XSDP
 dd 15
-dd 16
+; Networking info
+dd 14
+; Framebuffer
 dd 8
 info_request_end:
 
 ; Frame buffer request
-framebuffer_request:
-dw 5
-dw 0
-dd framebuffer_request_end - framebuffer_request
-dd 1024
-dd 768
-dd 24
-framebuffer_request_end:
-; Padding to make this 8 byte aligned
-dd 0
+;framebuffer_request:
+;dw 5
+;dw 0
+;dd framebuffer_request_end - framebuffer_request
+;dd 1024
+;dd 768
+;dd 24
+;framebuffer_request_end:
+;; Padding to make this 8 byte aligned
+;dd 0
 
 
 ; End tag
