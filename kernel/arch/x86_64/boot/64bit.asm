@@ -94,11 +94,6 @@ mov cr3, rax
 
 sti
 
-sop:
-  cli
-  hlt
-  jmp sop
-
 call kernel_early_start
 
 stop:

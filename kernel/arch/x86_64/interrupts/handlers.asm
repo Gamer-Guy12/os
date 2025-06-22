@@ -41,6 +41,7 @@ idt_handler_%1:
    mov es, ax
    mov fs, ax
    mov gs, ax
+   mov ss, ax
 
    ; Pass in pointer to the registers
    mov rdi, rsp
@@ -50,6 +51,10 @@ idt_handler_%1:
    ; Change data segment back
    pop rax
    mov ds, ax
+   mov es, ax
+   mov fs, ax
+   mov gs, ax
+   mov ss, ax
 
    pop r15
    pop r14
@@ -117,12 +122,17 @@ idt_handler_%1:
    mov es, ax
    mov fs, ax
    mov gs, ax
+   mov ss, ax
 
    call common_interrupt_handler
 
    ; Change data segment back
    pop rax
    mov ds, ax
+   mov es, ax
+   mov fs, ax
+   mov gs, ax
+   mov ss, ax
    
    pop r15
    pop r14
