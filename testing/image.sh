@@ -11,7 +11,7 @@ dd if=/dev/zero of=os.img bs=1M count=256
 
 # Create esp and other thingy
 dd if=/dev/zero of=fat32.img bs=1M count=9
-dd if=/dev/zero of=ext2.img bs=1M count=244
+dd if=/dev/zero of=ext2.img bs=512 count=501760
 
 # Format disks
 parted os.img --script -- \
@@ -29,7 +29,7 @@ e2cp ../build/bin/kernel.bin ext2.img:/boot/
 e2cp ../targets/x86_64/grub.cfg ext2.img:/boot/grub/
 
 # Create efi binary
-grub-mkstandalone -O x86_64-efi -o BOOTX64.EFI
+grub-mkstandalone -O x86_64-efi -o BOOTX64.EFI "boot/grub/grub.cfg=grub.cfg"
 
 # Copy efi binary onto fat32
 mmd -i fat32.img ::/EFI

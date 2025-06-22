@@ -42,6 +42,10 @@ typedef struct {
   uint32_t size;
 } PACKED multiboot_tag_t;
 
+void handle_interrupt(idt_registers_t* registers) {
+  kio_putchar((char)registers->rax);
+}
+
 void test_print(uint8_t *multiboot) {
   //  multiboot_header_t *header = (multiboot_header_t *)multiboot;
 
@@ -65,14 +69,7 @@ void test_print(uint8_t *multiboot) {
 }
 
 void kernel_start(uint8_t *multiboot) {
-  // Remember to delete once efi port is done
-  uint8_t *ptr = (uint8_t *)0x1000000000000;
-  *ptr = 94;
 
-  test_print(multiboot);
-
-  while (1) {
-  }
   handle_init_array();
   kio_printf("Called Global Constructors\n");
   init_multiboot(multiboot);
@@ -133,6 +130,10 @@ void kernel_start(uint8_t *multiboot) {
 
   init_interrupts();
   kio_printf("Initialized Interrupts\n");
+
+  register_interrupt_handler(handle_interrupt, 0x50);
+
+  __asm__ volatile("movq $65, %%rax; int $0x50" ::: "rax");
 
   kernel_main();
 }
