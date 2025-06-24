@@ -11,6 +11,7 @@
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
+#include <pic.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <x86_64.h>
@@ -127,6 +128,8 @@ void kernel_start(uint8_t *multiboot) {
   // kio_printf("Num %u\n", *num);
 
   init_interrupts();
+  // Or else it throws random interrupts
+  disable_pic();
   kio_printf("Initialized Interrupts\n");
 
   kernel_main();
