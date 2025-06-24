@@ -4,4 +4,6 @@
 void init_interrupts(void) {
   register_handlers();
   load_idt();
+
+  __asm__ volatile("sti");
 }

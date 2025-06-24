@@ -1,10 +1,10 @@
-#include <libk/math.h>
 #include <decls.h>
 #include <gdt.h>
 #include <interrupts.h>
 #include <libk/bst.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
+#include <libk/math.h>
 #include <libk/spinlock.h>
 #include <libk/string.h>
 #include <mem/kheap.h>
@@ -42,10 +42,6 @@ typedef struct {
   uint32_t size;
 } PACKED multiboot_tag_t;
 
-void handle_interrupt(idt_registers_t* registers) {
-  kio_putchar((char)registers->rax);
-}
-
 void test_print(uint8_t *multiboot) {
   //  multiboot_header_t *header = (multiboot_header_t *)multiboot;
 
@@ -70,8 +66,8 @@ void test_print(uint8_t *multiboot) {
 
 void kernel_start(uint8_t *multiboot) {
 
-//  test_print(multiboot);
-  
+  //  test_print(multiboot);
+
   handle_init_array();
   kio_printf("Called Global Constructors\n");
   init_multiboot(multiboot);
@@ -129,16 +125,9 @@ void kernel_start(uint8_t *multiboot) {
   //*num = 49;
   //
   // kio_printf("Num %u\n", *num);
-  
-  init_interrupts();
-  __asm__ volatile("sti");
-  register_interrupt_handler(handle_interrupt, 0x8);
-while (1) {}
-  // Enable interrupts
-  kio_printf("Initialized Interrupts\n");
-  register_interrupt_handler(handle_interrupt, 0x50);
 
-//  __asm__ volatile("movq $65, %%rax; int $0x50" ::: "rax");
+  init_interrupts();
+  kio_printf("Initialized Interrupts\n");
 
   kernel_main();
 }

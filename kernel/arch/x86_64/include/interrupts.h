@@ -36,7 +36,8 @@ typedef struct {
   uint64_t interrupt_number;
   uint64_t error_code;
   uint64_t rip, cs, rflags;
-  // If the interrupt was from user space we would also add
+  // If the interrupt was from user space we would also have
+  // Don't use unless this is garuanteed form user space
   // uint64_t rsp, ss;
 } PACKED idt_registers_t;
 
