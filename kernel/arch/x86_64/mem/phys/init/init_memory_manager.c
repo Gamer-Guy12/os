@@ -412,7 +412,6 @@ static void map_buddy_memory(void) {
       CLEAR_PAGE((void *)virt);
     }
 
-
     size_t pt_count =
         ROUND_UP(i * bytes_taken, PAGE_SIZE * 512) / (PAGE_SIZE * 512);
 
@@ -427,7 +426,6 @@ static void map_buddy_memory(void) {
 
       CLEAR_PAGE((void *)virt);
     }
-
 
     size_t page_count = ROUND_UP(i * bytes_taken, PAGE_SIZE) / PAGE_SIZE;
 
