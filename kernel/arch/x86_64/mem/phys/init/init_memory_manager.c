@@ -3,7 +3,6 @@
 #include <libk/bit.h>
 #include <libk/err.h>
 #include <libk/kio.h>
-#include <libk/math.h>
 #include <libk/mem.h>
 #include <libk/spinlock.h>
 #include <libk/sys.h>
@@ -15,6 +14,10 @@
 #include <x86_64.h>
 
 #define MULTIBOOT_MEMORY_MAP 6
+
+// It turns out that this file rlly needs the old round up and down macros
+#define ROUND_UP(num, to) ((num) + ((to) - ((num) % (to))))
+#define ROUND_DOWN(num, to) ((num) - ((num) % (to)))
 
 typedef struct {
   uint64_t base;

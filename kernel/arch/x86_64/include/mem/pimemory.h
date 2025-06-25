@@ -1,13 +1,16 @@
 #ifndef X86_64_PIMEMORY_H
 #define X86_64_PIMEMORY_H
 
-#include <libk/math.h>
 #include <libk/mem.h>
 #include <libk/spinlock.h>
 #include <mem/memory.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <decls.h>
+
+// This is all cuz the old rounding function is needed
+uint64_t CONST math_powu64(uint64_t base, uint64_t exp);
 
 #define PAGE_TABLE_ENTRY_ADDR_MASK 0x0007fffffffff000
 #define PAGE_SIZE 0x1000
