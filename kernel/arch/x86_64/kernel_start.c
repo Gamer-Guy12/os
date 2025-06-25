@@ -43,36 +43,13 @@ typedef struct {
   uint32_t size;
 } PACKED multiboot_tag_t;
 
-void test_print(uint8_t *multiboot) {
-  //  multiboot_header_t *header = (multiboot_header_t *)multiboot;
-
-  // Skip over the header
-  multiboot += 8;
-
-  multiboot_tag_t *cur_tag = (multiboot_tag_t *)multiboot;
-
-  kio_printf("Found multiboot tags: ");
-
-  while (cur_tag->type != 0) {
-    uint32_t true_size = ROUND_UP(cur_tag->size, 8);
-
-    kio_printf("%u, ", (size_t)cur_tag->type);
-
-    multiboot += true_size;
-    cur_tag = (multiboot_tag_t *)multiboot;
-  }
-
-  kio_printf("\n");
-}
-
 void kernel_start(uint8_t *multiboot) {
 
   //  test_print(multiboot);
 
+  kgfx_init();
   handle_init_array();
-  kio_printf("Called Global Constructors\n");
   init_multiboot(multiboot);
-  kio_printf("Initialized Multiboot\n");
   init_memory_manager();
   kio_printf("Initialized Memory Manager\n");
   // // kio_clear();
@@ -111,6 +88,7 @@ void kernel_start(uint8_t *multiboot) {
   //
   // decrement_kernel_brk(&region, 0x4001);
 
+  // Set up default kernel region. during smp startup each core should make their kernel region
   vmm_kernel_region_t region;
   create_kernel_region(&region);
   vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
