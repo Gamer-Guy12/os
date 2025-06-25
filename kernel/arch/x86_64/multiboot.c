@@ -1,9 +1,41 @@
+#include <libk/kio.h>
 #include <libk/math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <x86_64.h>
 
 static uint8_t *global_multiboot;
+
+typedef struct {
+  uint32_t type;
+  /// Make sure to round up by 8
+  uint32_t size;
+} multiboot_tag_header_t;
+
+void print_multiboot_info(void) {
+  uint8_t *ptr = get_multiboot();
+
+  uint32_t total_size = *(uint32_t *)ptr;
+  // The static part before the header has the size of 8 bytes so - 8 skips over
+  // those
+  uint32_t size_remaining = total_size - 8;
+
+  while (size_remaining > 0) {
+    multiboot_tag_header_t *cur_header =
+        (multiboot_tag_header_t *)(ptr + total_size - size_remaining);
+
+    kio_printf("Multiboot: Type %u, Size %x\n", cur_header->type,
+               cur_header->size);
+
+    uint32_t true_size = ROUND_UP(cur_header->size, 8);
+
+    if (true_size > size_remaining || cur_header->type == 0) {
+      break;
+    }
+
+    size_remaining -= true_size;
+  }
+}
 
 void init_multiboot(uint8_t *multiboot) { global_multiboot = multiboot; }
 

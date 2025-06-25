@@ -387,6 +387,8 @@ static void map_buddy_memory(void) {
 
   const size_t bytes_taken = math_powu64(2, PHYS_BUDDY_MAX_ORDER) * 2 / 8;
 
+  kio_printf("Block Count %x\n", block_count);
+
   for (size_t i = 0; i < block_count; i++) {
     bool make_pdt = ((i * bytes_taken) % (PAGE_SIZE * 512 * 512)) == 0;
     bool make_pt = ((i * bytes_taken) % (PAGE_SIZE * 512)) == 0;
@@ -395,6 +397,7 @@ static void map_buddy_memory(void) {
     // + 1 skips over the first pdt used for the block descriptors
     size_t pdt_count = ROUND_UP(i * bytes_taken, PAGE_SIZE * 512 * 512) /
                        (PAGE_SIZE * 512 * 512);
+
     if (make_pdt) {
       size_t phys = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
       used_page_count++;
@@ -405,6 +408,7 @@ static void map_buddy_memory(void) {
 
       CLEAR_PAGE((void *)virt);
     }
+
 
     size_t pt_count =
         ROUND_UP(i * bytes_taken, PAGE_SIZE * 512) / (PAGE_SIZE * 512);
@@ -420,6 +424,7 @@ static void map_buddy_memory(void) {
 
       CLEAR_PAGE((void *)virt);
     }
+
 
     size_t page_count = ROUND_UP(i * bytes_taken, PAGE_SIZE) / PAGE_SIZE;
 

@@ -15,9 +15,11 @@
 
 void start_cores(void);
 
+// Multiboot
 void init_multiboot(uint8_t *multiboot);
 uint8_t *get_multiboot(void);
 size_t get_multiboot_size(void);
+void print_multiboot_info(void);
 
 uint8_t *move_to_type(uint32_t type);
 

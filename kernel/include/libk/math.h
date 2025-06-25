@@ -22,7 +22,7 @@ int64_t CONST math_absi(int64_t input);
 
 int64_t CONST math_log(int64_t input, int64_t base);
 
-#define ROUND_UP(num, to) ((num) + ((to) - ((num) % (to))))
-#define ROUND_DOWN(num, to) ((num) - ((num) % (to)))
+#define ROUND_DOWN(num, to) (((num) / (to)) * (to))
+#define ROUND_UP(num, to) ((((num) + ((to) -1)) / (to)) * (to)) 
 
 #endif

@@ -127,10 +127,12 @@ void kernel_start(uint8_t *multiboot) {
   //
   // kio_printf("Num %u\n", *num);
 
-  init_interrupts();
-  // Or else it throws random interrupts
+  // It would create interrupts otherwise
   disable_pic();
+  init_interrupts();
   kio_printf("Initialized Interrupts\n");
+
+  print_multiboot_info();
 
   kernel_main();
 }
