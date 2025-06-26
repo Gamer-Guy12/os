@@ -5,7 +5,7 @@ PDPT Entries:
 258 - Misc Data: PDT structure
     - Multiboot Info
     - ACPI Info
-    - PDT 256 contains the framebuffer
+    - PDT 256 and onwards contains vga memory
 259 - 509 - Kernel Heap and Stack
 510 - Recursive Mapping
 511 - Kernel

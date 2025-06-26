@@ -2,10 +2,11 @@ Or this shit together to make cool errors!
 
 First 48 bits are for flags and the rest is just the error number
 
-Bit 0: Too much space
+Bit 0: Too much space / KGFX wrong mode
 Bit 1: Missing Block
 
 ERR 0: Memory Allocator Error
 ERR 1: Multiboot Error
 ERR 2: Memory Init Error
 ERR 3: No interrupt handler
+ERR 4: KGFX Error

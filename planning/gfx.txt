@@ -1,0 +1,12 @@
+kio_printf and kio_puts will print to screen unless the kernel sets a flag at runtime to start printing to a log file (requires fs)
+kgfx_putchar will print to screen until it is told to go into graphics mode at which it will panic
+
+gfx drivers:
+each one exposes some thingies in a struct
+how to figure out which driver to use
+  - There could be multiple monitors
+  - Kernel exposes monitor count and you can request which monitor to get the graphics info for
+  - kgfx will always use monitor 0 (cuz its for kernel stuff and should be not used or smthing for others)
+
+This is too complex for now kgfx justs assumes vga shit and works from there
+this stuff can be done later

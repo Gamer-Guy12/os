@@ -31,8 +31,11 @@ framebuffer_request:
 dw 5
 dw 0
 dd framebuffer_request_end - framebuffer_request
+; Width
 dd 1280
+; Height
 dd 720
+; Bits Per Pixel
 dd 24
 framebuffer_request_end:
 ; Padding to make this 8 byte aligned

@@ -8,6 +8,8 @@
 #include <libk/sys.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
+#include <mem/vimemory.h>
+#include <multiboot.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -455,13 +457,6 @@ static void create_physical_structures(void) {
   modify_descriptors();
 }
 
-inline static void set_bit_in_ptr(uint8_t *ptr, size_t bit) {
-  size_t index = ROUND_DOWN(bit, 8);
-  size_t offset = bit - index;
-
-  ptr[index / 8] |= 1 << offset;
-}
-
 inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
   size_t index = ROUND_DOWN(bit, 8);
   size_t offset = bit - index;
@@ -507,11 +502,13 @@ static void reserve_block(size_t base) {
   }
 }
 
-static void reserve_page(size_t block_base, size_t page) {
+static void reserve_page(size_t block_base, size_t page, bool panic) {
   block_descriptor_t *descriptor = get_descriptor(block_base);
 
-  if (descriptor == NULL) {
+  if (descriptor == NULL && panic) {
     sys_panic(MEMORY_INIT_ERR | MISSING_BLOCK_ERR);
+  } else if (descriptor == NULL && !panic) {
+    return;
   }
 
   descriptor->free_pages--;
@@ -558,49 +555,49 @@ static void reserve_page(size_t block_base, size_t page) {
   descriptor->largest_region_order = 0;
 }
 
-static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
-  uint8_t *data = descriptor->buddy_data;
-
-  size_t prev_bit = 0;
-
-  for (size_t i = PHYS_BUDDY_MAX_ORDER; i > 0; i--) {
-    if (i == PHYS_BUDDY_MAX_ORDER) {
-      if (!(data[0] & 1)) {
-        return false;
-      }
-    } else {
-      // 2 * size
-      size_t size = math_powu64(2, i + 1);
-      bool is_lower = page % size < size / 2;
-
-      if (!is_lower) {
-        prev_bit = prev_bit * 2 + 2;
-        if (!(check_bit_in_ptr(data, prev_bit))) {
-          return false;
-        }
-      } else {
-        prev_bit = prev_bit * 2 + 1;
-        if (!(check_bit_in_ptr(data, prev_bit))) {
-          return false;
-        }
-      }
-    }
-  }
-
-  if (page % 2 == 0) {
-    prev_bit = prev_bit * 2 + 1;
-    if (!check_bit_in_ptr(data, prev_bit)) {
-      return false;
-    }
-  } else {
-    prev_bit = prev_bit * 2 + 2;
-    if (!(check_bit_in_ptr(data, prev_bit))) {
-      return false;
-    }
-  }
-
-  return true;
-}
+// static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
+//   uint8_t *data = descriptor->buddy_data;
+//
+//   size_t prev_bit = 0;
+//
+//   for (size_t i = PHYS_BUDDY_MAX_ORDER; i > 0; i--) {
+//     if (i == PHYS_BUDDY_MAX_ORDER) {
+//       if (!(data[0] & 1)) {
+//         return false;
+//       }
+//     } else {
+//       // 2 * size
+//       size_t size = math_powu64(2, i + 1);
+//       bool is_lower = page % size < size / 2;
+//
+//       if (!is_lower) {
+//         prev_bit = prev_bit * 2 + 2;
+//         if (!(check_bit_in_ptr(data, prev_bit))) {
+//           return false;
+//         }
+//       } else {
+//         prev_bit = prev_bit * 2 + 1;
+//         if (!(check_bit_in_ptr(data, prev_bit))) {
+//           return false;
+//         }
+//       }
+//     }
+//   }
+//
+//   if (page % 2 == 0) {
+//     prev_bit = prev_bit * 2 + 1;
+//     if (!check_bit_in_ptr(data, prev_bit)) {
+//       return false;
+//     }
+//   } else {
+//     prev_bit = prev_bit * 2 + 2;
+//     if (!(check_bit_in_ptr(data, prev_bit))) {
+//       return false;
+//     }
+//   }
+//
+//   return true;
+// }
 
 static void reserve_kernel_structures(void) {
   extern char end_kernel[];
@@ -627,7 +624,52 @@ static void reserve_kernel_structures(void) {
 
     size_t page = i % BLOCKS_PER_PAGE;
 
-    reserve_page(block_base, page);
+    reserve_page(block_base, page, true);
+  }
+}
+
+/// I can use physical allocation in this function
+void identity_map_257(void) {
+  multiboot_memory_header_t *header = multiboot_get_tag(6);
+  size_t region_count = (header->size - 8) / sizeof(multiboot_memory_t);
+
+  multiboot_memory_t *regions = (void *)(header + 1);
+
+  for (size_t i = 0; i < region_count; i++) {
+    //    if (regions[i].type != 1) {
+    //      continue;
+    //    }
+
+    size_t true_base = ROUND_DOWN(regions[i].base, PAGE_SIZE);
+    size_t base_diff = regions[i].base - true_base;
+    size_t page_count =
+        ROUND_UP(regions[i].len + base_diff, PAGE_SIZE) / PAGE_SIZE;
+
+    for (size_t i = 0; i < page_count; i++) {
+      if (true_base + i * PAGE_SIZE > GB * 512ull) {
+        break;
+      }
+
+      map_phys_page((void *)(IDENTITY_MAPPED_ADDR + true_base + i * PAGE_SIZE),
+                    PT_PRESENT | PT_READ_WRITE, false,
+                    (void *)(true_base + i * PAGE_SIZE));
+    }
+  }
+}
+
+/// This assumes that the framebuffer is page aligned, i hope everything works out
+/// Prolly will cuz of like the rounding errors but its fine
+void map_vga_mem(void) {
+  mltbt_framebuffer_info_t *info = multiboot_get_tag(MLTBT_FRAMEBUFFER_INFO);
+  void *framebuffer_addr = (void *)info->framebuffer_addr;
+  size_t framebuffer_length =
+      info->framebuffer_pitch * (info->framebuffer_height + 1);
+  size_t page_count = ROUND_UP(framebuffer_length, PAGE_SIZE) / PAGE_SIZE;
+
+  for (size_t i = 0; i < page_count; i++) {
+    map_phys_page((void *)(VGA_MEM_ADDR + i * PAGE_SIZE),
+                  PT_PRESENT | PT_READ_WRITE, true,
+                  (void *)((size_t)framebuffer_addr + i * PAGE_SIZE));
   }
 }
 
@@ -645,4 +687,8 @@ void init_memory_manager(void) {
   create_physical_structures();
 
   reserve_kernel_structures();
+
+  identity_map_257();
+
+  map_vga_mem();
 }

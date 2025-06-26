@@ -1,13 +1,13 @@
 #ifndef X86_64_PIMEMORY_H
 #define X86_64_PIMEMORY_H
 
+#include <decls.h>
 #include <libk/mem.h>
 #include <libk/spinlock.h>
 #include <mem/memory.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <decls.h>
 
 // This is all cuz the old rounding function is needed
 uint64_t CONST math_powu64(uint64_t base, uint64_t exp);
@@ -33,6 +33,9 @@ uint64_t CONST math_powu64(uint64_t base, uint64_t exp);
   ((((pt) << 12ull) | ((pdt) << 21ull) | ((pdpt) << 30ull) |                   \
     ((pml4) << 39ull)) |                                                       \
    ((pml4) > 255 ? (0xFFFFull << 48ull) : 0))
+
+#define IDENTITY_MAPPED_ADDR INDICES_TO_ADDR(0, 0, 0, 257ull)
+#define VGA_MEM_ADDR INDICES_TO_ADDR(0, 0, 256ull, 258ull)
 
 typedef enum {
   PML4_PRESENT = 1,

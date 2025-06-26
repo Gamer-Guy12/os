@@ -34,7 +34,7 @@ typedef struct {
 
 typedef struct {
   uint32_t palette_size;
-} PACKED mltbt_framebuffer_type_0;
+} PACKED mltbt_framebuffer_type_0_t;
 
 typedef struct {
   uint8_t framebuffer_red_field_pos;
@@ -43,7 +43,7 @@ typedef struct {
   uint8_t framebuffer_green_mask_size;
   uint8_t framebuffer_blue_field_pos;
   uint8_t framebuffer_blue_mask_size;
-} PACKED mltbt_framebuffer_type_1;
+} PACKED mltbt_framebuffer_type_1_t;
 
 typedef struct {
   uint32_t type;
@@ -55,7 +55,7 @@ typedef struct {
   uint8_t framebuffer_bpp;
   uint8_t framebuffer_type;
   uint8_t reserved;
-} PACKED mltbt_framebuffer_info;
+} PACKED mltbt_framebuffer_info_t;
 
 void *multiboot_get_tag(uint32_t type);
 

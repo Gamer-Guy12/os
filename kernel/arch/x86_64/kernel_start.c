@@ -1,3 +1,5 @@
+#include "libk/bit.h"
+#include "libk/vga_kgfx.h"
 #include <decls.h>
 #include <gdt.h>
 #include <interrupts.h>
@@ -47,10 +49,19 @@ void kernel_start(uint8_t *multiboot) {
 
   //  test_print(multiboot);
 
-  kgfx_init();
   handle_init_array();
   init_multiboot(multiboot);
   init_memory_manager();
+  kgfx_init();
+
+  for (size_t i = 0; i < 1000; i++) {
+    for (size_t j = 0; j < 500; j++) {
+      vga_kgfx_set_pixel(i, j, 255, 255, 255);
+    }
+  }
+
+  while (1) {}
+
   kio_printf("Initialized Memory Manager\n");
   // // kio_clear();
   //
@@ -88,7 +99,8 @@ void kernel_start(uint8_t *multiboot) {
   //
   // decrement_kernel_brk(&region, 0x4001);
 
-  // Set up default kernel region. during smp startup each core should make their kernel region
+  // Set up default kernel region. during smp startup each core should make
+  // their kernel region
   vmm_kernel_region_t region;
   create_kernel_region(&region);
   vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;

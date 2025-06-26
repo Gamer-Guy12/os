@@ -1,3 +1,4 @@
+#include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/spinlock.h>
 
@@ -8,7 +9,7 @@ void kio_puts(char *c) {
   uint16_t index = 0;
 
   while (c[index] != '\0') {
-    kio_putchar(c[index]);
+    kgfx_putchar(c[index]);
     index++;
   }
 
