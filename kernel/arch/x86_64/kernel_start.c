@@ -1,5 +1,3 @@
-#include "libk/bit.h"
-#include "libk/vga_kgfx.h"
 #include <decls.h>
 #include <gdt.h>
 #include <interrupts.h>
@@ -9,6 +7,7 @@
 #include <libk/math.h>
 #include <libk/spinlock.h>
 #include <libk/string.h>
+#include <libk/vga_kgfx.h>
 #include <mem/kheap.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
@@ -56,9 +55,15 @@ void kernel_start(uint8_t *multiboot) {
 
   for (size_t j = 0; j < 20; j++) {
     for (size_t i = 0; i < 26; i++) {
-      vga_kgfx_print_glyph(i, j, 255, 255, 255, vga_kgfx_get_glyph('A' + i), 2);
+      vga_kgfx_print_glyph(i, j + 1, 255, 255, 255, vga_kgfx_get_glyph('a' + i), 2);
+    }
+    for (size_t i = 0; i < 26; i++) {
+      vga_kgfx_print_glyph(i + 26, j + 1, 255, 255, 255,
+                           vga_kgfx_get_glyph('A' + i), 2);
     }
   }
+
+  kgfx_scroll();
 
   kio_printf("Initialized Memory Manager\n");
   // // kio_clear();

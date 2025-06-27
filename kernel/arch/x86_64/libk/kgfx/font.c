@@ -30,6 +30,33 @@ void vga_kgfx_init_font(void) {
   font['X'] = 0x6363361C366363;
   font['Y'] = 0xC0C0C0C1E3333;
   font['Z'] = 0x3F03071E38303F;
+
+  font['a'] = 0x1E19191E180F00;
+  font['b'] = 0x1E33331F030303;
+  font['c'] = 0x1C060303061C00; 
+  font['d'] = 0x1E33333E303030;
+  font['e'] = 0x3C66037F663C00;
+  font['f'] = 0x606063F060E3C;
+  font['g'] = 0x1E33303E31313E60;
+  font['h'] = 0x6363673B030303;
+  font['i'] = 0xC0C0C0C000C00;
+  font['j'] = 0x619181818001800;
+  font['k'] = 0x321A0E1A322202;
+  font['l'] = 0xC0C0C0C0C0C0C;
+  font['m'] = 0x4141495D370000;
+  font['n'] = 0x212121331F0000;
+  font['o'] = 0xE1111110E0000;
+  font['p'] = 0x1010709090700;
+  font['q'] = 0x18080E09090E00;
+  font['r'] = 0x20202261A0000;
+  font['s'] = 0xC100C020C0000;
+  font['t'] = 0x1808081C080000;
+  font['u'] = 0xC121212120000;
+  font['v'] = 0x8141422220000;
+  font['w'] = 0xA151511110000;
+  font['x'] = 0x22361C36220000;
+  font['y'] = 0x2060C1814362200;
+  font['z'] = 0x3E0C18303E0000;
 }
 
 uint64_t vga_kgfx_get_glyph(char c) {

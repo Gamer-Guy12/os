@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#define FONT_SCALE 2
+#define FONT_WIDTH (FONT_SCALE * 8)
+#define FONT_HEIGHT (FONT_SCALE * 8)
+
 typedef struct {
   uint32_t width;
   uint32_t height;
