@@ -9,6 +9,6 @@ void unset_bit_in_ptr(void* ptr, uint64_t bit) {
 
   uint8_t* true_ptr = ptr;
 
-  true_ptr[offset] &= ~(1ull << offset);  
+  true_ptr[index] &= ~(1ull << offset);  
 }
 

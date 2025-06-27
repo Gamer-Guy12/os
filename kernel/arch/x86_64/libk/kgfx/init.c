@@ -29,4 +29,6 @@ void kgfx_init(void) {
   properties.framebuffer_red_mask_size = type_1_info->framebuffer_red_mask_size;
 
   vga_kgfx_set_properties(properties);
+
+  vga_kgfx_init_font();
 }

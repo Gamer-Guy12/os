@@ -54,13 +54,11 @@ void kernel_start(uint8_t *multiboot) {
   init_memory_manager();
   kgfx_init();
 
-  for (size_t i = 0; i < 1000; i++) {
-    for (size_t j = 0; j < 500; j++) {
-      vga_kgfx_set_pixel(i, j, 255, 255, 255);
+  for (size_t j = 0; j < 20; j++) {
+    for (size_t i = 0; i < 26; i++) {
+      vga_kgfx_print_glyph(i, j, 255, 255, 255, vga_kgfx_get_glyph('A' + i), 2);
     }
   }
-
-  while (1) {}
 
   kio_printf("Initialized Memory Manager\n");
   // // kio_clear();

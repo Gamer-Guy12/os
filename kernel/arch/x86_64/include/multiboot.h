@@ -54,7 +54,7 @@ typedef struct {
   uint32_t framebuffer_height;
   uint8_t framebuffer_bpp;
   uint8_t framebuffer_type;
-  uint8_t reserved;
+  uint16_t reserved;
 } PACKED mltbt_framebuffer_info_t;
 
 void *multiboot_get_tag(uint32_t type);
