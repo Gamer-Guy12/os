@@ -10,5 +10,7 @@ void kgfx_clear(void) {
       vga_kgfx_set_pixel(i, j, 0, 0, 0);
     }
   }
+
+  vga_kgfx_set_cursor(0, 0);
 }
 

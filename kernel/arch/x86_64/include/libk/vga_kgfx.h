@@ -40,4 +40,6 @@ void vga_kgfx_print_glyph(uint32_t x, uint32_t y, uint32_t r, uint32_t g,
 void vga_kgfx_init_font(void);
 uint64_t vga_kgfx_get_glyph(char c);
 
+void vga_kgfx_set_cursor(uint32_t x, uint32_t y);
+
 #endif
