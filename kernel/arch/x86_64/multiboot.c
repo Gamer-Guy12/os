@@ -53,7 +53,7 @@ void print_multiboot_info(void) {
     multiboot_tag_header_t *cur_header =
         (multiboot_tag_header_t *)(ptr + total_size - size_remaining);
 
-    kio_printf("Multiboot: Type %u, Size %x\n", cur_header->type,
+    kio_printf("Multiboot: Type %x, Size %x\n", cur_header->type,
                cur_header->size);
 
     uint32_t true_size = ROUND_UP(cur_header->size, 8);

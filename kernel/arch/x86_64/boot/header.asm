@@ -1,5 +1,7 @@
 BITS 32
 
+extern _start
+
 section .multiboot
 MAGIC equ 0xE85250D6
 ARCH equ 0 
@@ -32,15 +34,23 @@ dw 5
 dw 0
 dd framebuffer_request_end - framebuffer_request
 ; Width
-dd 1280
+dd 1536
 ; Height
-dd 720
+dd 864
 ; Bits Per Pixel
 dd 24
 framebuffer_request_end:
 ; Padding to make this 8 byte aligned
 dd 0
 
+entry_tag:
+dw 9
+dw 0
+dd entry_tag_end - entry_tag
+dd _start
+entry_tag_end:
+; Padding
+dd 0
 
 ; End tag
 dw 0

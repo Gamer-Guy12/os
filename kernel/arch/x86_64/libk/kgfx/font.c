@@ -57,6 +57,17 @@ void vga_kgfx_init_font(void) {
   font['x'] = 0x22361C36220000;
   font['y'] = 0x2060C1814362200;
   font['z'] = 0x3E0C18303E0000;
+
+  font['0'] = 0x7E464E5A72627E;
+  font['1'] = 0x7C101010141810;
+  font['2'] = 0x7E081020161C00;
+  font['3'] = 0x3E20203E20203E;
+  font['4'] = 0x2020203C242424;
+  font['5'] = 0x1E20201E02023E;
+  font['6'] = 0x3E22223E02023E;
+  font['7'] = 0x2020202020203E;
+  font['8'] = 0x7E42427E42427E;
+  font['9'] = 0x4040407C44447C;
 }
 
 uint64_t vga_kgfx_get_glyph(char c) {
