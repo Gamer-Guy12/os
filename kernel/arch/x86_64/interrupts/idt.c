@@ -36,4 +36,4 @@ void load_idt(void) {
   __asm__ volatile("lidt (%0)" : : "r"(&descriptor));
 }
 
-void enable_idt_gate(uint8_t gate_number) { idt[gate_number].present = 1; }
+void enable_idt_gate(uint8_t gate_number) { idt[gate_number].present = true; }

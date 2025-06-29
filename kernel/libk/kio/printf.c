@@ -1,5 +1,6 @@
 #include <libk/kio.h>
 #include <libk/spinlock.h>
+#include <libk/kgfx.h>
 #include <libk/string.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -20,7 +21,7 @@ void kio_printf(const char *format, ...) {
 
   while (format[index] != '\0') {
     if (format[index] != '%') {
-      kio_putchar(format[index]);
+      kgfx_putchar(format[index]);
     } else {
 
       index++;

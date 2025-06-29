@@ -3,18 +3,23 @@
 #include <libk/bit.h>
 #include <libk/err.h>
 #include <libk/kio.h>
-#include <libk/math.h>
 #include <libk/mem.h>
 #include <libk/spinlock.h>
 #include <libk/sys.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
+#include <mem/vimemory.h>
+#include <multiboot.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <x86_64.h>
 
 #define MULTIBOOT_MEMORY_MAP 6
+
+// It turns out that this file rlly needs the old round up and down macros
+#define ROUND_UP(num, to) ((num) + ((to) - ((num) % (to))))
+#define ROUND_DOWN(num, to) ((num) - ((num) % (to)))
 
 typedef struct {
   uint64_t base;
@@ -370,20 +375,12 @@ static void create_all_block_descriptors(void) {
   set_block_descriptor_ptr((const block_descriptor_t *)BLOCK_DESCRIPTORS_ADDR);
 }
 
-inline void print_addr_comps(size_t addr) {
-
-  kio_printf("pml4 %u, pdpt %u, pdt %u, pt %u, index %u\n",
-             (addr >> 39) & 0x1FF, (addr >> 30) & 0x1FF, (addr >> 21) & 0x1FF,
-             (addr >> 12) & 0x1FF, addr & 0xFFF);
-}
-
 static void map_buddy_memory(void) {
   // The PDPT has already been created so what is left to create are the pdts
   // and pts
   // As of now one pdt has been made but I'll just keep track (actually I won't)
 
   const size_t block_count = get_block_count();
-  // kio_printf("Block Count: %x\n", block_count);
 
   const size_t bytes_taken = math_powu64(2, PHYS_BUDDY_MAX_ORDER) * 2 / 8;
 
@@ -395,6 +392,7 @@ static void map_buddy_memory(void) {
     // + 1 skips over the first pdt used for the block descriptors
     size_t pdt_count = ROUND_UP(i * bytes_taken, PAGE_SIZE * 512 * 512) /
                        (PAGE_SIZE * 512 * 512);
+
     if (make_pdt) {
       size_t phys = (size_t)NEXT_PAGE - KERNEL_CODE_OFFSET;
       used_page_count++;
@@ -459,19 +457,9 @@ static void create_physical_structures(void) {
   modify_descriptors();
 }
 
-inline static void set_bit_in_ptr(uint8_t *ptr, size_t bit) {
-  size_t index = ROUND_DOWN(bit, 8);
-  size_t offset = bit - index;
-
-  ptr[index / 8] |= 1 << offset;
-}
-
 inline static bool check_bit_in_ptr(const uint8_t *ptr, size_t bit) {
   size_t index = ROUND_DOWN(bit, 8);
   size_t offset = bit - index;
-
-  // kio_printf("Value %x and ret %x and offset %x %x\n", (size_t)ptr[index],
-  //            (size_t)ptr[index] & (1 << offset), offset, 1 << offset);
 
   return ptr[index / 8] & (1 << offset);
 }
@@ -514,11 +502,13 @@ static void reserve_block(size_t base) {
   }
 }
 
-static void reserve_page(size_t block_base, size_t page) {
+static void reserve_page(size_t block_base, size_t page, bool panic) {
   block_descriptor_t *descriptor = get_descriptor(block_base);
 
-  if (descriptor == NULL) {
+  if (descriptor == NULL && panic) {
     sys_panic(MEMORY_INIT_ERR | MISSING_BLOCK_ERR);
+  } else if (descriptor == NULL && !panic) {
+    return;
   }
 
   descriptor->free_pages--;
@@ -565,57 +555,49 @@ static void reserve_page(size_t block_base, size_t page) {
   descriptor->largest_region_order = 0;
 }
 
-static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
-  uint8_t *data = descriptor->buddy_data;
-
-  size_t prev_bit = 0;
-
-  for (size_t i = PHYS_BUDDY_MAX_ORDER; i > 0; i--) {
-    if (i == PHYS_BUDDY_MAX_ORDER) {
-      if (!(data[0] & 1)) {
-        // kio_printf("Index %x\n", i);
-        return false;
-      }
-    } else {
-      // 2 * size
-      size_t size = math_powu64(2, i + 1);
-      bool is_lower = page % size < size / 2;
-
-      if (!is_lower) {
-        prev_bit = prev_bit * 2 + 2;
-        if (!(check_bit_in_ptr(data, prev_bit))) {
-          // kio_printf("Index %x %x\n", i, prev_bit);
-          return false;
-        }
-        // kio_printf("Lower %x  ", prev_bit);
-      } else {
-        prev_bit = prev_bit * 2 + 1;
-        if (!(check_bit_in_ptr(data, prev_bit))) {
-          // kio_printf("Idex %x %x\n", i, prev_bit);
-          return false;
-        }
-        // kio_printf("Higher %x  ", prev_bit);
-      }
-    }
-  }
-  // kio_printf("\n");
-
-  if (page % 2 == 0) {
-    prev_bit = prev_bit * 2 + 1;
-    if (!check_bit_in_ptr(data, prev_bit)) {
-      // kio_printf("Inde %x\n", prev_bit);
-      return false;
-    }
-  } else {
-    prev_bit = prev_bit * 2 + 2;
-    if (!(check_bit_in_ptr(data, prev_bit))) {
-      // kio_printf("Ide %x\n", prev_bit);
-      return false;
-    }
-  }
-
-  return true;
-}
+// static bool check_page_index(block_descriptor_t *descriptor, size_t page) {
+//   uint8_t *data = descriptor->buddy_data;
+//
+//   size_t prev_bit = 0;
+//
+//   for (size_t i = PHYS_BUDDY_MAX_ORDER; i > 0; i--) {
+//     if (i == PHYS_BUDDY_MAX_ORDER) {
+//       if (!(data[0] & 1)) {
+//         return false;
+//       }
+//     } else {
+//       // 2 * size
+//       size_t size = math_powu64(2, i + 1);
+//       bool is_lower = page % size < size / 2;
+//
+//       if (!is_lower) {
+//         prev_bit = prev_bit * 2 + 2;
+//         if (!(check_bit_in_ptr(data, prev_bit))) {
+//           return false;
+//         }
+//       } else {
+//         prev_bit = prev_bit * 2 + 1;
+//         if (!(check_bit_in_ptr(data, prev_bit))) {
+//           return false;
+//         }
+//       }
+//     }
+//   }
+//
+//   if (page % 2 == 0) {
+//     prev_bit = prev_bit * 2 + 1;
+//     if (!check_bit_in_ptr(data, prev_bit)) {
+//       return false;
+//     }
+//   } else {
+//     prev_bit = prev_bit * 2 + 2;
+//     if (!(check_bit_in_ptr(data, prev_bit))) {
+//       return false;
+//     }
+//   }
+//
+//   return true;
+// }
 
 static void reserve_kernel_structures(void) {
   extern char end_kernel[];
@@ -642,24 +624,52 @@ static void reserve_kernel_structures(void) {
 
     size_t page = i % BLOCKS_PER_PAGE;
 
-    reserve_page(block_base, page);
+    reserve_page(block_base, page, true);
   }
-  uint8_t *data =
-      get_descriptor(kernel_block_count * PHYS_BLOCK_SIZE)->buddy_data;
+}
 
-  for (size_t i = 0; i < 128; i += 8) {
-    kio_printf("Data: %x %x %x %x %x %x %x %x\n", data[i], data[i + 1],
-               data[i + 2], data[i + 3], data[i + 4], data[i + 5], data[i + 6],
-               data[i + 7]);
-  }
+/// I can use physical allocation in this function
+void identity_map_257(void) {
+  multiboot_memory_header_t *header = multiboot_get_tag(6);
+  size_t region_count = (header->size - 8) / sizeof(multiboot_memory_t);
 
-  for (size_t i = 0; i < used_page_count; i++) {
-    if (!check_page_index(get_descriptor(kernel_block_count * PHYS_BLOCK_SIZE),
-                          i)) {
-      kio_printf("Page %x is %x\n", i,
-                 (size_t)check_page_index(
-                     get_descriptor(kernel_block_count * PHYS_BLOCK_SIZE), i));
+  multiboot_memory_t *regions = (void *)(header + 1);
+
+  for (size_t i = 0; i < region_count; i++) {
+    //    if (regions[i].type != 1) {
+    //      continue;
+    //    }
+
+    size_t true_base = ROUND_DOWN(regions[i].base, PAGE_SIZE);
+    size_t base_diff = regions[i].base - true_base;
+    size_t page_count =
+        ROUND_UP(regions[i].len + base_diff, PAGE_SIZE) / PAGE_SIZE;
+
+    for (size_t i = 0; i < page_count; i++) {
+      if (true_base + i * PAGE_SIZE > GB * 512ull) {
+        break;
+      }
+
+      map_phys_page((void *)(IDENTITY_MAPPED_ADDR + true_base + i * PAGE_SIZE),
+                    PT_PRESENT | PT_READ_WRITE, false,
+                    (void *)(true_base + i * PAGE_SIZE));
     }
+  }
+}
+
+/// This assumes that the framebuffer is page aligned, i hope everything works out
+/// Prolly will cuz of like the rounding errors but its fine
+void map_vga_mem(void) {
+  mltbt_framebuffer_info_t *info = multiboot_get_tag(MLTBT_FRAMEBUFFER_INFO);
+  void *framebuffer_addr = (void *)info->framebuffer_addr;
+  size_t framebuffer_length =
+      info->framebuffer_pitch * (info->framebuffer_height + 1);
+  size_t page_count = ROUND_UP(framebuffer_length, PAGE_SIZE) / PAGE_SIZE;
+
+  for (size_t i = 0; i < page_count; i++) {
+    map_phys_page((void *)(VGA_MEM_ADDR + i * PAGE_SIZE),
+                  PT_PRESENT | PT_READ_WRITE, true,
+                  (void *)((size_t)framebuffer_addr + i * PAGE_SIZE));
   }
 }
 
@@ -678,9 +688,7 @@ void init_memory_manager(void) {
 
   reserve_kernel_structures();
 
-  extern char end_kernel[];
-  size_t usage = (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET +
-                 (used_page_count - 1) * PAGE_SIZE;
+  identity_map_257();
 
-  kio_printf("Total usage %x\n", usage);
+  map_vga_mem();
 }

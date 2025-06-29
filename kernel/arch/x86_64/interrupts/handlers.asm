@@ -50,6 +50,9 @@ idt_handler_%1:
    ; Change data segment back
    pop rax
    mov ds, ax
+   mov es, ax
+   mov fs, ax
+   mov gs, ax
 
    pop r15
    pop r14
@@ -83,9 +86,9 @@ idt_handler_%1:
 
 global idt_handler_%1
 idt_handler_%1:
-   
-   cli
 
+    cli
+   
    ; Push interrupt number
    push %1
 
@@ -111,18 +114,24 @@ idt_handler_%1:
    push rax
 
    ; Change Data Segment
-   ; Data Segment is selected with 0x8
-   mov ax, 0x8
+   ; Data Segment is selected with 0x10
+   mov ax, 0x10
    mov ds, ax
    mov es, ax
    mov fs, ax
    mov gs, ax
+
+   ; Pass in pointer to the registers
+   mov rdi, rsp
 
    call common_interrupt_handler
 
    ; Change data segment back
    pop rax
    mov ds, ax
+   mov es, ax
+   mov fs, ax
+   mov gs, ax
    
    pop r15
    pop r14

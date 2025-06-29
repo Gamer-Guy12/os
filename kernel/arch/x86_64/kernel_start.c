@@ -1,14 +1,18 @@
+#include <decls.h>
 #include <gdt.h>
 #include <interrupts.h>
 #include <libk/bst.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
+#include <libk/math.h>
 #include <libk/spinlock.h>
 #include <libk/string.h>
+#include <libk/vga_kgfx.h>
 #include <mem/kheap.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
+#include <pic.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <x86_64.h>
@@ -30,12 +34,26 @@ static void handle_init_array(void) {
 }
 #pragma endregion
 
+typedef struct {
+  uint32_t total_size;
+  uint32_t reserved;
+} PACKED multiboot_header_t;
+
+typedef struct {
+  uint32_t type;
+  uint32_t size;
+} PACKED multiboot_tag_t;
+
 void kernel_start(uint8_t *multiboot) {
+
+  //  test_print(multiboot);
+
   handle_init_array();
-  kio_printf("Called Global Constructors\n");
   init_multiboot(multiboot);
-  kio_printf("Initialized Multiboot\n");
   init_memory_manager();
+  kgfx_init();
+  kgfx_clear();
+
   kio_printf("Initialized Memory Manager\n");
   // // kio_clear();
   //
@@ -73,6 +91,8 @@ void kernel_start(uint8_t *multiboot) {
   //
   // decrement_kernel_brk(&region, 0x4001);
 
+  // Set up default kernel region. during smp startup each core should make
+  // their kernel region
   vmm_kernel_region_t region;
   create_kernel_region(&region);
   vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
@@ -89,8 +109,12 @@ void kernel_start(uint8_t *multiboot) {
   //
   // kio_printf("Num %u\n", *num);
 
+  // It would create interrupts otherwise
+  disable_pic();
   init_interrupts();
   kio_printf("Initialized Interrupts\n");
+
+  print_multiboot_info();
 
   kernel_main();
 }
