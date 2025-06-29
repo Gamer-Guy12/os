@@ -91,10 +91,14 @@ void vga_kgfx_init_font(void) {
   font['-'] = 0x7E7E000000;
   font['.'] = 0x6060000000000;
   font['/'] = 0x8081010202000;
+
+  font['{'] = 0x18080C06060C0818;
+  font['|'] = 0x202020202020202;
+  font['}'] = 0x1810306060301018;
+  font['~'] = 0x327E4C000000;
 }
 
 uint64_t vga_kgfx_get_glyph(char c) {
   return font[(uint8_t)c];
 }
-
 
