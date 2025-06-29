@@ -1,6 +1,7 @@
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #define UNCANONICALIZER 0x0000fffffffff000
@@ -10,7 +11,11 @@ static bool check_page(void *addr) {
   // Get the address and page index
   size_t index = ((size_t)addr & UNCANONICALIZER) / PAGE_SIZE;
 
-  return entries[index].full_entry & PT_PRESENT;
+  bool ret = false;
+  if (entries[index].full_entry & PT_PRESENT)
+    ret = true;
+
+  return ret;
 }
 
 static void *map_pml4(size_t index) {
@@ -58,7 +63,8 @@ static void *map_pdt(size_t index, size_t pdpt, size_t pml4) {
                           PDT_PRESENT | PDT_READ_WRITE | PDT_USER_PAGE);
 }
 
-void *map_phys_page(void *addr, uint16_t flags, bool not_executable, void* phys) {
+void *map_phys_page(void *addr, uint16_t flags, bool not_executable,
+                    void *phys) {
   size_t addr_bits = (size_t)addr;
 
   size_t pdt_index = (addr_bits >> 21) & 0x1ff;

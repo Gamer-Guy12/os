@@ -657,8 +657,8 @@ void identity_map_257(void) {
   }
 }
 
-/// This assumes that the framebuffer is page aligned, i hope everything works out
-/// Prolly will cuz of like the rounding errors but its fine
+/// This assumes that the framebuffer is page aligned, i hope everything works
+/// out Prolly will cuz of like the rounding errors but its fine
 void map_vga_mem(void) {
   mltbt_framebuffer_info_t *info = multiboot_get_tag(MLTBT_FRAMEBUFFER_INFO);
   void *framebuffer_addr = (void *)info->framebuffer_addr;

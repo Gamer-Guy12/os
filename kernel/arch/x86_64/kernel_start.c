@@ -50,6 +50,7 @@ void kernel_start(uint8_t *multiboot) {
 
   handle_init_array();
   init_multiboot(multiboot);
+
   init_memory_manager();
   kgfx_init();
   kgfx_clear();
@@ -100,6 +101,7 @@ void kernel_start(uint8_t *multiboot) {
 
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
+
 
   create_gdt();
   kio_printf("Created the GDT\n");
