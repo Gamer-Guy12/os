@@ -1,6 +1,7 @@
 #ifndef X86_64_MULTIBOOT_H
 #define X86_64_MULTIBOOT_H
 
+#include <acpi/acpi.h>
 #include <stdint.h>
 #include <decls.h>
 
@@ -56,6 +57,12 @@ typedef struct {
   uint8_t framebuffer_type;
   uint16_t reserved;
 } PACKED mltbt_framebuffer_info_t;
+
+typedef struct {
+  uint32_t type;
+  uint32_t size;
+  XSDP_t xsdp;
+} PACKED mltbt_rsdp_new_t;
 
 void *multiboot_get_tag(uint32_t type);
 
