@@ -116,7 +116,5 @@ void kernel_start(uint8_t *multiboot) {
   init_interrupts();
   kio_printf("Initialized Interrupts\n");
 
-  print_multiboot_info();
-
   kernel_main();
 }
