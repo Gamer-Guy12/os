@@ -58,6 +58,11 @@ void print_multiboot_info(void) {
 
     uint32_t true_size = ROUND_UP(cur_header->size, 8);
 
+    if (cur_header->type == 17) {
+      kio_printf("Total Size %x\n", total_size);
+      kio_printf("PTR: %x\n", (size_t)ptr);
+    }
+
     if (true_size > size_remaining || cur_header->type == 0) {
       break;
     }

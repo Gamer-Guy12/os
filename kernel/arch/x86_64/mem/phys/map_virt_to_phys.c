@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define UNCANONICALIZER 0x0000fffffffff000
+#define PHYS_MASK 0x0007fffffffff000
 
 void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
                        uint16_t flags) {
@@ -18,8 +19,9 @@ void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
 
   // kio_printf("Calculated address is %x\n", PT_ADDR + index * 8);
 
-  entries[index].full_entry = phys_bits;
-  entries[index].flags |= bit8_flags | PT_PRESENT;
+  entries[index].full_entry = 0;
+  entries[index].full_entry = (phys_bits & PHYS_MASK) & ~(1ull << 51);
+  entries[index].flags = bit8_flags | PT_PRESENT;
   if (flags & PT_GLOBAL)
     entries[index].flags |= PT_GLOBAL;
   entries[index].not_executable = not_executable;

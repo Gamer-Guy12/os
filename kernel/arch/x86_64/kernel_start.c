@@ -50,6 +50,7 @@ void kernel_start(uint8_t *multiboot) {
 
   handle_init_array();
   init_multiboot(multiboot);
+
   init_memory_manager();
   kgfx_init();
   kgfx_clear();
@@ -101,6 +102,7 @@ void kernel_start(uint8_t *multiboot) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
 
+
   create_gdt();
   kio_printf("Created the GDT\n");
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -113,8 +115,6 @@ void kernel_start(uint8_t *multiboot) {
   disable_pic();
   init_interrupts();
   kio_printf("Initialized Interrupts\n");
-
-  print_multiboot_info();
 
   kernel_main();
 }
