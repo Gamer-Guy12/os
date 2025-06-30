@@ -2,7 +2,7 @@
 #include <acpi/acpi.h>
 #include <stddef.h>
 
-XSDP_t* ptr = NULL;
+static XSDP_t* ptr = NULL;
 
 XSDP_t* get_xsdp(void) {
   if (ptr != NULL) {

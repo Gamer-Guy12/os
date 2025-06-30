@@ -629,7 +629,7 @@ static void reserve_kernel_structures(void) {
 }
 
 /// I can use physical allocation in this function
-void identity_map_257(void) {
+static void identity_map_257(void) {
   multiboot_memory_header_t *header = multiboot_get_tag(6);
   size_t region_count = (header->size - 8) / sizeof(multiboot_memory_t);
 
@@ -659,7 +659,7 @@ void identity_map_257(void) {
 
 /// This assumes that the framebuffer is page aligned, i hope everything works
 /// out Prolly will cuz of like the rounding errors but its fine
-void map_vga_mem(void) {
+static void map_vga_mem(void) {
   mltbt_framebuffer_info_t *info = multiboot_get_tag(MLTBT_FRAMEBUFFER_INFO);
   void *framebuffer_addr = (void *)info->framebuffer_addr;
   size_t framebuffer_length =
@@ -673,6 +673,14 @@ void map_vga_mem(void) {
   }
 }
 
+static void map_apic(void) {
+  #define APIC_ADDR 0xFEE00000
+  
+  const size_t page_offset = APIC_ADDR % PHYS_BLOCK_SIZE;
+
+  reserve_page(ROUND_DOWN(APIC_ADDR, PHYS_BLOCK_SIZE), page_offset, false);
+}
+
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
 void init_memory_manager(void) {
@@ -682,13 +690,19 @@ void init_memory_manager(void) {
   wrmsr(IA32_EFER, rdmsr(IA32_EFER) | EXECUTE_DISABLE_BIT_ENABLE);
 
   // Add Fmem if you want
+  // Do this one for every core
   create_page_tables();
 
   create_physical_structures();
 
   reserve_kernel_structures();
 
+  // Do this one for every core
   identity_map_257();
 
+  // Do this one for every core
   map_vga_mem();
+
+  // Do this one for every core
+  map_apic();
 }

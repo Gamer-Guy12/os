@@ -1,5 +1,5 @@
-#ifndef X86_64_HAL_IRQ
-#define X86_64_HAL_IRQ
+#ifndef X86_64_HAL_IRQ_H
+#define X86_64_HAL_IRQ_H
 
 #include <stdint.h>
 #include <stdbool.h>
