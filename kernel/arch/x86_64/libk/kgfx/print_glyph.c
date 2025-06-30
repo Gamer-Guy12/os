@@ -17,6 +17,5 @@ void vga_kgfx_print_glyph(uint32_t x, uint32_t y, uint32_t r, uint32_t g,
         vga_kgfx_set_scaled_pixel(scaled_x, scaled_y, 0, 0, 0, scale);
       }
     }
-  }  
+  }
 }
-

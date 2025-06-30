@@ -10,7 +10,6 @@ typedef struct {
 } cls_t;
 
 void init_cls(void);
-cls_t* get_cls(void);
+cls_t *get_cls(void);
 
 #endif
-

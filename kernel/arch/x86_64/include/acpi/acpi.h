@@ -12,7 +12,7 @@ typedef struct {
   /// Don't use this
   uint32_t rsdt_addr;
 
-  uint32_t length; 
+  uint32_t length;
   uint64_t xsdt_addr;
   uint8_t extended_checksum;
   uint8_t reserved[3];
@@ -35,8 +35,8 @@ typedef struct {
   uint64_t sdt_ptrs[];
 } PACKED XSDT_t;
 
-void* acpi_get_struct(char signature[4]);
-XSDP_t* get_xsdp(void);
-XSDT_t* get_xsdt(void);
+void *acpi_get_struct(char signature[4]);
+XSDP_t *get_xsdp(void);
+XSDT_t *get_xsdt(void);
 
 #endif

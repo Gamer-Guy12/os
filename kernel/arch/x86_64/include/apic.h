@@ -3,11 +3,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <mem/pimemory.h>
+
+#define APIC_REGISTERS_ADDR (0xFEE0000 + IDENTITY_MAPPED_ADDR)
 
 #define SPURIOUS_INTERRUPT_VECTOR_REG 0xF0
 
-uint32_t read_register(size_t register);
-void write_register(size_t register, uint32_t value);
+uint32_t read_apic_register(size_t reg);
+void write_apic_register(size_t reg, uint32_t value);
 
 #endif
-

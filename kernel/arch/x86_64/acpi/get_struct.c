@@ -11,7 +11,7 @@ void *acpi_get_struct(char signature[4]) {
 
   for (size_t i = 0; i < ptr_count; i++) {
     if (check_header((sdt_header_t *)xsdt->sdt_ptrs[i], signature))
-      return (void*)xsdt->sdt_ptrs[i];
+      return (void *)xsdt->sdt_ptrs[i];
   }
 
   return NULL;

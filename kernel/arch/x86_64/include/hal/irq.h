@@ -1,8 +1,8 @@
 #ifndef X86_64_HAL_IRQ_H
 #define X86_64_HAL_IRQ_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
   void (*eoi)(void);

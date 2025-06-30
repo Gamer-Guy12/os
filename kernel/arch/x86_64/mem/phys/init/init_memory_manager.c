@@ -674,8 +674,8 @@ static void map_vga_mem(void) {
 }
 
 static void map_apic(void) {
-  #define APIC_ADDR 0xFEE00000
-  
+#define APIC_ADDR 0xFEE00000
+
   const size_t page_offset = APIC_ADDR % PHYS_BLOCK_SIZE;
 
   reserve_page(ROUND_DOWN(APIC_ADDR, PHYS_BLOCK_SIZE), page_offset, false);

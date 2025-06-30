@@ -30,6 +30,6 @@ float CONST math_sqrtf(float input);
 double CONST math_sqrtd(double input);
 
 #define ROUND_DOWN(num, to) (((num) / (to)) * (to))
-#define ROUND_UP(num, to) ((((num) + ((to) -1)) / (to)) * (to)) 
+#define ROUND_UP(num, to) ((((num) + ((to) - 1)) / (to)) * (to))
 
 #endif

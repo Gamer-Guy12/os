@@ -1,3 +1,5 @@
+#include "apic.h"
+#include "libk/kio.h"
 #include <asm.h>
 #include <hal/irq.h>
 #include <stddef.h>
@@ -48,6 +50,11 @@ void set_apic_base(uintptr_t apic) {
 hal_irq_t init_apic(void) {
   set_apic_base(get_apic_base());
 
-  hal_irq_t irq = { NULL }; 
+  // 0x1ff is split into 0xff and 0x100
+  // 0xff is the interrupt number for it
+  // 0x100 just says to start interrupts
+  write_apic_register(SPURIOUS_INTERRUPT_VECTOR_REG, 0x1ff);
+
+  hal_irq_t irq = {NULL};
   return irq;
 }

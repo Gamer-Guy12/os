@@ -1,6 +1,6 @@
+#include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/spinlock.h>
-#include <libk/kgfx.h>
 #include <libk/string.h>
 #include <stdarg.h>
 #include <stdint.h>
