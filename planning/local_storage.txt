@@ -1,0 +1,11 @@
+Local Storage:
+
+Per-Core Storage:
+Store a pointer to a data structure in GS
+
+Per-Process Storage:
+Put it in the process struct
+
+Per-Thread Storage:
+Put it in the Thread struct
+

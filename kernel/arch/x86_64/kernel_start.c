@@ -1,17 +1,20 @@
+#include <acpi/acpi.h>
+#include <apic.h>
+#include <asm.h>
+#include <cls.h>
 #include <decls.h>
 #include <gdt.h>
+#include <hal/hal.h>
+#include <hal/irq.h>
 #include <interrupts.h>
-#include <libk/bst.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
-#include <libk/math.h>
-#include <libk/spinlock.h>
-#include <libk/string.h>
 #include <libk/vga_kgfx.h>
 #include <mem/kheap.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
+#include <multiboot.h>
 #include <pic.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -44,6 +47,23 @@ typedef struct {
   uint32_t size;
 } PACKED multiboot_tag_t;
 
+uint64_t ms_counter = 0;
+
+void handler(idt_registers_t *registers) {
+  if (ms_counter > 1000) {
+    hal_irq_t irqs = get_hal_irq();
+    irqs.unmask_irq(0x0);
+    irqs.eoi();
+  }
+  ms_counter++;
+  if (ms_counter == 1000) {
+    kio_printf("1 Second\n");
+  }
+  hal_irq_t irqs = get_hal_irq();
+  irqs.unmask_irq(0x0);
+  irqs.eoi();
+}
+
 void kernel_start(uint8_t *multiboot) {
 
   //  test_print(multiboot);
@@ -67,7 +87,7 @@ void kernel_start(uint8_t *multiboot) {
   // phys_free((void *)phys_3);
   // phys_free((void *)phys_4);
   //
-  // extern char end_kernel[];
+  // extern char ex0nd_kernel[];
   //
   // kio_printf("Addr 1 %x, 2 %x, 3 %x, 4 %x diff %x\n", phys_1, phys_2, phys_3,
   //            phys_4, (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET -
@@ -102,7 +122,6 @@ void kernel_start(uint8_t *multiboot) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
 
-
   create_gdt();
   kio_printf("Created the GDT\n");
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -115,6 +134,24 @@ void kernel_start(uint8_t *multiboot) {
   disable_pic();
   init_interrupts();
   kio_printf("Initialized Interrupts\n");
+
+  init_cls();
+  init_hal();
+  kio_printf("Initialized HAL\n");
+
+  hal_irq_t irqs = get_hal_irq();
+  register_interrupt_handler(handler, 0x50);
+  irqs.map_irq(0x50, 0x0);
+  irqs.unmask_irq(0x0);
+
+  uint8_t pit_command = 0x34;
+
+  outb(0x43, pit_command);
+  io_wait();
+  outb(0x40, 0xA9);
+  io_wait();
+  outb(0x40, 0x4);
+  io_wait();
 
   kernel_main();
 }

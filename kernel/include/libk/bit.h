@@ -28,8 +28,8 @@ inline uint64_t CONST unset_bits(uint64_t num, uint64_t bits) {
   return num & ~bits;
 }
 
-void set_bit_in_ptr(void* ptr, uint64_t bit);
-void unset_bit_in_ptr(void* ptr, uint64_t bit);
+void set_bit_in_ptr(void *ptr, uint64_t bit);
+void unset_bit_in_ptr(void *ptr, uint64_t bit);
 
 // This is only here because I get confused about the ^ operator
 #define XOR(first, second) (first ^ second)

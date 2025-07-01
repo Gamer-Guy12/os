@@ -14,7 +14,7 @@ void vga_kgfx_set_pixel(uint32_t x, uint32_t y, uint32_t r, uint32_t g,
 
   uint64_t data = 0;
 
-  // Set r 
+  // Set r
   for (size_t i = 0; i < properties.framebuffer_red_mask_size; i++) {
     if (r & (1 << i)) {
       data |= 1 << (i + properties.framebuffer_red_field_pos);
@@ -36,7 +36,8 @@ void vga_kgfx_set_pixel(uint32_t x, uint32_t y, uint32_t r, uint32_t g,
   }
 
   // Set in framebuffer
-  uint8_t* offset_framebuffer = (uint8_t*)properties.framebuffer_addr + row_offset;
+  uint8_t *offset_framebuffer =
+      (uint8_t *)properties.framebuffer_addr + row_offset;
 
   for (size_t i = 0; i < properties.framebuffer_bits_pp; i++) {
     if (data & (1 << i)) {

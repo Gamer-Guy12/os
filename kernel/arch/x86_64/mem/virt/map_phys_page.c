@@ -1,7 +1,7 @@
+#include <libk/mem.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
-#include <libk/mem.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -43,7 +43,7 @@ static void *map_pdpt(size_t index, size_t pml4) {
   /// allocated
   /// At the bottom actual flags are made
   void *ret = map_virt_to_phys((void *)map_index, phys, 0,
-                              PDPT_PRESENT | PDPT_READ_WRITE | PDPT_USER_PAGE);
+                               PDPT_PRESENT | PDPT_READ_WRITE | PDPT_USER_PAGE);
   memset(ret, 0, PAGE_SIZE);
 
   return ret;
@@ -63,8 +63,8 @@ static void *map_pdt(size_t index, size_t pdpt, size_t pml4) {
   /// These flags are here because they mean that no matter what it can be
   /// allocated
   /// At the bottom actual flags are made
-  void* ret = map_virt_to_phys((void *)map_index, phys, 0,
-                          PDT_PRESENT | PDT_READ_WRITE | PDT_USER_PAGE);
+  void *ret = map_virt_to_phys((void *)map_index, phys, 0,
+                               PDT_PRESENT | PDT_READ_WRITE | PDT_USER_PAGE);
 
   memset(ret, 0, PAGE_SIZE);
 

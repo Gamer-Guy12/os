@@ -2,8 +2,8 @@
 #define X86_64_MULTIBOOT_H
 
 #include <acpi/acpi.h>
-#include <stdint.h>
 #include <decls.h>
+#include <stdint.h>
 
 #define MLTBT_BASIC_MEM_INFO 4
 #define MLTBT_BIOS_BOOT_DEV 5

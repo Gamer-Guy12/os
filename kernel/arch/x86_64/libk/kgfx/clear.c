@@ -1,5 +1,5 @@
-#include <libk/vga_kgfx.h>
 #include <libk/kgfx.h>
+#include <libk/vga_kgfx.h>
 #include <stddef.h>
 
 void kgfx_clear(void) {
@@ -13,4 +13,3 @@ void kgfx_clear(void) {
 
   vga_kgfx_set_cursor(0, 0);
 }
-

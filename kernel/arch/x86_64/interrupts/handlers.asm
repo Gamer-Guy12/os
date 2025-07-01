@@ -39,8 +39,6 @@ idt_handler_%1:
    mov ax, 0x10
    mov ds, ax
    mov es, ax
-   mov fs, ax
-   mov gs, ax
 
    ; Pass in pointer to the registers
    mov rdi, rsp
@@ -51,8 +49,6 @@ idt_handler_%1:
    pop rax
    mov ds, ax
    mov es, ax
-   mov fs, ax
-   mov gs, ax
 
    pop r15
    pop r14
@@ -118,8 +114,6 @@ idt_handler_%1:
    mov ax, 0x10
    mov ds, ax
    mov es, ax
-   mov fs, ax
-   mov gs, ax
 
    ; Pass in pointer to the registers
    mov rdi, rsp
@@ -130,8 +124,6 @@ idt_handler_%1:
    pop rax
    mov ds, ax
    mov es, ax
-   mov fs, ax
-   mov gs, ax
    
    pop r15
    pop r14

@@ -15,6 +15,7 @@ void *map_page(void *addr, uint16_t flags, bool not_executable);
 /// Does not check if page exists already
 void *unmap_page(void *addr);
 
-void *map_phys_page(void *addr, uint16_t flags, bool not_executable, void* phys);
+void *map_phys_page(void *addr, uint16_t flags, bool not_executable,
+                    void *phys);
 
 #endif

@@ -1,9 +1,5 @@
 #include <decls.h>
-#include <libk/kgfx.h>
 #include <libk/kio.h>
-#include <mem/memory.h>
-#include <stddef.h>
-#include <stdint.h>
 
 void NORETURN kernel_main(void) {
   // kio_clear();
