@@ -36,9 +36,11 @@ kernel/obj/%.asm.o: kernel/%.asm
 	@$(ASM) $(ASMFLAGS) -o $@ $<
 	@echo ASM $< $@
 
+-include $(patsubst kernel/obj/%.o, kernel/obj/%.d, $(kernel-objs))
+
 kernel/obj/%.c.o: kernel/%.c
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) -I kernel/arch/x86_64/include $(addprefix -D , $(DECLS)) -D _$(ARCH)_ -o $@ $<
+	@$(CC) $(CFLAGS) -MD -I kernel/arch/x86_64/include $(addprefix -D , $(DECLS)) -D _$(ARCH)_ -o $@ $<
 	@echo CC $< $@
 	
 endif

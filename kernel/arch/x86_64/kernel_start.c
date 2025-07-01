@@ -46,6 +46,12 @@ typedef struct {
   uint32_t size;
 } PACKED multiboot_tag_t;
 
+void handler(idt_registers_t* registers) {
+  kio_printf("Recieved\n");
+  hal_irq_t irqs = get_hal_irq();
+  irqs.eoi();
+}
+
 void kernel_start(uint8_t *multiboot) {
 
   //  test_print(multiboot);
@@ -120,6 +126,22 @@ void kernel_start(uint8_t *multiboot) {
   init_cls();
   init_hal();
   kio_printf("Initialized HAL\n");
+
+  hal_irq_t irqs = get_hal_irq();
+  register_interrupt_handler(handler, 0x50);
+  irqs.map_irq(0x50, 0x0);
+  irqs.unmask_irq(0x0);
+
+  uint8_t pit_command = (3 << 4);
+
+  outb(0x43, pit_command);
+  io_wait();
+  outb(0x40, 0xA9);
+  io_wait();
+  outb(0x40, 0x4);
+  io_wait();
+
+  while (1) {}
 
   kernel_main();
 }
