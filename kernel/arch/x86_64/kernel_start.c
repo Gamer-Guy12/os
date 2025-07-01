@@ -153,8 +153,5 @@ void kernel_start(uint8_t *multiboot) {
   outb(0x40, 0x4);
   io_wait();
 
-  while (1) {
-  }
-
   kernel_main();
 }
