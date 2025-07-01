@@ -710,6 +710,10 @@ static void map_apic(void) {
   const size_t page_offset = APIC_ADDR % PHYS_BLOCK_SIZE;
 
   reserve_page(ROUND_DOWN(APIC_ADDR, PHYS_BLOCK_SIZE), page_offset, false);
+  map_phys_page((void *)(APIC_ADDR + IDENTITY_MAPPED_ADDR),
+                PT_PRESENT | PT_READ_WRITE | PT_PAGE_CACHE_DISABLED |
+                    PT_PAGE_WRITE_THROUGH,
+                1, (void *)APIC_ADDR);
 
   const size_t io_apic_addr = (size_t)get_io_apic();
   map_phys_page((void *)io_apic_addr,

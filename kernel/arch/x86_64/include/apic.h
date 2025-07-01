@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <mem/pimemory.h>
 
-#define APIC_REGISTERS_ADDR (0xFEE0000 + IDENTITY_MAPPED_ADDR)
+#define APIC_REGISTERS_ADDR (0xFEE00000 + IDENTITY_MAPPED_ADDR)
 
 #define SPURIOUS_INTERRUPT_VECTOR_REG 0xF0
 #define EOI_REG 0xB0

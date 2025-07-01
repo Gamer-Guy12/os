@@ -1,6 +1,6 @@
-#include <asm.h>
 #include <acpi/acpi.h>
 #include <apic.h>
+#include <asm.h>
 #include <cls.h>
 #include <decls.h>
 #include <gdt.h>
@@ -17,6 +17,7 @@
 #include <multiboot.h>
 #include <pic.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);
@@ -46,9 +47,20 @@ typedef struct {
   uint32_t size;
 } PACKED multiboot_tag_t;
 
-void handler(idt_registers_t* registers) {
-  kio_printf("Recieved\n");
+uint64_t ms_counter = 0;
+
+void handler(idt_registers_t *registers) {
+  if (ms_counter > 1000) {
+    hal_irq_t irqs = get_hal_irq();
+    irqs.unmask_irq(0x0);
+    irqs.eoi();
+  }
+  ms_counter++;
+  if (ms_counter == 1000) {
+    kio_printf("1 Second\n");
+  }
   hal_irq_t irqs = get_hal_irq();
+  irqs.unmask_irq(0x0);
   irqs.eoi();
 }
 
@@ -75,7 +87,7 @@ void kernel_start(uint8_t *multiboot) {
   // phys_free((void *)phys_3);
   // phys_free((void *)phys_4);
   //
-  // extern char end_kernel[];
+  // extern char ex0nd_kernel[];
   //
   // kio_printf("Addr 1 %x, 2 %x, 3 %x, 4 %x diff %x\n", phys_1, phys_2, phys_3,
   //            phys_4, (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET -
@@ -132,7 +144,7 @@ void kernel_start(uint8_t *multiboot) {
   irqs.map_irq(0x50, 0x0);
   irqs.unmask_irq(0x0);
 
-  uint8_t pit_command = (3 << 4);
+  uint8_t pit_command = 0x34;
 
   outb(0x43, pit_command);
   io_wait();
@@ -141,7 +153,8 @@ void kernel_start(uint8_t *multiboot) {
   outb(0x40, 0x4);
   io_wait();
 
-  while (1) {}
+  while (1) {
+  }
 
   kernel_main();
 }
