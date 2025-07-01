@@ -1,3 +1,4 @@
+#include <mem/pimemory.h>
 #include <acpi/acpi.h>
 #include <stddef.h>
 
@@ -8,7 +9,8 @@ XSDT_t *get_xsdt(void) {
     return ptr;
 
   XSDP_t *xsdp = get_xsdp();
-  ptr = (XSDT_t *)xsdp->xsdt_addr;
+  /// Give them the memory mapped address
+  ptr = (XSDT_t *)(xsdp->xsdt_addr + IDENTITY_MAPPED_ADDR);
 
   return ptr;
 }

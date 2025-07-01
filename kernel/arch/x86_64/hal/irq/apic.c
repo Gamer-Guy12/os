@@ -1,60 +1,152 @@
-#include "apic.h"
-#include "libk/kio.h"
+#include <acpi/acpi.h>
+#include <apic.h>
 #include <asm.h>
 #include <hal/irq.h>
+#include <interrupts.h>
+#include <mem/pimemory.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#define IA32_APIC_BASE_MSR 0x1B
-#define IA32_APIC_BASE_MSR_BSP 0x100
-#define IA32_APIC_BASE_MSR_ENABLE 0x800
-
 bool check_apic(void) {
-  uint32_t a = 0;
-  uint32_t d = 0;
+  uint32_t a, d;
+  cpuid(1, &a, &d);
+  return d & (1 << 9);
+}
 
-  cpuid(0x1, &a, &d);
+uint32_t get_apic_id(void) { return read_apic_register(APIC_ID_REG); }
 
-  if (d & (1 << 9)) {
-    return true;
+void *get_io_apic_addr(void) {
+  MADT_t *madt = acpi_get_struct("APIC");
+  size_t size_left = madt->header.length - sizeof(MADT_t);
+
+  while (size_left > 0) {
+    MADT_entry_header_t *header =
+        (MADT_entry_header_t *)((uint8_t *)madt +
+                                (madt->header.length - size_left));
+
+    if (header->entry_type == 1) {
+      MADT_entry_1_t *entry = (MADT_entry_1_t *)header;
+      return (void *)(size_t)(entry->io_apic_addr + IDENTITY_MAPPED_ADDR);
+    } else {
+      if (header->record_length > size_left) {
+        return NULL;
+      }
+      size_left -= header->record_length;
+      continue;
+    }
   }
 
-  return false;
+  return NULL;
 }
 
-uintptr_t get_apic_base(void) {
-  uint64_t a, d;
-  uint64_t value = rdmsr(IA32_APIC_BASE_MSR);
+void apic_eoi(void) { write_apic_register(EOI_REG, 0); }
 
-  a = value & 0xffffffff;
-  d = (value >> 32) & 0xffffffff;
+uint32_t get_apic_irq_from_isa(uint8_t isa_irq) {
+  MADT_t *madt = acpi_get_struct("APIC");
+  size_t size_left = madt->header.length - sizeof(MADT_t);
 
-#ifdef PME
-  return (a & 0xfffff000) | ((d & 0x0f) << 32);
-#else
-  return (a & 0xfffff000);
-#endif
+  while (size_left > 0) {
+    MADT_entry_header_t *header =
+        (MADT_entry_header_t *)((uint8_t *)madt +
+                                (madt->header.length - size_left));
+
+    if (header->entry_type == 2) {
+      MADT_entry_2_t *entry = (MADT_entry_2_t *)header;
+
+      if (entry->irq_source == isa_irq) {
+        return entry->global_system_interrupt;
+      }
+    }
+
+    if (size_left < header->record_length) {
+      return isa_irq;
+    }
+
+    size_left -= header->record_length;
+  }
+
+  return isa_irq;
 }
 
-void set_apic_base(uintptr_t apic) {
-  uint32_t d = 0;
-  uint32_t a = (apic & 0xfffff0000) | IA32_APIC_BASE_MSR_ENABLE;
+void write_io_apic_reg(uint32_t reg, uint32_t value) {
+  uint32_t *ioapic = get_io_apic_addr();
 
-#ifdef PME
-  d = (apic >> 32) & 0x0f;
-#endif
+  ioapic[0] = reg;
+  ioapic[4] = value;
+}
 
-  wrmsr(IA32_APIC_BASE_MSR, a | ((size_t)d << 32));
+uint32_t read_io_apic_reg(uint32_t reg) {
+  uint32_t *ioapic = get_io_apic_addr();
+
+  ioapic[0] = reg;
+  return ioapic[4];
+}
+
+void apic_map_irq(uint8_t interrupt_number, uint8_t irq_number) {
+  uint32_t actual_irq = get_apic_irq_from_isa(irq_number);
+
+  uint32_t redirect_lobyte = 0;
+  uint32_t redirect_hibyte = 0;
+
+  // Mask irq
+  redirect_lobyte |= (1 << 16);
+  // Set interrupt_number
+  redirect_lobyte |= interrupt_number;
+
+  // Set lapic id
+  uint8_t apic_id = get_apic_id();
+  redirect_hibyte |= (apic_id << 24);
+
+  size_t offset = 0x10 + actual_irq * 2;
+
+  write_io_apic_reg(offset, redirect_lobyte);
+  write_io_apic_reg(offset + 1, redirect_hibyte);
+
+  enable_idt_gate(interrupt_number);
+}
+
+void apic_mask_irq(uint32_t irq) {
+  uint32_t actual_irq = get_apic_irq_from_isa(irq);
+  size_t offset = 0x10 + actual_irq * 2;
+
+  uint32_t redirect_lobyte = read_apic_register(offset);
+
+  redirect_lobyte |= (1 << 16);
+
+  write_io_apic_reg(offset, redirect_lobyte);
+}
+
+void apic_unmask_irq(uint32_t irq) {
+  uint8_t actual_irq = get_apic_irq_from_isa(irq);
+  uint32_t offset = 0x10 + actual_irq * 2;
+
+  uint32_t redirect_lobyte = read_io_apic_reg(offset);
+
+  redirect_lobyte &= ~(1 << 16);
+
+  write_io_apic_reg(offset, redirect_lobyte);
+}
+
+void apic_mask_all_irqs(void) {
+  for (size_t i = 0; i < 24; i++) {
+    uint32_t redirect_lobyte = read_apic_register(0x10 + i * 2);
+
+    redirect_lobyte |= 1 << 16;
+
+    write_io_apic_reg(0x10 + i * 2, redirect_lobyte);
+  }
 }
 
 hal_irq_t init_apic(void) {
-  set_apic_base(get_apic_base());
+  // Set the spurious interrupt vecor
+  write_apic_register(SPURIOUS_INTERRUPT_VECTOR_REG, 0xFF | (1 << 8));
 
-  // 0x1ff is split into 0xff and 0x100
-  // 0xff is the interrupt number for it
-  // 0x100 just says to start interrupts
-  write_apic_register(SPURIOUS_INTERRUPT_VECTOR_REG, 0x1ff);
+  hal_irq_t ret;
+  ret.eoi = apic_eoi;
+  ret.map_irq = apic_map_irq;
+  ret.mask_irq = apic_mask_irq;
+  ret.unmask_irq = apic_unmask_irq;
+  ret.mask_all_irqs = apic_mask_all_irqs;
 
-  hal_irq_t irq = {NULL};
-  return irq;
+  return ret;
 }

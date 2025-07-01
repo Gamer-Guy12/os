@@ -1,7 +1,11 @@
+#include <asm.h>
+#include <acpi/acpi.h>
+#include <apic.h>
 #include <cls.h>
 #include <decls.h>
 #include <gdt.h>
 #include <hal/hal.h>
+#include <hal/irq.h>
 #include <interrupts.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
@@ -10,7 +14,9 @@
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
+#include <multiboot.h>
 #include <pic.h>
+#include <stddef.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);
@@ -113,6 +119,7 @@ void kernel_start(uint8_t *multiboot) {
 
   init_cls();
   init_hal();
+  kio_printf("Initialized HAL\n");
 
   kernel_main();
 }

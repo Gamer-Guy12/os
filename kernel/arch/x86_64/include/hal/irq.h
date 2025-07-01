@@ -6,7 +6,8 @@
 
 typedef struct {
   void (*eoi)(void);
-  void (*map_irq)(uint8_t interrupt_number, uint8_t gate_type);
+  /// This maps the isa irq so if there is a difference this will autofix
+  void (*map_irq)(uint8_t interrupt_number, uint8_t irq_number);
   void (*mask_irq)(uint32_t irq);
   void (*unmask_irq)(uint32_t irq);
   void (*mask_all_irqs)(void);
