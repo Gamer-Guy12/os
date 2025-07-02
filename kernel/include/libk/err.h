@@ -6,6 +6,7 @@
 #define KGFX_WRONG_MODE 1
 #define IRQ_HANDLING_ERR 1
 #define MISSING_BLOCK_ERR (1 << 1)
+#define KBD_HANDLING_ERR (1 << 1)
 
 #define MEMORY_ALLOCATOR_ERR (0)
 #define MULTIBOOT_ERR (1ull << 48ull)

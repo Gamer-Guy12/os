@@ -81,7 +81,20 @@
 typedef void (*ascii_key_down_handler)(uint8_t ascii);
 
 typedef struct {
+  uint8_t key_code; 
+  /// If applicable
+  uint8_t ascii_code;
+  /// If not release
+  bool key_press;
+} key_event_t;
+
+typedef void (*key_event_reciever)(key_event_t event);
+
+typedef struct {
   bool (*check_keycode_down)(uint8_t keycode);
+  void (*register_key_event_handler)(key_event_reciever reciever);
+  void (*unregister_key_event_handler)(key_event_reciever reciever);
+  bool (*is_capslock_on)(void);
 } hal_kbd_t;
 
 void hal_init_kbd(void);
