@@ -136,7 +136,7 @@ void kernel_start(uint8_t *multiboot) {
   kio_printf("Initialized Interrupts\n");
 
   init_cls();
-  init_hal();
+  init_x86_64_hal();
   kio_printf("Initialized HAL\n");
 
   hal_irq_t irqs = get_hal_irq();
