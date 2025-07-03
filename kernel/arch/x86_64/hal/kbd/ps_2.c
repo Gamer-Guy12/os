@@ -1,9 +1,9 @@
-#include "libk/key.h"
-#include "libk/kgfx.h"
 #include <hal/irq.h>
-#include <interrupts.h>
-#include <libk/kio.h>
 #include <hal/kbd.h>
+#include <interrupts.h>
+#include <libk/key.h>
+#include <libk/kgfx.h>
+#include <libk/kio.h>
 #include <ps_2.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -57,8 +57,44 @@ static void on_key_event(idt_registers_t *registers) {
   uint8_t flags = info >> 8;
   uint8_t code = info & 0xff;
 
-  if (flags & KEY_RELEASED) {
-    kgfx_putchar(keycode_to_char(code));
+  key_event_t event;
+  char c = 0;
+  bool shift = false;
+
+  if (get_key_state(QWERTY_KEY_L_SHIFT) == KEY_STATE_DOWN) {
+    shift = true;
+  } else if (get_key_state(QWERTY_KEY_R_SHIFT) == KEY_STATE_DOWN) {
+    shift = true;
+  }
+
+  if (get_caps_key_on()) {
+    // Use this to check if alphabet
+    c = shift_keycode_to_char(code);
+
+    if ((uint8_t)c > 64 && (uint8_t)c < 91) {
+      shift = !shift;
+    } else {
+    }
+
+    c = 0;
+  }
+
+  if (shift) {
+    c = shift_keycode_to_char(code);
+  } else {
+    c = keycode_to_char(code);
+  }
+
+  event.ascii_code = c;
+  event.key_code = code;
+  event.key_press = !(flags & KEY_RELEASED);
+
+  for (size_t i = 0; i < KEY_EVENT_RECIEVER_COUNT; i++) {
+    if (key_event_recievers[i] == NULL) {
+      continue;
+    } else {
+      key_event_recievers[i](event);
+    }
   }
 
   hal_irq_t irqs = get_hal_irq();

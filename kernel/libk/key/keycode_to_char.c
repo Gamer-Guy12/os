@@ -179,6 +179,22 @@ static uint8_t translation_table[] = {
   0,
   0,
   0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
 };
 
 uint8_t keycode_to_char(uint8_t keycode) {

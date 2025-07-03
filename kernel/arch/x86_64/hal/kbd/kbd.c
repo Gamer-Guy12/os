@@ -14,3 +14,10 @@ void hal_init_kbd(void) {
 
   sys_panic(HAL_INIT_ERR | KBD_HANDLING_ERR);
 }
+
+hal_kbd_t hal_get_kbd(void) {
+  cls_t *cls = get_cls();
+
+  return cls->kbd_interface;
+}
+
