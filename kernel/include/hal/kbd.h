@@ -10,12 +10,14 @@
 #define QWERTY_KEY_F2 0x3
 #define QWERTY_KEY_F3 0x4
 #define QWERTY_KEY_F4 0x5
-#define QWERTY_KEY_F5 0x7
-#define QWERTY_KEY_F6 0x8
-#define QWERTY_KEY_F7 0x9
-#define QWERTY_KEY_F8 0xA
-#define QWERTY_KEY_F9 0xB
-#define QWERTY_KEY_F10 0xC
+#define QWERTY_KEY_F5 0x6
+#define QWERTY_KEY_F6 0x7
+#define QWERTY_KEY_F7 0x8
+#define QWERTY_KEY_F8 0x9
+#define QWERTY_KEY_F9 0xA
+#define QWERTY_KEY_F10 0xB
+#define QWERTY_KEY_F11 0xC
+#define QWERTY_KEY_F12 0xD
 #define QWERTY_KEY_GRAVE (1 << 5)
 #define QWERTY_KEY_1 ((1 << 5) | 0x1)
 #define QWERTY_KEY_2 ((1 << 5) | 0x2)
@@ -78,7 +80,7 @@
 #define QWERTY_KEY_MENU ((5 << 5) | 0xB)
 #define QWERTY_KEY_R_CTRL ((5 << 5) | 0xC)
 
-typedef void (*ascii_key_down_handler)(uint8_t ascii);
+#define KEY_NONE 0xFF
 
 typedef struct {
   uint8_t key_code; 
@@ -92,7 +94,7 @@ typedef void (*key_event_reciever)(key_event_t event);
 
 typedef struct {
   bool (*check_keycode_down)(uint8_t keycode);
-  void (*register_key_event_handler)(key_event_reciever reciever);
+  bool (*register_key_event_handler)(key_event_reciever reciever);
   void (*unregister_key_event_handler)(key_event_reciever reciever);
   bool (*is_capslock_on)(void);
 } hal_kbd_t;

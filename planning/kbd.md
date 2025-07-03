@@ -7,7 +7,7 @@ Organize into a grid, bits 0 - 4 contain the column, bits 5 - 8 contain row
 
 | | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D |
 |-|-|-|- | - | - | - |-|-| -|-| - | -|-|-|
-| 0 | Esc | | F1 | F2 | F3 | F4 | | F5 | F6 | F7 | F8 | F9 | F10 | |
+| 0 | Esc | | F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F11 |
 | 1 | Grave | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 | - | = | Bkspc |
 | 2 | Tab | Q | W | E | R | T | Y | U | I | O | P | [ | ] | \ |
 | 3 | Caps | A | S | D | F | G | H | J | K | L | ; | ' | Enter | |
@@ -60,4 +60,21 @@ The read pointer will go through and read the next byte to send and increment
 - [ ] Check the state of certain toggle keys
     - Caps lock 
     - Later Num and Scroll Lock when i extend the keyboard (for numpad, arrows, extra keys)
+
+## NOTES
+
+- Later I might have to make a seperate ps_2 module and do inits for that stuff seperatly to use both kbd and mouse
+
+## TODO
+- [x] Create a system to hold all the keystates
+- [-] Create the interrupt handler that handles the irq
+    - [ ] State machine to fully get all the bytes
+    - [ ] Translation table to translate from scan code to key code
+    - [ ] Call all the registered handlers
+- [ ] Enable the irq (hal_irq_t)
+- [ ] Create the hal functions based off of it
+    - [ ] check_keycode_down
+    - [ ] register and unregister key event handler
+        - have an array and if it fills up too bad so sad (return false)
+    - [ ] is capslock on
 

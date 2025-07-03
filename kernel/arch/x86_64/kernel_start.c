@@ -50,15 +50,14 @@ typedef struct {
 uint64_t ms_counter = 0;
 
 void handler(idt_registers_t *registers) {
-  if (ms_counter > 1000) {
-    hal_irq_t irqs = get_hal_irq();
-    irqs.unmask_irq(0x0);
-    irqs.eoi();
+  size_t mod = ms_counter % 1000;
+  if (mod == 0) {
+    if (ms_counter == 1000)
+      kio_printf("1 Second\n");
+    else
+      kio_printf("%u Seconds\n", ms_counter / 1000);
   }
   ms_counter++;
-  if (ms_counter == 1000) {
-    kio_printf("1 Second\n");
-  }
   hal_irq_t irqs = get_hal_irq();
   irqs.unmask_irq(0x0);
   irqs.eoi();
