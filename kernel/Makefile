@@ -4,17 +4,19 @@ DECLS?=
 ifeq ($(ARCH), x86_64)
 CC=x86_64-elf-gcc
 INCLUDE := kernel/include
-CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c -I $(INCLUDE) -std=c11 -mcmodel=kernel -no-pie -mmmx -msse -mno-avx
+CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c -I $(INCLUDE) -I $(dev_includes) -std=c11 -mcmodel=kernel -no-pie -mmmx -msse -mno-avx
 
 ASM := nasm
 ASMFLAGS?=-felf64
 
 LD:=ld
-LDFLAGS=-T targets/x86_64/linker.ld -z noexecstack
+LDFLAGS=-T targets/x86_64/linker.ld -z noexecstack -L.
 endif
 
 kernel-c-srcs := $(shell find kernel -name "*.c")
 kernel-c-objs := $(patsubst kernel/%, kernel/obj/%.o, $(kernel-c-srcs))
+
+kernel-libs := $(dev_drivers)
 
 kernel-objs = $(kernel-c-objs)
 
@@ -28,8 +30,8 @@ build/bin/kernel.bin: $(kernel-objs) $(kernel-libs)
 	@echo The Kernel does not yet support many things for floating point numbers
 	@echo The types exist but not the declerations backing them
 	@mkdir -p build/bin
-	@$(LD) $(LDFLAGS) $(kernel-objs) $(kernel-libs) -o $@
-	@echo LD $(kernel-objs)
+	@$(LD) $(LDFLAGS) $(kernel-objs) $(addprefix -l:, $(kernel-libs)) -o $@
+	@echo LD $(kernel-objs) $(kernel-libs)
 
 kernel/obj/%.asm.o: kernel/%.asm
 	@mkdir -p $(dir $@)

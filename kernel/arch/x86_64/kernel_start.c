@@ -1,3 +1,4 @@
+#include "hal/kbd.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -47,21 +48,13 @@ typedef struct {
   uint32_t size;
 } PACKED multiboot_tag_t;
 
-uint64_t ms_counter = 0;
+void handler(key_event_t event) {
+  if (!event.key_press) return;
+  if (event.ascii_code == 0) {
+    return;
+  }
 
-void handler(idt_registers_t *registers) {
-  if (ms_counter > 1000) {
-    hal_irq_t irqs = get_hal_irq();
-    irqs.unmask_irq(0x0);
-    irqs.eoi();
-  }
-  ms_counter++;
-  if (ms_counter == 1000) {
-    kio_printf("1 Second\n");
-  }
-  hal_irq_t irqs = get_hal_irq();
-  irqs.unmask_irq(0x0);
-  irqs.eoi();
+  kgfx_putchar(event.ascii_code);
 }
 
 void kernel_start(uint8_t *multiboot) {
@@ -136,22 +129,12 @@ void kernel_start(uint8_t *multiboot) {
   kio_printf("Initialized Interrupts\n");
 
   init_cls();
-  init_hal();
+  init_x86_64_hal();
   kio_printf("Initialized HAL\n");
 
-  hal_irq_t irqs = get_hal_irq();
-  register_interrupt_handler(handler, 0x50);
-  irqs.map_irq(0x50, 0x0);
-  irqs.unmask_irq(0x0);
-
-  uint8_t pit_command = 0x34;
-
-  outb(0x43, pit_command);
-  io_wait();
-  outb(0x40, 0xA9);
-  io_wait();
-  outb(0x40, 0x4);
-  io_wait();
+  hal_kbd_t kbd = hal_get_kbd();
+  kbd.register_key_event_handler(handler);
+  kbd.unregister_key_event_handler(handler);
 
   kernel_main();
 }

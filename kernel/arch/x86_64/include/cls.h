@@ -4,9 +4,11 @@
 #define X86_64_CLS
 
 #include <hal/irq.h>
+#include <hal/kbd.h>
 
 typedef struct {
   hal_irq_t irq_interface;
+  hal_kbd_t kbd_interface;
 } cls_t;
 
 void init_cls(void);

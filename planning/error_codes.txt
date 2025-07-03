@@ -7,6 +7,7 @@ Bit 1: Missing Block
 
 first 48 bits for error 5:
 Bit 0: IRQ Handling error
+Bit 1: Keyboard handling error
 
 ERR 0: Memory Allocator Error
 ERR 1: Multiboot Error

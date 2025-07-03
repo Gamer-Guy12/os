@@ -61,6 +61,7 @@ void handle_escape(char c) {
     break;
   case '\b':
     decrement_cursor();
+    vga_kgfx_print_glyph(cursor_x, cursor_y, 0, 0, 0, 0, FONT_SCALE);
     break;
   case '\r':
     cursor_x = 0;
@@ -86,7 +87,10 @@ void kgfx_putchar(char c) {
   spinlock_acquire(&char_lock);
 
   if (c == ' ') {
+    vga_kgfx_print_glyph(cursor_x, cursor_y, 0, 0, 0, 0, FONT_SCALE);
     increment_cursor();
+  } else if (c == 0) {
+    
   } else if ((uint8_t)c < 32) {
     handle_escape(c);
   } else {
