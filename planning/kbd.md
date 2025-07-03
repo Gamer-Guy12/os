@@ -7,7 +7,7 @@ Organize into a grid, bits 0 - 4 contain the column, bits 5 - 8 contain row
 
 | | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | A | B | C | D |
 |-|-|-|- | - | - | - |-|-| -|-| - | -|-|-|
-| 0 | Esc | | F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F11 |
+| 0 | Esc | | F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F12 |
 | 1 | Grave | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0 | - | = | Bkspc |
 | 2 | Tab | Q | W | E | R | T | Y | U | I | O | P | [ | ] | \ |
 | 3 | Caps | A | S | D | F | G | H | J | K | L | ; | ' | Enter | |

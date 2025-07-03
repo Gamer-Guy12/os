@@ -87,6 +87,8 @@ void kgfx_putchar(char c) {
 
   if (c == ' ') {
     increment_cursor();
+  } else if (c == 0) {
+    
   } else if ((uint8_t)c < 32) {
     handle_escape(c);
   } else {

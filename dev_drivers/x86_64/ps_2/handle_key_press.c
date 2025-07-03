@@ -143,11 +143,15 @@ uint8_t translation_table[] = {
 
 // Same indexing as previous one
 // TODO: IMPORTANT: ADD IN RIGHT CONTROL AND RIGHT ALT CUZ THEY IN HERE
-uint8_t extended_translation_table[] = {KEY_NONE};
+uint8_t extended_translation_table[256] = {KEY_NONE};
 
-void handle_key_press(void) {
+/// Bottom 8 bits is keycode
+/// Top 8 is flags
+uint16_t handle_key_press(void) {
   bool prefix_state = false;
   bool release_state = false;
+  uint8_t key = KEY_NONE;
+  uint8_t flags = 0;
 
   while (true) {
     wait_for_read();
@@ -209,6 +213,11 @@ void handle_key_press(void) {
       break;
     }
 
+    key = keycode;
+    if (release_state) {
+      flags |= KEY_RELEASED;
+    }
+
     set_key_state(keycode, release_state ? KEY_STATE_UP : KEY_STATE_DOWN);
 
     // Handle caps
@@ -219,4 +228,6 @@ void handle_key_press(void) {
 
     break;
   }
+
+  return key | (flags << 8);
 }

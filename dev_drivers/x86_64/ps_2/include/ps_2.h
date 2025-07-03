@@ -41,8 +41,12 @@ uint8_t get_key_state(uint8_t key_code);
 
 bool enqueue_command(uint8_t command);
 
+typedef enum {
+  KEY_RELEASED = 1,
+} key_press_flags_t;
+
 // Reads it into the key states
-void handle_key_press(void);
+uint16_t handle_key_press(void);
 
 void set_caps_key(bool is_on);
 bool get_caps_key_on(void);
