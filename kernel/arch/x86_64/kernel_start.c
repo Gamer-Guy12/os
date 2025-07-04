@@ -1,4 +1,3 @@
-#include "hal/kbd.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -47,15 +46,6 @@ typedef struct {
   uint32_t type;
   uint32_t size;
 } PACKED multiboot_tag_t;
-
-void handler(key_event_t event) {
-  if (!event.key_press) return;
-  if (event.ascii_code == 0) {
-    return;
-  }
-
-  kgfx_putchar(event.ascii_code);
-}
 
 void kernel_start(uint8_t *multiboot) {
 
@@ -132,9 +122,7 @@ void kernel_start(uint8_t *multiboot) {
   init_x86_64_hal();
   kio_printf("Initialized HAL\n");
 
-  hal_kbd_t kbd = hal_get_kbd();
-  kbd.register_key_event_handler(handler);
-  kbd.unregister_key_event_handler(handler);
+  start_cores();
 
   kernel_main();
 }
