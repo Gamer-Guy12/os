@@ -9,6 +9,8 @@ SECTIONS {
     _smp_code = .;
 
     *(.smp_code)
+
+    _smp_code_end = .;
   }
 
   .smp_data ALIGN(4K) :
@@ -16,6 +18,8 @@ SECTIONS {
     _smp_data = .;
 
     *(.smp_data)
+
+    _smp_data_end = .;
   }
 
 	. = 0x100000;

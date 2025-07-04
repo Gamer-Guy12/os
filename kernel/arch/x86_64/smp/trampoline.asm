@@ -1,5 +1,9 @@
 global trampoline
+global started
 global page_table_ptr
+extern smp_start
+extern bspdone
+extern ap_running
 
 BITS 16
 
@@ -8,7 +12,7 @@ section .smp_code
 trampoline:
   cli
   cld
-
+  
   ; How to do it
   ; First disable interrupts (done)
   ; Load the gdt
@@ -62,9 +66,59 @@ bit32:
   or eax, (1 << 8)
   wrmsr
 
+  ; Enable paging again
+  mov edx, cr0
+  or edx, (1 << 31)
+  mov cr0, edx
+  
+  ; Load gdt
+  lgdt [gdt_ptr]
+
+  jmp 8:long_start
+
+  ;; 8 is the code segment
+  ;jmp 8:smp_start
+
+.stop:
+  cli
   hlt
+  jmp .stop
 
 section .smp_data
 page_table_ptr:
 dd 0
+
+gdt_64:
+dq 0
+; 64 bit code segment
+dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53)
+; 64 bit data segment
+dq (1 << 44) | (1 << 47) | (1 << 53)
+gdt_64_end:
+
+gdt_64_ptr:
+dw gdt_64_end - gdt_64 - 1
+dq gdt_64
+
+BITS 64
+section .smp_code
+long_start:
+  jmp long_land
+
+BITS 64
+section .text
+
+long_land:
+
+  .wait:
+  pause
+  cmp byte [bspdone], 0
+  jz .wait
+
+  lock inc byte [ap_running]
+
+  .stop:
+  cli
+  hlt
+  jmp .stop
 
