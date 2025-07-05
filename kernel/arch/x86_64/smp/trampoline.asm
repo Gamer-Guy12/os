@@ -2,7 +2,7 @@ global trampoline
 global started
 global page_table_ptr
 extern smp_start
-extern bspdone
+global bspdone
 extern ap_running
 
 BITS 16
@@ -66,15 +66,15 @@ bit32:
   or eax, (1 << 8)
   wrmsr
 
+  ; Load gdt
+  lgdt [gdt_64_ptr]
+
   ; Enable paging again
   mov edx, cr0
   or edx, (1 << 31)
   mov cr0, edx
-  
-  ; Load gdt
-  lgdt [gdt_ptr]
 
-  jmp 8:long_start
+  jmp 0x8:long_start
 
   ;; 8 is the code segment
   ;jmp 8:smp_start
@@ -109,11 +109,30 @@ BITS 64
 section .text
 
 long_land:
+  ; Enable mmx
+  ; Clear EM in cr0
+  mov rax, cr0
+  mov rbx, (1 << 2)
+  not rbx
+  and rax, rbx
 
-  .wait:
-  pause
-  cmp byte [bspdone], 0
-  jz .wait
+  ; Set MP bit in cr0
+  or rax, (1 << 1)
+
+  ; Clear TS bit in cr0
+  mov rbx, (1 << 3)
+  not rbx
+  and rax, rbx
+  
+  mov cr0, rax
+
+  ; Enable sse
+  mov rax, cr4
+
+  or rax, (1 << 9)
+  or rax, (1 << 10)
+
+  mov cr4, rax
 
   lock inc byte [ap_running]
 
@@ -121,4 +140,8 @@ long_land:
   cli
   hlt
   jmp .stop
+
+section .data
+bspdone:
+dd 0
 

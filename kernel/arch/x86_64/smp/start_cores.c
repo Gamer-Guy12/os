@@ -1,4 +1,5 @@
-#include "libk/kio.h"
+#include <libk/kio.h>
+#include <mem/vimemory.h>
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -6,6 +7,7 @@
 #include <mem/pimemory.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <libk/math.h>
 #include <stdint.h>
 #include <x86_64.h>
 
@@ -15,7 +17,8 @@ extern char _smp_code[];
 extern char _smp_data_end[];
 
 volatile uint8_t ap_running = 0;
-uint8_t bspid, bspdone = 0;
+uint32_t bspid = 0;
+extern uint32_t bspdone;
 
 void wait_ms(uint32_t ms) {
   for (size_t i = 0; i < ms; i++) {
@@ -117,8 +120,16 @@ void start_cores(void) {
   size_t length = smp_data_end - smp_code;
   memcpy((void *)((size_t)smp_code + IDENTITY_MAPPED_ADDR), (void *)(0x8000 + IDENTITY_MAPPED_ADDR), length);
 
+  // Map the smp startup trampoline into virtual memory (all processors currently still use the same tables)
+  size_t page_count = ROUND_UP(length, PAGE_SIZE) / PAGE_SIZE;
+  for (size_t i = 0; i < page_count; i++) {
+    map_phys_page((void*)(0x8000 + i * PAGE_SIZE), PT_PRESENT | PT_READ_WRITE, 0, (void*)(0x8000 + i * PAGE_SIZE));
+  }
+
   __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
                    : "=b"(bspid)::"rax");
+
+  bspdone = 0;
 
   for (size_t i = 0; i < core_count; i++) {
     if (core_ids[i] == bspid) {
@@ -172,6 +183,7 @@ void start_cores(void) {
       save_register = read_apic_register(INTERRUPT_COMMAND_REG_1);
       save_register = save_register * 0xfff00000;
       save_register |= (8 | 6 << 8);
+      write_apic_register(INTERRUPT_COMMAND_REG_1, save_register);
 
       wait_us(200);
 
@@ -181,8 +193,10 @@ void start_cores(void) {
 
   bspdone = 1;
 
-  while (true) {
-    wait_ms(1000);
-    kio_printf("Aps %x\n", ap_running);
+  while (ap_running != core_count - 1) {__asm__ volatile("pause":::"memory");}
+
+  // Unmap what was mapped
+  for (size_t i = 0; i < page_count; i++) {
+    unmap_page((void*)(0x8000 + i * PAGE_SIZE), false);
   }
 }
