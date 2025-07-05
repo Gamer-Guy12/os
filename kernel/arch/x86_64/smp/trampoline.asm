@@ -4,6 +4,7 @@ global page_table_ptr
 extern smp_start
 global bspdone
 extern ap_running
+extern stack_ptrs
 
 BITS 16
 
@@ -130,11 +131,26 @@ long_land:
   mov rax, cr4
 
   or rax, (1 << 9)
-  or rax, (1 << 10)
+or rax, (1 << 10)
 
   mov cr4, rax
 
+  mov rbx, 0
+  mov eax, 1
+  cpuid
+  shr ebx, 24
+  mov rdi, rbx
+
   lock inc byte [ap_running]
+
+  mov rax, 8
+  mul rbx
+  add rax, stack_ptrs
+
+  mov rsp, [rax]
+  mov rbp, rsp
+
+  call smp_start
 
   .stop:
   cli
