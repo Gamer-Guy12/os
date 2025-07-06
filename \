@@ -119,6 +119,11 @@ void start_cores(void) {
   *((uint32_t *)((size_t)&page_table_ptr + IDENTITY_MAPPED_ADDR)) =
       virt_to_phys(PML4_ADDR);
 
+  size_t addr = 0;
+  __asm__ volatile("movq %cr3, %rax" :"=a"(addr)::);
+
+  kio_printf("addr %x\n", virt_to_phys(PML4_ADDR));
+
   uint8_t *smp_code = (void *)_smp_code;
   uint8_t *smp_data_end = (void *)_smp_data_end;
 
@@ -214,6 +219,8 @@ void start_cores(void) {
   while (ap_running != core_count - 1) {
     __asm__ volatile("pause" ::: "memory");
   }
+
+  kio_printf("Addr %x\n", virt_to_phys(0xffff814000064000));
 
   // Unmap what was mapped
   for (size_t i = 0; i < page_count; i++) {

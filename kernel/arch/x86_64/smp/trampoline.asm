@@ -92,9 +92,9 @@ dd 0
 gdt_64:
 dq 0
 ; 64 bit code segment
-dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53)
+dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53) | (1 << 55)
 ; 64 bit data segment
-dq (1 << 44) | (1 << 47) | (1 << 53)
+dq (1 << 44) | (1 << 47) | (1 << 53) | (1 << 41) | (1 << 55)
 gdt_64_end:
 
 gdt_64_ptr:
@@ -104,6 +104,14 @@ dq gdt_64
 BITS 64
 section .smp_code
 long_start:
+  xor rax, rax
+  mov ax, 0x10
+  mov ds, ax
+  mov ss, ax
+  mov es, ax
+  mov fs, ax
+  mov gs, ax
+
   jmp long_land
 
 BITS 64
@@ -134,6 +142,12 @@ long_land:
 or rax, (1 << 10)
 
   mov cr4, rax
+
+  ; Enable NX Bit
+  mov rcx, 0xc0000080
+  rdmsr
+  or rax, (1 << 11)
+  wrmsr
 
   mov rbx, 0
   mov eax, 1
