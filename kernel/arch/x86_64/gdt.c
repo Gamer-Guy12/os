@@ -1,3 +1,4 @@
+#include <cls.h>
 #include <decls.h>
 #include <gdt.h>
 #include <libk/kio.h>
@@ -6,9 +7,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-ALIGN(0x8) gdt_descriptor_t gdt[DESCRIPTOR_COUNT];
-
 gdt_pointer_t create_descriptors(void) {
+
+  gdt_descriptor_t* gdt = get_cls()->gdt;
 
   // Kernel Code
   gdt[1].access_byte = GDT_ACCESS_PRESENT | GDT_ACCESS_DESCRIPTOR |

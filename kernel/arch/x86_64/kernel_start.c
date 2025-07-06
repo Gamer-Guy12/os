@@ -105,6 +105,9 @@ void kernel_start(uint8_t *multiboot) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
 
+  init_cls();
+  kio_printf("Initialized CLS (Core Local Storage)\n");
+
   create_gdt();
   kio_printf("Created the GDT\n");
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -118,7 +121,6 @@ void kernel_start(uint8_t *multiboot) {
   init_interrupts();
   kio_printf("Initialized Interrupts\n");
 
-  init_cls();
   init_x86_64_hal();
   kio_printf("Initialized HAL\n");
 

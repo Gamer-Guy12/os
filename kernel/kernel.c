@@ -3,7 +3,6 @@
 
 void NORETURN kernel_main(void) {
   // kio_clear();
-  kio_printf("We are in Kernel Main!\n");
 
   // uint64_t *num1 = kmalloc(sizeof(uint64_t), 0);
   // *num1 = 29;
