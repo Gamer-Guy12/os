@@ -1,13 +1,14 @@
 #include <libk/kgfx.h>
 #include <libk/spinlock.h>
 #include <libk/vga_kgfx.h>
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 
 uint32_t cursor_x = 0;
 uint32_t cursor_y = 0;
 
-spinlock_t char_lock = 0;
+spinlock_t char_lock = ATOMIC_FLAG_INIT;
 
 void increment_cursor(void) {
   vga_kgfx_properties_t properties = vga_kgfx_get_properties();

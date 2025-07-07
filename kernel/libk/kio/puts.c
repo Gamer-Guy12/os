@@ -1,8 +1,9 @@
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/spinlock.h>
+#include <stdatomic.h>
 
-static spinlock_t strLock;
+static spinlock_t strLock = ATOMIC_FLAG_INIT;
 
 void kio_puts(char *c) {
   spinlock_acquire(&strLock);
