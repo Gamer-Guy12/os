@@ -1,3 +1,6 @@
+#include "hal/irq.h"
+#include "hal/kbd.h"
+#include "libk/kgfx.h"
 #include <cls.h>
 #include <gdt.h>
 #include <hal/hal.h>
@@ -41,32 +44,45 @@ void setup_memory(void) {
   /// TODO: Delete the old stacks and create new ones
 }
 
+void handler(key_event_t event) {
+  if (!event.key_press)
+    return;
+  kgfx_putchar(event.ascii_code);
+}
+
 void smp_start(uint32_t processor_id) {
-  kio_printf("0 Hi 0\n");
+
+  __asm__ volatile("cli");
+
+  kgfx_putchar(processor_id + '0');
+  kgfx_putchar('\n');
+
+  if (processor_id != 1) {
+    while (1) {
+    }
+  }
+
   setup_memory();
-  kio_printf("Hi 1\n");
 
   vmm_kernel_region_t region;
   create_kernel_region(&region);
   vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
   *region_ptr = &region;
 
-  kio_printf("Hi 2\n");
   init_heap();
-  kio_printf("Hi 3\n");
 
   init_cls();
-  kio_printf("Hi 4\n");
 
   create_gdt();
-  kio_printf("Hi 5\n");
 
   init_interrupts();
 
-  kio_printf("Hi 6\n");
   init_x86_64_hal();
 
-  kio_printf("Hi\n");
+  hal_kbd_t kbd = hal_get_kbd();
+
+  kbd.register_key_event_handler(handler);
+
   while (1) {
   }
 }

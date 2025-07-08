@@ -139,9 +139,15 @@ long_land:
   mov rax, cr4
 
   or rax, (1 << 9)
-or rax, (1 << 10)
+  or rax, (1 << 10)
+  or rax, (1 << 18)
 
   mov cr4, rax
+
+  xor rcx, rcx
+  xgetbv
+  or rax, 7
+  xsetbv
 
   ; Enable NX Bit
   mov rcx, 0xc0000080
@@ -149,18 +155,17 @@ or rax, (1 << 10)
   or rax, (1 << 11)
   wrmsr
 
+  lock inc byte [ap_running]
+
   mov rbx, 0
-  mov eax, 1
+  mov rax, 1
   cpuid
   shr ebx, 24
   mov rdi, rbx
 
-  lock inc byte [ap_running]
-
   mov rax, 8
   mul rbx
   add rax, stack_ptrs
-
   mov rsp, [rax]
   mov rbp, rsp
 

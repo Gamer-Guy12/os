@@ -97,6 +97,7 @@ void kernel_start(uint8_t *multiboot) {
 
   // Set up default kernel region. during smp startup each core should make
   // their kernel region
+  
   vmm_kernel_region_t region;
   create_kernel_region(&region);
   vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
@@ -110,6 +111,7 @@ void kernel_start(uint8_t *multiboot) {
 
   create_gdt();
   kio_printf("Created the GDT\n");
+  
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
   //*num = 49;

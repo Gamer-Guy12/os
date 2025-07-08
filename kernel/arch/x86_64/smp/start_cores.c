@@ -139,6 +139,7 @@ void start_cores(void) {
 
   // -1 so we don't allocate for ourselves
   for (size_t i = 0; i < core_count; i++) {
+    kio_printf("Core Id: %x\n", core_ids[i]);
     if (i == bspid)
       continue;
 
@@ -160,7 +161,7 @@ void start_cores(void) {
     // Set destination apic
     uint32_t save_register = read_apic_register(INTERRUPT_COMMAND_REG_2);
     save_register = save_register & 0x00ffffff;
-    save_register |= (1 << 24);
+    save_register |= (i << 24);
     write_apic_register(INTERRUPT_COMMAND_REG_2, save_register);
 
     // Issue init ipi
@@ -174,7 +175,7 @@ void start_cores(void) {
     // Set destination apic
     save_register = read_apic_register(INTERRUPT_COMMAND_REG_2);
     save_register = save_register & 0x00ffffff;
-    save_register |= (1 << 24);
+    save_register |= (i << 24);
     write_apic_register(INTERRUPT_COMMAND_REG_2, save_register);
 
     // Deassert init ipi
@@ -194,7 +195,7 @@ void start_cores(void) {
       // Set destination apic
       save_register = read_apic_register(INTERRUPT_COMMAND_REG_2);
       save_register = save_register & 0x00ffffff;
-      save_register |= (1 << 24);
+      save_register |= (i << 24);
       write_apic_register(INTERRUPT_COMMAND_REG_2, save_register);
 
       // Issue startup ipi
