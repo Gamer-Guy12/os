@@ -41,4 +41,6 @@ void kgfx_scroll(void) {
   for (size_t i = 1; i < row_count; i++) {
     move_row_up(i);
   }
+
+  clear_row(row_count - 1);
 }

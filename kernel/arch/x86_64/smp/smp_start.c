@@ -53,9 +53,6 @@ void smp_start(uint32_t processor_id) {
 
   __asm__ volatile("cli");
 
-  kgfx_putchar(processor_id + '0');
-  kgfx_putchar('\n');
-
   if (processor_id != 1) {
     while (1) {
     }
@@ -75,11 +72,14 @@ void smp_start(uint32_t processor_id) {
   create_gdt();
 
   init_interrupts();
+  
+  for (size_t i = 0; i < 100; i++) {
+    kio_printf("%u\n", i);
+  }
 
   hal_kbd_t kbd = hal_get_kbd();
 
   kbd.register_key_event_handler(handler);
-
   while (1) {
   }
 }

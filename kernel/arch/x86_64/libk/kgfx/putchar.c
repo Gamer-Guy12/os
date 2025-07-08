@@ -57,6 +57,7 @@ void handle_escape(char c) {
 
     if (cursor_y >= text_height) {
       kgfx_scroll();
+      cursor_y--;
     }
 
     break;
@@ -104,4 +105,8 @@ void kgfx_putchar(char c) {
 void vga_kgfx_set_cursor(uint32_t x, uint32_t y) {
   cursor_y = y;
   cursor_x = x;
+}
+
+uint32_t vga_kgfx_get_row(void) {
+  return cursor_y;
 }
