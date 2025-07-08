@@ -1,10 +1,10 @@
-#include <mem/memory.h>
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
 #include <libk/kio.h>
 #include <libk/math.h>
 #include <libk/mem.h>
+#include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
 #include <stdbool.h>
@@ -161,7 +161,7 @@ void start_cores(void) {
     // Set destination apic
     uint32_t save_register = read_apic_register(INTERRUPT_COMMAND_REG_2);
     save_register = save_register & 0x00ffffff;
-    save_register |= (i << 24);
+    save_register |= (core_ids[i] << 24);
     write_apic_register(INTERRUPT_COMMAND_REG_2, save_register);
 
     // Issue init ipi
@@ -175,7 +175,7 @@ void start_cores(void) {
     // Set destination apic
     save_register = read_apic_register(INTERRUPT_COMMAND_REG_2);
     save_register = save_register & 0x00ffffff;
-    save_register |= (i << 24);
+    save_register |= (core_ids[i] << 24);
     write_apic_register(INTERRUPT_COMMAND_REG_2, save_register);
 
     // Deassert init ipi
@@ -195,7 +195,7 @@ void start_cores(void) {
       // Set destination apic
       save_register = read_apic_register(INTERRUPT_COMMAND_REG_2);
       save_register = save_register & 0x00ffffff;
-      save_register |= (i << 24);
+      save_register |= (core_ids[i] << 24);
       write_apic_register(INTERRUPT_COMMAND_REG_2, save_register);
 
       // Issue startup ipi

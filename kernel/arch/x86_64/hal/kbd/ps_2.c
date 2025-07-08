@@ -10,6 +10,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+key_event_reciever key_event_recievers[KEY_EVENT_RECIEVER_COUNT];
+
 bool check_ps_2(void) {
   // IMPORTANT: TODO: Do an actual check for the ps_2 controller
 
@@ -29,8 +31,6 @@ static bool ps_2_check_keycode_down(uint8_t keycode) {
 bool ps_2_is_capslock_on(void) { return get_caps_key_on(); }
 
 static bool ps_2_register_key_event_handler(key_event_reciever reciever) {
-  key_event_reciever* key_event_recievers = get_cls()->key_event_recievers;
-
   for (size_t i = 0; i < KEY_EVENT_RECIEVER_COUNT; i++) {
     if (key_event_recievers[i] != NULL) {
       continue;
@@ -44,8 +44,6 @@ static bool ps_2_register_key_event_handler(key_event_reciever reciever) {
 }
 
 static void ps_2_unregister_key_event_handler(key_event_reciever reciever) {
-  key_event_reciever* key_event_recievers = get_cls()->key_event_recievers;
-
   for (size_t i = 0; i < KEY_EVENT_RECIEVER_COUNT; i++) {
     if (key_event_recievers[i] == reciever) {
       key_event_recievers[i] = NULL;
@@ -54,8 +52,6 @@ static void ps_2_unregister_key_event_handler(key_event_reciever reciever) {
 }
 
 static void on_key_event(idt_registers_t *registers) {
-  key_event_reciever* key_event_recievers = get_cls()->key_event_recievers;
-
   uint16_t info = handle_key_press();
   uint8_t flags = info >> 8;
   uint8_t code = info & 0xff;
