@@ -3,9 +3,10 @@
 #include <libk/spinlock.h>
 #include <libk/string.h>
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <stdint.h>
 
-static spinlock_t printLock;
+static spinlock_t printLock = ATOMIC_FLAG_INIT;
 
 /// This is a cut down version of printf
 /// The format specifiers that you can use are:

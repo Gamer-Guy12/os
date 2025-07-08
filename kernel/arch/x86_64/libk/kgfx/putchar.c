@@ -1,13 +1,14 @@
 #include <libk/kgfx.h>
 #include <libk/spinlock.h>
 #include <libk/vga_kgfx.h>
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 
 uint32_t cursor_x = 0;
 uint32_t cursor_y = 0;
 
-spinlock_t char_lock = 0;
+spinlock_t char_lock = ATOMIC_FLAG_INIT;
 
 void increment_cursor(void) {
   vga_kgfx_properties_t properties = vga_kgfx_get_properties();
@@ -56,6 +57,7 @@ void handle_escape(char c) {
 
     if (cursor_y >= text_height) {
       kgfx_scroll();
+      cursor_y--;
     }
 
     break;
@@ -103,4 +105,8 @@ void kgfx_putchar(char c) {
 void vga_kgfx_set_cursor(uint32_t x, uint32_t y) {
   cursor_y = y;
   cursor_x = x;
+}
+
+uint32_t vga_kgfx_get_row(void) {
+  return cursor_y;
 }

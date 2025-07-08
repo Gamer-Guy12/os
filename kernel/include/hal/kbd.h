@@ -99,6 +99,8 @@ typedef struct {
   bool (*is_capslock_on)(void);
 } hal_kbd_t;
 
+#define KEY_EVENT_RECIEVER_COUNT 512
+
 void hal_init_kbd(void);
 hal_kbd_t hal_get_kbd(void);
 

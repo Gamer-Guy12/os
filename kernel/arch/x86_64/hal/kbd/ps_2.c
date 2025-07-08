@@ -1,3 +1,4 @@
+#include <cls.h>
 #include <hal/irq.h>
 #include <hal/kbd.h>
 #include <interrupts.h>
@@ -8,6 +9,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
+key_event_reciever key_event_recievers[KEY_EVENT_RECIEVER_COUNT];
 
 bool check_ps_2(void) {
   // IMPORTANT: TODO: Do an actual check for the ps_2 controller
@@ -26,10 +29,6 @@ static bool ps_2_check_keycode_down(uint8_t keycode) {
 }
 
 bool ps_2_is_capslock_on(void) { return get_caps_key_on(); }
-
-#define KEY_EVENT_RECIEVER_COUNT 512
-
-key_event_reciever key_event_recievers[KEY_EVENT_RECIEVER_COUNT] = {NULL};
 
 static bool ps_2_register_key_event_handler(key_event_reciever reciever) {
   for (size_t i = 0; i < KEY_EVENT_RECIEVER_COUNT; i++) {

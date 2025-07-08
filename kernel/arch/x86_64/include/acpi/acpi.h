@@ -65,6 +65,14 @@ typedef struct {
   uint16_t flags;
 } PACKED MADT_entry_2_t;
 
+typedef struct {
+  MADT_entry_header_t header;
+  uint8_t processor_id;
+  uint8_t apic_id;
+  /// If bit 0 is not set don't enable
+  uint32_t flags;
+} PACKED MADT_entry_0_t;
+
 void *acpi_get_struct(char signature[4]);
 XSDP_t *get_xsdp(void);
 XSDT_t *get_xsdt(void);

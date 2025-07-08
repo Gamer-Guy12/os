@@ -1,4 +1,3 @@
-#include "hal/kbd.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -47,15 +46,6 @@ typedef struct {
   uint32_t type;
   uint32_t size;
 } PACKED multiboot_tag_t;
-
-void handler(key_event_t event) {
-  if (!event.key_press) return;
-  if (event.ascii_code == 0) {
-    return;
-  }
-
-  kgfx_putchar(event.ascii_code);
-}
 
 void kernel_start(uint8_t *multiboot) {
 
@@ -107,6 +97,7 @@ void kernel_start(uint8_t *multiboot) {
 
   // Set up default kernel region. during smp startup each core should make
   // their kernel region
+  
   vmm_kernel_region_t region;
   create_kernel_region(&region);
   vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
@@ -115,8 +106,12 @@ void kernel_start(uint8_t *multiboot) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
 
+  init_cls();
+  kio_printf("Initialized CLS (Core Local Storage)\n");
+
   create_gdt();
   kio_printf("Created the GDT\n");
+  
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
   //*num = 49;
@@ -128,13 +123,10 @@ void kernel_start(uint8_t *multiboot) {
   init_interrupts();
   kio_printf("Initialized Interrupts\n");
 
-  init_cls();
   init_x86_64_hal();
   kio_printf("Initialized HAL\n");
 
-  hal_kbd_t kbd = hal_get_kbd();
-  kbd.register_key_event_handler(handler);
-  kbd.unregister_key_event_handler(handler);
+  start_cores();
 
   kernel_main();
 }

@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>

@@ -8,6 +8,7 @@ extend:
 
   push rax
   push rbx
+  push rcx
 
   ; Enable mmx
   ; Clear EM in cr0
@@ -31,9 +32,16 @@ extend:
 
   or rax, (1 << 9)
   or rax, (1 << 10)
+  or rax, (1 << 18)
 
   mov cr4, rax
 
+  xor rcx, rcx
+  xgetbv
+  or rax, 7
+  xsetbv
+
+  pop rcx
   pop rbx
   pop rax
   jmp extend_ret

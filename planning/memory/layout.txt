@@ -4,7 +4,6 @@ PDPT Entries:
 257 - Physical Memory Identity Mapping (If wanted later)
 258 - Misc Data: PDT structure
     - Multiboot Info
-    - ACPI Info
     - PDT 256 and onwards contains vga memory
 259 - 509 - Kernel Heap and Stack
 510 - Recursive Mapping

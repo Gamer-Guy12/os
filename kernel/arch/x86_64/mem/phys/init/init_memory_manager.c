@@ -668,7 +668,7 @@ static void map_vga_mem(void) {
 
   for (size_t i = 0; i < page_count; i++) {
     map_phys_page((void *)(VGA_MEM_ADDR + i * PAGE_SIZE),
-                  PT_PRESENT | PT_READ_WRITE, true,
+                  PT_PRESENT | PT_READ_WRITE | PT_PAGE_WRITE_THROUGH | PT_PAGE_CACHE_DISABLED, true,
                   (void *)((size_t)framebuffer_addr + i * PAGE_SIZE));
   }
 }

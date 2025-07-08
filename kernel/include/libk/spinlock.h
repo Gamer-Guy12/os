@@ -1,9 +1,10 @@
 #ifndef SPINLOCK_H
 #define SPINLOCK_H
 
+#include <stdatomic.h>
 #include <stdint.h>
 
-typedef volatile uint16_t spinlock_t;
+typedef atomic_flag spinlock_t;
 
 void spinlock_acquire(spinlock_t *lock);
 void spinlock_release(spinlock_t *lock);

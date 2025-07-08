@@ -1,6 +1,7 @@
 #include <asm.h>
 #include <libk/spinlock.h>
 #include <ps_2.h>
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -9,7 +10,7 @@ uint16_t read_index = 0;
 uint16_t write_index = 0;
 uint16_t command_count = 0;
 
-spinlock_t command_queue_lock = 0;
+spinlock_t command_queue_lock = ATOMIC_FLAG_INIT;
 
 bool executing = false;
 

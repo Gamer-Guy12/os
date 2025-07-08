@@ -3,8 +3,14 @@
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
+#include <stdatomic.h>
 
 void create_kernel_region(vmm_kernel_region_t *region) {
+  atomic_flag_clear_explicit(&region->global_lock, memory_order_release);
+  atomic_flag_clear_explicit(&region->brk_lock, memory_order_release);
+  atomic_flag_clear_explicit(&region->mmap_lock, memory_order_release);
+  atomic_flag_clear_explicit(&region->autogen_lock, memory_order_release);
+
   spinlock_acquire(&region->global_lock);
 
   // IMPORTANT: Change this when u add mmap
