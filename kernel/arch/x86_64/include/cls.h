@@ -10,8 +10,6 @@
 #include <interrupts.h>
 
 typedef struct {
-  hal_irq_t irq_interface;
-  hal_kbd_t kbd_interface;
   ALIGN(0x8) gdt_descriptor_t gdt[DESCRIPTOR_COUNT];
   ALIGN(0x10) idt_gate_descriptor_t idt[256];
 } cls_t;

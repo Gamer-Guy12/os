@@ -4,11 +4,12 @@
 #include <libk/err.h>
 #include <libk/sys.h>
 
+hal_kbd_t kbd;
+
 void hal_init_kbd(void) {
-  cls_t *cls = get_cls();
 
   if (check_ps_2()) {
-    cls->kbd_interface = init_ps_2();
+    kbd = init_ps_2();
     return;
   }
 
@@ -16,8 +17,6 @@ void hal_init_kbd(void) {
 }
 
 hal_kbd_t hal_get_kbd(void) {
-  cls_t *cls = get_cls();
-
-  return cls->kbd_interface;
+  return kbd;
 }
 

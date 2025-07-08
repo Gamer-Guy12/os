@@ -1,4 +1,3 @@
-#include "hal/irq.h"
 #include "hal/kbd.h"
 #include "libk/kgfx.h"
 #include <cls.h>
@@ -76,8 +75,6 @@ void smp_start(uint32_t processor_id) {
   create_gdt();
 
   init_interrupts();
-
-  init_x86_64_hal();
 
   hal_kbd_t kbd = hal_get_kbd();
 

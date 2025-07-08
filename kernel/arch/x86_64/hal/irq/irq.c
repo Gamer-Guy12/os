@@ -3,11 +3,11 @@
 #include <libk/err.h>
 #include <libk/sys.h>
 
-void hal_init_irq(void) {
-  cls_t *cls = get_cls();
+hal_irq_t irq;
 
+void hal_init_irq(void) {
   if (check_apic()) {
-    cls->irq_interface = init_apic();
+    irq = init_apic();
     return;
   }
 
@@ -15,7 +15,5 @@ void hal_init_irq(void) {
 }
 
 hal_irq_t get_hal_irq(void) {
-  cls_t *cls = get_cls();
-
-  return cls->irq_interface;
+  return irq;
 }
