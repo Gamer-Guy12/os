@@ -73,10 +73,6 @@ void smp_start(uint32_t processor_id) {
 
   init_interrupts();
   
-  for (size_t i = 0; i < 100; i++) {
-    kio_printf("%u\n", i);
-  }
-
   hal_kbd_t kbd = hal_get_kbd();
 
   kbd.register_key_event_handler(handler);
