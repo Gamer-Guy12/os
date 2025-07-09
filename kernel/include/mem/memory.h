@@ -106,4 +106,8 @@ void *increment_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
 void *decrement_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
 void *move_kernel_brk(vmm_kernel_region_t *region, int64_t amount);
 
+void *increment_global_brk(size_t amount);
+void *decrement_global_brk(size_t amount);
+void init_global_brk(void);
+
 #endif

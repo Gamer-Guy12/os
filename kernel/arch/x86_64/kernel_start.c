@@ -1,3 +1,4 @@
+#include "mem/gheap.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -59,6 +60,10 @@ void kernel_start(uint8_t *multiboot) {
   kgfx_clear();
 
   kio_printf("Initialized Memory Manager\n");
+
+  init_global_brk();
+  kio_printf("Initialized Global Heap (brk)\n");
+
   // // kio_clear();
   //
   // size_t phys_1 = (size_t)phys_alloc();

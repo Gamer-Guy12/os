@@ -28,6 +28,9 @@ void setup_memory(void) {
   // Copy over 258 (Misc information)
   pml4[258] = cur_pml4[258];
 
+  // Copy over 259 (Global Heap)
+  pml4[259] = cur_pml4[259];
+
   // Recursive mapping
   size_t phys_pml4 = (size_t)pml4 - IDENTITY_MAPPED_ADDR;
   pml4[510].full_entry = phys_pml4;
