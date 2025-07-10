@@ -4,6 +4,7 @@
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
 #include <stdatomic.h>
+#include <stddef.h>
 
 void create_kernel_region(vmm_kernel_region_t *region) {
   atomic_flag_clear_explicit(&region->stack_lock, memory_order_release);
@@ -39,7 +40,8 @@ void create_kernel_region(vmm_kernel_region_t *region) {
   region->end_mmap = region->start_mmap;
 
   region->start_stack = (void*)KERNEL_FREE_END;
-  region->end_stack = (void*)(KERNEL_FREE_END - PAGE_SIZE);
+  region->end_stack = (void*)(KERNEL_FREE_END - 2 * PAGE_SIZE);
   map_page(region->end_stack, PT_PRESENT | PT_READ_WRITE, 1);
+  map_page((void*)((size_t)region->end_stack + PAGE_SIZE), PT_PRESENT | PT_READ_WRITE, 1);
   memset(region->end_stack, 0, PAGE_SIZE);
 }
