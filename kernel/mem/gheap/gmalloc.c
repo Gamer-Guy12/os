@@ -19,7 +19,9 @@ gheap_entry_t *find_entry(size_t size) {
     ptr = ptr->next;
   }
 
-  return NULL;
+  ptr->free = 0;
+
+  return ptr;
 }
 
 gheap_entry_t *create_entry(size_t size) {
@@ -41,8 +43,7 @@ void *gmalloc(size_t size) {
   spinlock_acquire(get_heap_lock());
 
   size = ROUND_UP(size, 8);
-  gheap_entry_t *entry = NULL;
-  find_entry(size);
+  gheap_entry_t *entry = find_entry(size);
 
   if (entry == NULL)
     entry = create_entry(size);
