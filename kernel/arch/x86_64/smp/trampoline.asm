@@ -1,4 +1,5 @@
 global trampoline
+extern setup_memory
 global started
 global page_table_ptr
 extern smp_start
@@ -167,6 +168,13 @@ long_land:
   mul rbx
   add rax, stack_ptrs
   mov rsp, [rax]
+  mov rbp, rsp
+
+  call setup_memory 
+  mov rsi, rax
+
+  mov rdx, 0xfffffe8000000000
+  mov rsp, rdx
   mov rbp, rsp
 
   call smp_start

@@ -77,7 +77,8 @@ void phys_free(void *addr) {
   size_t page_index = ((addr_bits - block_base) & ~0xFFF) >> 12;
   block_descriptor_t *descriptor = get_descriptor(block_base);
 
-  free_page_index(descriptor, page_index);
+  if (descriptor != NULL)
+    free_page_index(descriptor, page_index);
 
   spinlock_release(get_mem_lock());
 }

@@ -75,7 +75,8 @@ inline static void check_pdpt(void *addr) {
 void *unmap_page(void *addr, bool free) {
   void *phys = unmap_virt(addr);
   if (free)
-  phys_free(phys);
+    phys_free(phys);
+
   // Check if there are any other pages in the pt
   check_pt(addr);
   check_pdt(addr);

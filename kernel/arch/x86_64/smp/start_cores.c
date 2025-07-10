@@ -137,9 +137,7 @@ void start_cores(void) {
   __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
                    : "=b"(bspid)::"rax");
 
-  // -1 so we don't allocate for ourselves
   for (size_t i = 0; i < core_count; i++) {
-    kio_printf("Core Id: %x\n", core_ids[i]);
     if (i == bspid)
       continue;
 

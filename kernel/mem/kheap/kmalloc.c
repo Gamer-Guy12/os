@@ -42,7 +42,7 @@ void *kmalloc(size_t size, uint8_t flags) {
   vmm_kernel_region_t *region = *KERNEL_REGION_PTR_LOCATION;
   size_t actual_size = ROUND_UP(size, 8);
 
-  spinlock_acquire(&region->global_lock);
+  spinlock_acquire(&region->brk_lock);
 
   heap_entry_t *last_chunk = NULL;
   heap_entry_t *chunk = find_free_chunk(actual_size, &last_chunk);
@@ -51,7 +51,7 @@ void *kmalloc(size_t size, uint8_t flags) {
     chunk = create_chunk(actual_size, last_chunk);
   }
 
-  spinlock_release(&region->global_lock);
+  spinlock_release(&region->brk_lock);
 
   // + 1 to skip over the metadata
   return (void *)(chunk + 1);

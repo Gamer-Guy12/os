@@ -5,10 +5,10 @@
 
 void kfree(void *addr) {
   vmm_kernel_region_t *region = *KERNEL_REGION_PTR_LOCATION;
-  spinlock_acquire(&region->global_lock);
+  spinlock_acquire(&region->brk_lock);
 
   heap_entry_t *entry = (void *)((size_t)addr - sizeof(heap_entry_t));
   entry->free = 1;
 
-  spinlock_release(&region->global_lock);
+  spinlock_release(&region->brk_lock);
 }

@@ -1,4 +1,3 @@
-#include "mem/gheap.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>

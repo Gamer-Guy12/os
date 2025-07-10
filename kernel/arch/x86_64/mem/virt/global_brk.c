@@ -1,3 +1,4 @@
+#include <libk/kio.h>
 #include <libk/math.h>
 #include <libk/spinlock.h>
 #include <mem/memory.h>
@@ -26,7 +27,7 @@ void *increment_global_brk(size_t amount) {
   size_t diff_pages = new_page_index - cur_page_index;
 
   for (size_t i = 0; i < diff_pages; i++) {
-    map_page((void *)(cur_page_index * PAGE_SIZE + i * PAGE_SIZE),
+    map_page((void *)(cur_page_index * PAGE_SIZE + (i + 1) * PAGE_SIZE),
              PT_PRESENT | PT_READ_WRITE, 1);
   }
 

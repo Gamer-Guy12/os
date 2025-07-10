@@ -10,7 +10,7 @@ interrupt_handler_t handlers[256] = {NULL};
 void common_interrupt_handler(idt_registers_t *registers) {
   bool is_exception = registers->interrupt_number < 32;
 
-  if (is_exception) {
+  if (is_exception && handlers[registers->interrupt_number] == NULL) {
     kio_printf("Exception: number %x, error_code %x, registers:\n",
                registers->interrupt_number, registers->error_code);
 
