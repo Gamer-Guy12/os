@@ -1,3 +1,4 @@
+#include "mem/gheap.h"
 #include <mem/vimemory.h>
 #include <libk/math.h>
 #include <libk/mem.h>
@@ -45,10 +46,10 @@ size_t setup_memory(void) {
   // Move it into cr3
   __asm__ volatile("mov %%rax, %%cr3" ::"a"(phys_pml4) : "memory");
 
-  vmm_kernel_region_t region;
-  create_kernel_region(&region);
+  vmm_kernel_region_t* region = gmalloc(sizeof(vmm_kernel_region_t));
+  create_kernel_region(region);
   vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
-  *region_ptr = &region;
+  *region_ptr = region;
 
   size_t old_page;
   __asm__ volatile("mov %%rsp, %%rax" : "=a"(old_page));
