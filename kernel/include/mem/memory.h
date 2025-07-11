@@ -104,6 +104,23 @@ void *kmalloc(size_t size, uint8_t flags);
 /// Use like free but for kernel
 void kfree(void *addr);
 
+typedef struct gheap_entry_struct {
+    union {
+        size_t size;
+        struct {
+            uint64_t free : 1;
+            uint64_t reserved : 2;
+            uint64_t useless : 61;
+        };
+    };
+    struct gheap_entry_struct* next;
+    struct gheap_entry_struct* prev;
+} gheap_entry_t;
+
+void* gmalloc(size_t size);
+void gfree(void* ptr);
+
+
 /// Kernel side
 void create_kernel_region(vmm_kernel_region_t *region);
 void *increment_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
