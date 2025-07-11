@@ -36,9 +36,12 @@ typedef struct {
   uint64_t interrupt_number;
   uint64_t error_code;
   uint64_t rip, cs, rflags;
-  // If the interrupt was from user space we would also have
-  // Don't use unless this is garuanteed form user space
-  // uint64_t rsp, ss;
+  /// If the interrupt was from user space we would also have
+  ///
+  ///  Don't use unless this is garuanteed form user space
+  /// 
+  /// First check if it is from userspace
+  uint64_t rsp, ss;
 } PACKED idt_registers_t;
 
 typedef void (*interrupt_handler_t)(idt_registers_t *registers);

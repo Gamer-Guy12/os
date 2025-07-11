@@ -1,10 +1,10 @@
 #include <asm.h>
 #include <cls.h>
-#include <mem/memory.h>
 #include <stddef.h>
+#include <mem/memory.h>
 
 void init_cls(void) {
-  cls_t *cls = kmalloc(sizeof(cls_t), 0);
+  cls_t *cls = gmalloc(sizeof(cls_t));
 
 #define GS_BASE_MSR 0xC0000101
 

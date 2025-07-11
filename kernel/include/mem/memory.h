@@ -60,21 +60,25 @@ typedef struct vmm_region_struct {
 /// brk is at the bottom of address space
 /// MMap grows up to the top
 /// Autogen grows down to meet the break
+/// ignore that it goes brk, autogen, mmap, stack where stack and autogen grow down
 typedef struct vmm_kernel_region_struct {
   void *start_brk;
   void *brk;
-
-  void *start_mmap;
-  void *end_mmap;
 
   // Start is the higher address and it grows down
   void *start_autogen;
   void *end_autogen;
 
+  void *start_mmap;
+  void *end_mmap;
+
+  void* start_stack;
+  void* end_stack;
+
   spinlock_t autogen_lock;
   spinlock_t mmap_lock;
   spinlock_t brk_lock;
-  spinlock_t global_lock;
+  spinlock_t stack_lock;
 
   bst_node_t *mmap_regions;
 } vmm_kernel_region_t;
@@ -100,10 +104,31 @@ void *kmalloc(size_t size, uint8_t flags);
 /// Use like free but for kernel
 void kfree(void *addr);
 
+typedef struct gheap_entry_struct {
+    union {
+        size_t size;
+        struct {
+            uint64_t free : 1;
+            uint64_t reserved : 2;
+            uint64_t useless : 61;
+        };
+    };
+    struct gheap_entry_struct* next;
+    struct gheap_entry_struct* prev;
+} gheap_entry_t;
+
+void* gmalloc(size_t size);
+void gfree(void* ptr);
+
+
 /// Kernel side
 void create_kernel_region(vmm_kernel_region_t *region);
 void *increment_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
 void *decrement_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
 void *move_kernel_brk(vmm_kernel_region_t *region, int64_t amount);
+
+void *increment_global_brk(size_t amount);
+void *decrement_global_brk(size_t amount);
+void init_global_brk(void);
 
 #endif

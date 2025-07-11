@@ -21,6 +21,7 @@
 #include <x86_64.h>
 
 extern void kernel_main(void);
+extern void change_stacks(void);
 
 // Code thanks to nullplan from the osdev wiki
 // https://forum.osdev.org/viewtopic.php?t=57103 This code calls the global
@@ -47,6 +48,8 @@ typedef struct {
   uint32_t size;
 } PACKED multiboot_tag_t;
 
+void kernel_secondary_start(void);
+
 void kernel_start(uint8_t *multiboot) {
 
   //  test_print(multiboot);
@@ -59,6 +62,10 @@ void kernel_start(uint8_t *multiboot) {
   kgfx_clear();
 
   kio_printf("Initialized Memory Manager\n");
+
+  init_global_brk();
+  kio_printf("Initialized Global Heap (brk)\n");
+
   // // kio_clear();
   //
   // size_t phys_1 = (size_t)phys_alloc();
@@ -97,12 +104,15 @@ void kernel_start(uint8_t *multiboot) {
 
   // Set up default kernel region. during smp startup each core should make
   // their kernel region
-  
-  vmm_kernel_region_t region;
-  create_kernel_region(&region);
+  vmm_kernel_region_t *region = gmalloc(sizeof(vmm_kernel_region_t));
+  create_kernel_region(region);
   vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
-  *region_ptr = &region;
+  *region_ptr = region;
 
+  change_stacks();
+}
+
+void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
 
@@ -111,7 +121,7 @@ void kernel_start(uint8_t *multiboot) {
 
   create_gdt();
   kio_printf("Created the GDT\n");
-  
+
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
   //*num = 49;
