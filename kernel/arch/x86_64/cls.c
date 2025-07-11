@@ -1,7 +1,7 @@
 #include <asm.h>
 #include <cls.h>
 #include <stddef.h>
-#include <mem/gheap.h>
+#include <mem/memory.h>
 
 void init_cls(void) {
   cls_t *cls = gmalloc(sizeof(cls_t));

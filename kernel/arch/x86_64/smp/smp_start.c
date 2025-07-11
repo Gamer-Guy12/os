@@ -1,4 +1,3 @@
-#include "mem/gheap.h"
 #include <mem/vimemory.h>
 #include <libk/math.h>
 #include <libk/mem.h>
