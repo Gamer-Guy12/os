@@ -1,13 +1,36 @@
-#include <decls.h>
-#include <libk/kgfx.h>
-#include <libk/kio.h>
 #include <mem/memory.h>
+#include <decls.h>
+#include <libk/kio.h>
 #include <stddef.h>
 #include <stdint.h>
 
-void kernel_main(void) {
+void test_gmalloc(void) {
+  uint64_t *ptr1 = gmalloc(8);
+  uint64_t *ptr2 = gmalloc(8);
+
+  *ptr1 = 39;
+  *ptr2 = 49;
+
+  kio_printf("Ptr1: %u, %x, Ptr2: %u, %x\n", *ptr1, (size_t)ptr1, *ptr2,
+             (size_t)ptr2);
+
+  gfree(ptr1);
+
+  uint64_t *ptr3 = gmalloc(8);
+
+  *ptr3 = 290;
+
+  kio_printf("Ptr1: %u, %x, Ptr3: %u, %x\n", *ptr1, (size_t)ptr1, *ptr3,
+             (size_t)ptr3);
+
+  gfree(ptr2);
+  gfree(ptr3);
+}
+
+void NORETURN kernel_main(void) {
   // kio_clear();
-  kio_printf("We are in Kernel Main!\n");
+
+  test_gmalloc();
 
   // uint64_t *num1 = kmalloc(sizeof(uint64_t), 0);
   // *num1 = 29;
@@ -30,4 +53,7 @@ void kernel_main(void) {
   // *num3 = 48;
   // kio_printf("Malloc %u\n", *num1);
   // kio_printf("Malloc %u\n", *num3);
+
+  while (1) {
+  }
 }

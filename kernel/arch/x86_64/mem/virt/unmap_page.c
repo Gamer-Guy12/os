@@ -1,6 +1,7 @@
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #define UNCANONICALIZER 0x0000fffffffff000
@@ -71,9 +72,11 @@ inline static void check_pdpt(void *addr) {
   unmap_virt(entries_to_check);
 }
 
-void *unmap_page(void *addr) {
+void *unmap_page(void *addr, bool free) {
   void *phys = unmap_virt(addr);
-  phys_free(phys);
+  if (free)
+    phys_free(phys);
+
   // Check if there are any other pages in the pt
   check_pt(addr);
   check_pdt(addr);

@@ -1,10 +1,12 @@
+#include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/spinlock.h>
 #include <libk/string.h>
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <stdint.h>
 
-static spinlock_t printLock;
+static spinlock_t printLock = ATOMIC_FLAG_INIT;
 
 /// This is a cut down version of printf
 /// The format specifiers that you can use are:
@@ -20,7 +22,7 @@ void kio_printf(const char *format, ...) {
 
   while (format[index] != '\0') {
     if (format[index] != '%') {
-      kio_putchar(format[index]);
+      kgfx_putchar(format[index]);
     } else {
 
       index++;

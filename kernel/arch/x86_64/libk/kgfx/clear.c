@@ -1,15 +1,15 @@
-#include "./vga.h"
 #include <libk/kgfx.h>
-#include <stdint.h>
-#include <x86_64.h>
-
-static volatile uint16_t *terminalBuffer =
-    (volatile uint16_t *)(0xb8000 + KERNEL_CODE_OFFSET);
+#include <libk/vga_kgfx.h>
+#include <stddef.h>
 
 void kgfx_clear(void) {
-  for (uint16_t i = 0; i < VGA_WIDTH; i++) {
-    for (uint16_t j = 0; j < VGA_HEIGHT; j++) {
-      terminalBuffer[getIndexFromPos(i, j)] = 0x0;
+  vga_kgfx_properties_t properties = vga_kgfx_get_properties();
+
+  for (size_t i = 0; i < properties.width; i++) {
+    for (size_t j = 0; j < properties.height; j++) {
+      vga_kgfx_set_pixel(i, j, 0, 0, 0);
     }
   }
+
+  vga_kgfx_set_cursor(0, 0);
 }

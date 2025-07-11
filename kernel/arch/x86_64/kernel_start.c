@@ -1,17 +1,27 @@
-#include <libk/bst.h>
+#include <acpi/acpi.h>
+#include <apic.h>
+#include <asm.h>
+#include <cls.h>
+#include <decls.h>
+#include <gdt.h>
+#include <hal/hal.h>
+#include <hal/irq.h>
+#include <interrupts.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
-#include <libk/spinlock.h>
-#include <libk/string.h>
+#include <libk/vga_kgfx.h>
 #include <mem/kheap.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
+#include <multiboot.h>
+#include <pic.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);
+extern void change_stacks(void);
 
 // Code thanks to nullplan from the osdev wiki
 // https://forum.osdev.org/viewtopic.php?t=57103 This code calls the global
@@ -28,13 +38,34 @@ static void handle_init_array(void) {
 }
 #pragma endregion
 
+typedef struct {
+  uint32_t total_size;
+  uint32_t reserved;
+} PACKED multiboot_header_t;
+
+typedef struct {
+  uint32_t type;
+  uint32_t size;
+} PACKED multiboot_tag_t;
+
+void kernel_secondary_start(void);
+
 void kernel_start(uint8_t *multiboot) {
+
+  //  test_print(multiboot);
+
   handle_init_array();
-  kio_printf("Called Global Constructors\n");
   init_multiboot(multiboot);
-  kio_printf("Initialized Multiboot\n");
+
   init_memory_manager();
+  kgfx_init();
+  kgfx_clear();
+
   kio_printf("Initialized Memory Manager\n");
+
+  init_global_brk();
+  kio_printf("Initialized Global Heap (brk)\n");
+
   // // kio_clear();
   //
   // size_t phys_1 = (size_t)phys_alloc();
@@ -46,7 +77,7 @@ void kernel_start(uint8_t *multiboot) {
   // phys_free((void *)phys_3);
   // phys_free((void *)phys_4);
   //
-  // extern char end_kernel[];
+  // extern char ex0nd_kernel[];
   //
   // kio_printf("Addr 1 %x, 2 %x, 3 %x, 4 %x diff %x\n", phys_1, phys_2, phys_3,
   //            phys_4, (size_t)(void *)end_kernel - KERNEL_CODE_OFFSET -
@@ -70,13 +101,42 @@ void kernel_start(uint8_t *multiboot) {
   // kio_printf("Num %u\n", *num);
   //
   // decrement_kernel_brk(&region, 0x4001);
+
+  // Set up default kernel region. during smp startup each core should make
+  // their kernel region
+  vmm_kernel_region_t *region = gmalloc(sizeof(vmm_kernel_region_t));
+  create_kernel_region(region);
+  vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
+  *region_ptr = region;
+
+  change_stacks();
+}
+
+void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
+
+  init_cls();
+  kio_printf("Initialized CLS (Core Local Storage)\n");
+
+  create_gdt();
+  kio_printf("Created the GDT\n");
+
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
   //*num = 49;
   //
   // kio_printf("Num %u\n", *num);
+
+  // It would create interrupts otherwise
+  disable_pic();
+  init_interrupts();
+  kio_printf("Initialized Interrupts\n");
+
+  init_x86_64_hal();
+  kio_printf("Initialized HAL\n");
+
+  start_cores();
 
   kernel_main();
 }

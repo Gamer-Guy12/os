@@ -125,14 +125,6 @@ static size_t find_pair(block_descriptor_t *descriptor, size_t order) {
   }
 
   // kio_printf("Start %x end %x\n", start_index, end_index);
-  if (order == 7) {
-    kio_printf("Start %x end %x\n", start_index, end_index);
-  }
-  if (order == 7) {
-    kio_printf("i %x, i + 1 %x\n",
-               (size_t)check_bit_in_ptr(descriptor->buddy_data, 1),
-               (size_t)check_bit_in_ptr(descriptor->buddy_data, 1 + 1));
-  }
 
   for (size_t i = start_index; i < end_index; i += 2) {
 

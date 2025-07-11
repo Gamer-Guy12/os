@@ -6,9 +6,12 @@ $(error Must have fart.txt (according to bluehalooo))
 endif
 
 .PHONY: all
-all: build/bin/kernel.bin build/os.iso
+all: inter
 
-kernel-libs=
+include dev_drivers/$(ARCH)/Makefile
+
+.PHONY: inter
+inter: build/bin/kernel.bin build/os.iso
 
 ifeq ($(ARCH), x86_64)
 build/os.iso: install-kernel
@@ -23,6 +26,6 @@ include kernel/Makefile
 include targets/$(ARCH)/Makefile
 
 .PHONY: clean
-clean: clean-kernel
+clean: clean-kernel clean_drivers
 	@rm -rf build
 	@echo Cleaned build

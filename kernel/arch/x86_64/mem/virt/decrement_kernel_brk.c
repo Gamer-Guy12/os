@@ -22,7 +22,7 @@ void *decrement_kernel_brk(vmm_kernel_region_t *region, uint64_t amount) {
 
   size_t cur_addr = ROUND_DOWN((size_t)region->brk, PAGE_SIZE);
   for (size_t i = 0; i < pages_to_unmap; i++) {
-    unmap_page((void *)cur_addr);
+    unmap_page((void *)cur_addr, true);
     cur_addr -= PAGE_SIZE;
   }
 

@@ -8,6 +8,9 @@ extern kernel_gp_end
 extern _higher_l2_page
 extern _higher_l1_page
 
+global extend_ret
+extern extend
+
 extern _l4_page
 extern _l3_page
 extern _l2_page
@@ -91,6 +94,9 @@ mov [_l4_page + 511 * 8], rax
 
 mov rax, _l4_page
 mov cr3, rax
+
+jmp extend
+extend_ret:
 
 call kernel_early_start
 

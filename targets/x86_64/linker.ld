@@ -2,6 +2,26 @@ ENTRY(_start)
 OUTPUT_FORMAT(elf64-x86-64)
 
 SECTIONS {
+  . = 0x8000;
+
+  .smp_code ALIGN(4K) : 
+  {
+    _smp_code = .;
+
+    *(.smp_code)
+
+    _smp_code_end = .;
+  }
+
+  .smp_data ALIGN(4K) :
+  {
+    _smp_data = .;
+
+    *(.smp_data)
+
+    _smp_data_end = .;
+  }
+
 	. = 0x100000;
 
 	.loading ALIGN(4K) :
