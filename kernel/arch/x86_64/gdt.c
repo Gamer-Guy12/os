@@ -64,15 +64,15 @@ gdt_pointer_t create_descriptors(void) {
   union {
     gdt_system_segment_t segment;
     struct {
-      size_t lobyte;
-      size_t hibyte;
+      gdt_descriptor_t lobyte;
+      gdt_descriptor_t hibyte;
     };
   } tss_union;
 
   tss_union.segment = segment;
 
-  gdt[5] = *(gdt_descriptor_t *)&tss_union.lobyte;
-  gdt[6] = *(gdt_descriptor_t *)&tss_union.hibyte;
+  gdt[5] = tss_union.lobyte;
+  gdt[6] = tss_union.hibyte;
 
   // Load the tss
   __asm__ volatile("ltr %%ax" ::"a"(0x28));

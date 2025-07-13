@@ -15,7 +15,7 @@ typedef enum {
 typedef struct {
   size_t rax, rbx, rcx, rdx, rbp, rdi, rsi;
   size_t r8, r9, r10, r11, r12, r13, r14, r15;
-  size_t cs, ds, es, fs, gs, ss;
+  size_t cs, ds, es, ss;
   size_t rflags;
 } registers_t;
 
