@@ -173,7 +173,7 @@ long_land:
   call setup_memory 
   mov rsi, rax
 
-  mov rdx, 0xfffffe8000000000
+  mov rdx, 0xfffffe8000000000 - 8
   mov rsp, rdx
   mov rbp, rsp
 

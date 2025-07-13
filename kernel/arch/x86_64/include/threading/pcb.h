@@ -4,6 +4,8 @@
 #include <mem/memory.h>
 #include <stddef.h>
 
+typedef struct TCB_struct TCB_t;
+
 typedef enum {
   PROCESS_RUNNING = 1,
   PROCESS_WAITING = 2,
@@ -17,6 +19,7 @@ typedef struct PCB_struct {
   vmm_region_t* user_region;
   PCB_state_t state;
   struct PCB_struct* next;
+  TCB_t* tcbs;
 } PCB_t;
 
 #endif

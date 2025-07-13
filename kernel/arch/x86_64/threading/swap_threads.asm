@@ -4,10 +4,8 @@ global swap_threads
 ; FS contains the pointer to the current TCB
 ; FS BASE MSR is 0xC0000100
 swap_threads:
-  ; R10 contains rip
-  pop r10
-
-  ; RAX contains the pointer to the current TCB
+  cli
+    ; RAX contains the pointer to the current TCB
   mov rcx, 0xC0000100
   rdmsr
   shl rdx, 32
@@ -32,6 +30,9 @@ swap_threads:
   mov [r8 + 96], r13
   mov [r8 + 104], r14
   mov [r8 + 112], r15
+
+; R10 contains rip
+  pop r10
 
   ; Save segments
   xor rbx, rbx
@@ -61,7 +62,7 @@ swap_threads:
   ; Save the new TCB pointer (its in rdi)
   mov rax, rdi
   mov rdx, rdi
-  shr rdi, 32
+  shr rdx, 32
   mov rcx, 0xC0000100
   wrmsr
 
@@ -83,7 +84,7 @@ swap_threads:
   mov rcx, [r8 + 16]
   mov rdx, [r8 + 24]
   mov rbp, [r8 + 32]
-  mov rdi, [r8 + 40]
+  ; RDI will be loaded at the end
   mov rsi, [r8 + 48]
   ; R8 Will be loaded at the end 
   mov r9, [r8 + 64]
@@ -103,11 +104,14 @@ swap_threads:
   mov rbx, [r8 + 136]
   mov es, bx
 
-  mov rbx, [r8 + 144]
-  mov ss, bx
-
   ; Load new rsp
-  mov rsp, [rdi + 32]
+  ; mov rsp, [rdi + 32]
+
+  ; Load new ss
+  push qword [r8 + 144]
+  
+  ; Load new rsp
+  push qword [rdi + 32]
 
   ; Load rflags
   mov rbx, [r8 + 152]
@@ -117,11 +121,16 @@ swap_threads:
   mov rbx, [r8 + 120]
   push rbx
 
+  ; Load RIP
   mov rbx, [rdi + 48]
   push rbx
 
-  ; Save r8
-  mov r8, [r8 + 56]
+  ; Load rdi
+  mov rdi, [r8 + 40]
 
+  ; Load r8
+  mov r8, [r8 + 56]
+  
+  sti
   iretq
 

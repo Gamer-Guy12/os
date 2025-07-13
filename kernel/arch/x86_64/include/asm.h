@@ -37,8 +37,8 @@ static inline void cpuid(int code, uint32_t *a, uint32_t *d) {
   __asm__ volatile("cpuid" : "=a"(*a), "=d"(*d) : "0"(code) : "ebx", "ecx");
 }
 
-static inline void interrupt(size_t interrupt) {
-  __asm__ volatile("int %0" :: "r"(interrupt):);
+static inline void interrupt(uint8_t interrupt) {
+  __asm__ volatile("int %0" :: "i"(interrupt):);
 }
 
 #endif
