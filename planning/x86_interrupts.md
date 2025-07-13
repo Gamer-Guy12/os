@@ -1,8 +1,9 @@
 
 # X86_64 Interrupts
 
+
 | Number | Usage |
-|--------|-------|
+| ------ | --- |
 | 0x0 - 0x1f | CPU |
 | 0x20 - 0x2f | PIC Mapped |
 | 0x30 | PS/2 Keyboard |
@@ -139,8 +140,6 @@
 | 0xb3 | |
 | 0xb4 | |
 | 0xb5 | |
-| 0xb6 | |
-| 0xb7 | |
 | 0xb8 | |
 | 0xb9 | |
 | 0xba | |
