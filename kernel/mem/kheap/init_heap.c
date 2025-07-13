@@ -4,8 +4,7 @@
 #include <mem/memory.h>
 
 void init_heap(void) {
-  vmm_kernel_region_t *region =
-      *(vmm_kernel_region_t **)(KERNEL_REGION_PTR_LOCATION);
+  vmm_kernel_region_t *region = get_kernel_region();
 
   // Align the heap to 8 bytes
   if ((size_t)region->start_brk != 0) {

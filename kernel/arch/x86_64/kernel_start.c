@@ -53,6 +53,24 @@ typedef struct {
 
 void kernel_secondary_start(void);
 
+static void create_local_proccess(vmm_kernel_region_t *region) {
+  PCB_t *pcb = gmalloc(sizeof(PCB_t));
+  TCB_t *tcb = gmalloc(sizeof(TCB_t));
+
+  pcb->pid = 0;
+  pcb->state = PROCESS_RUNNING;
+  pcb->kernel_region = region;
+  pcb->tcbs = tcb;
+
+  tcb->pcb = pcb;
+  tcb->stack_num = 0;
+  tcb->tid = 0;
+
+#define FS_MSR 0xC0000100
+
+  wrmsr(FS_MSR, (size_t)tcb);
+}
+
 void kernel_start(uint8_t *multiboot) {
 
   //  test_print(multiboot);
@@ -109,88 +127,9 @@ void kernel_start(uint8_t *multiboot) {
   // their kernel region
   vmm_kernel_region_t *region = gmalloc(sizeof(vmm_kernel_region_t));
   create_kernel_region(region);
-  vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
-  *region_ptr = region;
+  create_local_proccess(region);
 
   change_stacks();
-}
-
-PCB_t *pcb;
-TCB_t *tcb;
-
-PCB_t *pcb2;
-TCB_t *tcb2;
-
-void *stack2;
-
-void NORETURN to_thread(void) {
-  kio_printf("Other Thread!\n");
-
-  swap_threads(tcb);
-
-  kio_printf("Im back\n");
-
-  swap_threads(tcb);
-
-  while (1) {
-  }
-}
-
-void test_threading(void) {
-  pcb = gmalloc(sizeof(PCB_t));
-  tcb = gmalloc(sizeof(TCB_t));
-  registers_t *registers = gmalloc(sizeof(registers_t));
-
-  pcb->tcbs = tcb;
-  tcb->pcb = pcb;
-
-  pcb->cr3 = (void *)virt_to_phys(PML4_ADDR);
-  pcb->kernel_region = *KERNEL_REGION_PTR_LOCATION;
-  pcb->state = PROCESS_RUNNING;
-  pcb->pid = 0;
-
-  tcb->state = THREAD_RUNNING;
-  tcb->tid = 0;
-  tcb->stack_num = 0;
-  tcb->registers = registers;
-
-  pcb2 = gmalloc(sizeof(PCB_t));
-  tcb2 = gmalloc(sizeof(TCB_t));
-  registers_t *registers2 = gmalloc(sizeof(registers_t));
-  stack2 = phys_alloc();
-
-  pcb2->tcbs = tcb2;
-  tcb2->pcb = pcb2;
-
-  pcb2->cr3 = (void *)virt_to_phys(PML4_ADDR);
-  pcb2->kernel_region = *KERNEL_REGION_PTR_LOCATION;
-  pcb2->state = PROCESS_RUNNING;
-  pcb2->pid = 1;
-
-  tcb2->state = THREAD_RUNNING;
-  tcb2->tid = 1;
-  tcb2->stack_num = 0;
-  tcb2->rip0 = (size_t)to_thread;
-  tcb2->registers = registers2;
-  tcb2->rsp0 = (size_t)stack2 + IDENTITY_MAPPED_ADDR + PAGE_SIZE - 8;
-  registers2->cs = KERNEL_CODE_SELECTOR;
-  registers2->ds = KERNEL_DATA_SELECTOR;
-  registers2->es = KERNEL_DATA_SELECTOR;
-  registers2->ss = KERNEL_DATA_SELECTOR;
-
-  // Load the TCB into fs
-  wrmsr(0xC0000100, (size_t)tcb);
-
-  swap_threads(tcb2);
-
-  kio_printf("Hi\n");
-
-  swap_threads(tcb2);
-
-  gfree(pcb2);
-  gfree(tcb2->registers);
-  gfree(tcb2);
-  phys_free(stack2);
 }
 
 void kernel_secondary_start(void) {
@@ -218,8 +157,6 @@ void kernel_secondary_start(void) {
   kio_printf("Initialized HAL\n");
 
   start_cores();
-
-  test_threading();
 
   kernel_main();
 }

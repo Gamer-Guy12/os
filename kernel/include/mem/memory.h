@@ -131,4 +131,6 @@ void *increment_global_brk(size_t amount);
 void *decrement_global_brk(size_t amount);
 void init_global_brk(void);
 
+vmm_kernel_region_t* get_kernel_region(void);
+
 #endif

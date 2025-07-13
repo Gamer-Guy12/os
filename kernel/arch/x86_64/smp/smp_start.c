@@ -1,20 +1,39 @@
-#include <mem/vimemory.h>
-#include <libk/math.h>
-#include <libk/mem.h>
 #include <cls.h>
+#include <asm.h>
 #include <gdt.h>
 #include <hal/hal.h>
 #include <interrupts.h>
 #include <libk/kio.h>
+#include <libk/math.h>
+#include <libk/mem.h>
 #include <libk/vga_kgfx.h>
 #include <mem/kheap.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
+#include <mem/vimemory.h>
 #include <multiboot.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <x86_64.h>
+
+void create_local_proccess(vmm_kernel_region_t *region) {
+  PCB_t *pcb = gmalloc(sizeof(PCB_t));
+  TCB_t *tcb = gmalloc(sizeof(TCB_t));
+
+  pcb->pid = 0;
+  pcb->state = PROCESS_RUNNING;
+  pcb->kernel_region = region;
+  pcb->tcbs = tcb;
+
+  tcb->pcb = pcb;
+  tcb->stack_num = 0;
+  tcb->tid = 0;
+
+#define FS_MSR 0xC0000100
+
+  wrmsr(FS_MSR, (size_t)tcb);
+}
 
 size_t setup_memory(void) {
   PML4_entry_t *pml4 =
@@ -45,10 +64,9 @@ size_t setup_memory(void) {
   // Move it into cr3
   __asm__ volatile("mov %%rax, %%cr3" ::"a"(phys_pml4) : "memory");
 
-  vmm_kernel_region_t* region = gmalloc(sizeof(vmm_kernel_region_t));
+  vmm_kernel_region_t *region = gmalloc(sizeof(vmm_kernel_region_t));
   create_kernel_region(region);
-  vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
-  *region_ptr = region;
+  create_local_proccess(region);
 
   size_t old_page;
   __asm__ volatile("mov %%rsp, %%rax" : "=a"(old_page));
@@ -61,7 +79,7 @@ void smp_start(size_t processor_id, size_t old_page) {
 
   __asm__ volatile("cli");
 
-  phys_free((void*)old_page);
+  phys_free((void *)old_page);
 
   init_heap();
 

@@ -23,7 +23,7 @@ void create_kernel_region(vmm_kernel_region_t *region) {
   // Map the first page
   // It starts after a page because a pointer to the region will be stored at
   // the beginning
-  region->start_brk = (void *)(KERNEL_FREE_START + PAGE_SIZE);
+  region->start_brk = (void *)(KERNEL_FREE_START);
   region->brk = region->start_brk;
   map_page(region->start_brk, PT_READ_WRITE | PT_PRESENT, 1);
   memset(region->start_brk, 0, PAGE_SIZE);
