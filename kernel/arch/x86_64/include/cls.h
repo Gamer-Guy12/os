@@ -18,6 +18,7 @@ typedef struct {
   PCB_t* processes_end;
   TCB_t* thread_queue;
   TCB_t* thread_queue_end;
+  tss_t* tss;
 } cls_t;
 
 void init_cls(void);
