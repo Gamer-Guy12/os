@@ -1,3 +1,6 @@
+#include "threading/pcb.h"
+#include "threading/tcb.h"
+#include "threading/threading.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -49,6 +52,24 @@ typedef struct {
 } PACKED multiboot_tag_t;
 
 void kernel_secondary_start(void);
+
+static void create_local_proccess(vmm_kernel_region_t *region) {
+  PCB_t *pcb = gmalloc(sizeof(PCB_t));
+  TCB_t *tcb = gmalloc(sizeof(TCB_t));
+
+  pcb->pid = 0;
+  pcb->state = PROCESS_RUNNING;
+  pcb->kernel_region = region;
+  pcb->tcbs = tcb;
+
+  tcb->pcb = pcb;
+  tcb->stack_num = 0;
+  tcb->tid = 0;
+
+#define FS_MSR 0xC0000100
+
+  wrmsr(FS_MSR, (size_t)tcb);
+}
 
 void kernel_start(uint8_t *multiboot) {
 
@@ -106,8 +127,7 @@ void kernel_start(uint8_t *multiboot) {
   // their kernel region
   vmm_kernel_region_t *region = gmalloc(sizeof(vmm_kernel_region_t));
   create_kernel_region(region);
-  vmm_kernel_region_t **region_ptr = KERNEL_REGION_PTR_LOCATION;
-  *region_ptr = region;
+  create_local_proccess(region);
 
   change_stacks();
 }

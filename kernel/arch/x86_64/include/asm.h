@@ -4,6 +4,7 @@
 #ifndef X86_64_IO_H
 #define X86_64_IO_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 static inline void outb(uint16_t port, uint8_t byte) {
@@ -34,6 +35,10 @@ static inline uint64_t rdmsr(uint64_t msr) {
 
 static inline void cpuid(int code, uint32_t *a, uint32_t *d) {
   __asm__ volatile("cpuid" : "=a"(*a), "=d"(*d) : "0"(code) : "ebx", "ecx");
+}
+
+static inline void interrupt(uint8_t interrupt) {
+  __asm__ volatile("int %0" :: "i"(interrupt):);
 }
 
 #endif

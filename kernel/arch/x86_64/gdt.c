@@ -7,9 +7,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
+tss_t *create_tss(void) {
+  tss_t *tss = gmalloc(sizeof(tss_t));
+
+  return tss;
+}
+
 gdt_pointer_t create_descriptors(void) {
 
-  gdt_descriptor_t* gdt = get_cls()->gdt;
+  gdt_descriptor_t *gdt = get_cls()->gdt;
 
   // Kernel Code
   gdt[1].access_byte = GDT_ACCESS_PRESENT | GDT_ACCESS_DESCRIPTOR |
@@ -39,6 +45,37 @@ gdt_pointer_t create_descriptors(void) {
   gdt[4].flags = GDT_LONG_MODE;
   gdt[4].limit_1 = 0xFFFF;
   gdt[4].limit_2 = 0xF;
+
+  // TSS
+  tss_t *tss = create_tss();
+  cls_t *cls = get_cls();
+  cls->tss = tss;
+
+  gdt_system_segment_t segment;
+  segment.flags = GDT_LONG_MODE;
+  segment.access_byte = GDT_SYSTEM_TSS_AVAILABLE | GDT_ACCESS_PRESENT;
+
+  size_t tss_ptr = (size_t)tss;
+  segment.base_0 = tss_ptr & 0xfff;
+  segment.base_1 = (tss_ptr >> 16) & 0xff;
+  segment.base_2 = (tss_ptr >> 24) & 0xff;
+  segment.base_3 = (tss_ptr >> 32) & 0xffffffff;
+
+  union {
+    gdt_system_segment_t segment;
+    struct {
+      gdt_descriptor_t lobyte;
+      gdt_descriptor_t hibyte;
+    };
+  } tss_union;
+
+  tss_union.segment = segment;
+
+  gdt[5] = tss_union.lobyte;
+  gdt[6] = tss_union.hibyte;
+
+  // Load the tss
+  // __asm__ volatile("ltr %%ax" ::"a"(0x28));
 
   gdt_pointer_t ptr;
   // Add one because of the null descriptor

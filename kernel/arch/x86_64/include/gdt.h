@@ -5,8 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// We need the null descriptor which adds 1
-#define DESCRIPTOR_COUNT 5
+// We need the null descriptor which adds 1 and 2 more for the tss descriptor
+#define DESCRIPTOR_COUNT 7
 
 #define CREATE_SELECTOR(index, table, rpl)                                     \
   (uint16_t)((index << 3) | (table << 2) | rpl)
@@ -45,6 +45,42 @@ typedef struct {
   uint16_t size;
   uint64_t offset;
 } PACKED gdt_pointer_t;
+
+typedef enum {
+  GDT_SYSTEM_LDT = 0x2,
+  GDT_SYSTEM_TSS_AVAILABLE = 0x9,
+  GDT_SYSTEM_TSS_BUSY = 0xB
+} GDT_system_access_t;
+
+typedef struct {
+  uint16_t limit_0;
+  uint16_t base_0;
+  uint8_t base_1;
+  uint8_t access_byte;
+  uint8_t limit_1 : 4;
+  uint8_t flags : 4;
+  uint8_t base_2;
+  uint32_t base_3;
+  uint32_t reserved;
+} PACKED gdt_system_segment_t;
+
+typedef struct {
+  uint32_t reserved_0;
+  uint64_t rsp0;
+  uint64_t rsp1;
+  uint64_t rsp2;
+  uint64_t reserved_1;
+  uint64_t ist1;
+  uint64_t ist2;
+  uint64_t ist3;
+  uint64_t ist4;
+  uint64_t ist5;
+  uint64_t ist6;
+  uint64_t ist7;
+  uint64_t reserved_2;
+  uint16_t reserved_3;
+  uint16_t iopb;
+} PACKED tss_t;
 
 void create_gdt(void);
 
