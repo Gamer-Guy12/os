@@ -72,9 +72,9 @@ typedef struct vmm_kernel_region_struct {
   void *start_mmap;
   void *end_mmap;
 
-  void* start_stack;
-  void* end_stack;
-
+  void* stacks_bottom;
+  size_t stack_index;
+  
   spinlock_t autogen_lock;
   spinlock_t mmap_lock;
   spinlock_t brk_lock;
@@ -130,6 +130,9 @@ void *move_kernel_brk(vmm_kernel_region_t *region, int64_t amount);
 void *increment_global_brk(size_t amount);
 void *decrement_global_brk(size_t amount);
 void init_global_brk(void);
+
+/// returns the addr for rsp
+void* create_new_kernel_stack(vmm_kernel_region_t* region);
 
 vmm_kernel_region_t* get_kernel_region(void);
 

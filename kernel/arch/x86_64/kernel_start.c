@@ -1,6 +1,6 @@
-#include "threading/pcb.h"
-#include "threading/tcb.h"
 #include "threading/threading.h"
+#include <threading/pcb.h>
+#include <threading/tcb.h>
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -53,18 +53,11 @@ typedef struct {
 
 void kernel_secondary_start(void);
 
-static void create_local_proccess(vmm_kernel_region_t *region) {
-  PCB_t *pcb = gmalloc(sizeof(PCB_t));
+void create_local_proccess(void) {
+  PCB_t *pcb = create_process();
   TCB_t *tcb = gmalloc(sizeof(TCB_t));
 
-  pcb->pid = 0;
   pcb->state = PROCESS_RUNNING;
-  pcb->kernel_region = region;
-  pcb->tcbs = tcb;
-
-  tcb->pcb = pcb;
-  tcb->stack_num = 0;
-  tcb->tid = 0;
 
 #define FS_MSR 0xC0000100
 
@@ -125,9 +118,7 @@ void kernel_start(uint8_t *multiboot) {
 
   // Set up default kernel region. during smp startup each core should make
   // their kernel region
-  vmm_kernel_region_t *region = gmalloc(sizeof(vmm_kernel_region_t));
-  create_kernel_region(region);
-  create_local_proccess(region);
+  create_local_proccess();
 
   change_stacks();
 }

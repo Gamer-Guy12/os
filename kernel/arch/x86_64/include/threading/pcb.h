@@ -1,6 +1,7 @@
 #ifndef X86_64_PCB_H
 #define X86_64_PCB_H
 
+#include <libk/spinlock.h>
 #include <mem/memory.h>
 #include <stddef.h>
 
@@ -9,7 +10,8 @@ typedef struct TCB_struct TCB_t;
 typedef enum {
   PROCESS_RUNNING = 1,
   PROCESS_WAITING = 2,
-  PROCESS_TERMINATED = 3
+  PROCESS_TERMINATED = 3,
+  PROCESS_STARTING = 4
 } PCB_state_t;
 
 typedef struct PCB_struct {
@@ -20,6 +22,7 @@ typedef struct PCB_struct {
   PCB_state_t state;
   struct PCB_struct* next;
   TCB_t* tcbs;
+  spinlock_t pcb_lock;
 } PCB_t;
 
 #endif
