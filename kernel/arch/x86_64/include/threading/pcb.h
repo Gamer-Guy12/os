@@ -25,7 +25,6 @@ typedef struct PCB_struct {
   TCB_t* tcbs;
   spinlock_t pcb_lock;
   heap_info_t heap_info;
-  struct PCB_struct* prev;
 } PCB_t;
 
 #endif

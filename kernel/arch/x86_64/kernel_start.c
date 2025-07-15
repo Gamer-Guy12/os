@@ -1,3 +1,4 @@
+#include "threading/threading.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -20,7 +21,6 @@
 #include <stdint.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
-#include <threading/threading.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);
@@ -53,31 +53,12 @@ typedef struct {
 
 void kernel_secondary_start(void);
 
-void NORETURN secondary(void) {
-  kio_printf("Hello there\n");
-
-  TCB_t *tcb = (TCB_t *)rdmsr(0xC0000100);
-  tcb->state = THREAD_TERMINATED;
-
-  execute_next_thread();
-
-  while (1) {
-  }
-}
-
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
-  TCB_t *tcb = gmalloc(sizeof(TCB_t));
-
-  tcb->registers = gmalloc(sizeof(TCB_t));
-  create_new_kernel_stack(pcb->kernel_region, &tcb->stack_num);
-  tcb->tid = create_id_thread();
-  tcb->pcb = pcb;
+  TCB_t *tcb = create_thread(pcb, NULL);
 
   pcb->state = PROCESS_RUNNING;
   tcb->state = THREAD_RUNNING;
-
-  pcb->tcbs = tcb;
 
 #define FS_MSR 0xC0000100
 
@@ -168,21 +149,6 @@ void kernel_secondary_start(void) {
   kio_printf("Initialized HAL\n");
 
   start_cores();
-
-  queue_thread((TCB_t *)rdmsr(FS_MSR));
-
-  PCB_t *pcb = create_process();
-  union {
-    void *ptr;
-    void (*func)(void);
-  } thingy;
-
-  thingy.func = secondary;
-  TCB_t *tcb = create_thread(pcb, thingy.ptr);
-
-  execute_next_thread();
-
-  delete_thread(tcb);
 
   kernel_main();
 }

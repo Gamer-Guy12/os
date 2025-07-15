@@ -13,12 +13,9 @@
 #include <mem/vimemory.h>
 #include <multiboot.h>
 #include <stdbool.h>
-#include <threading/threading.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <x86_64.h>
-
-#define FS_MSR 0xC0000100
 
 extern void create_local_proccess(void);
 
@@ -69,8 +66,6 @@ void smp_start(size_t processor_id, size_t old_page) {
   init_heap();
 
   init_cls();
-
-  queue_thread((TCB_t*)rdmsr(FS_MSR));
 
   create_gdt();
 
