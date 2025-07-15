@@ -14,6 +14,10 @@
 typedef struct {
   ALIGN(0x10) idt_gate_descriptor_t idt[256];
   ALIGN(0x8) gdt_descriptor_t gdt[DESCRIPTOR_COUNT];
+  PCB_t* processes;
+  PCB_t* processes_end;
+  TCB_t* thread_queue;
+  TCB_t* thread_queue_end;
   tss_t* tss;
 } cls_t;
 

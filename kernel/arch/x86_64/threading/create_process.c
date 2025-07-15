@@ -28,7 +28,5 @@ PCB_t *create_process(void) {
 
   pcb->tcbs = NULL;
 
-  append_process(pcb);
-
   return pcb;
 }

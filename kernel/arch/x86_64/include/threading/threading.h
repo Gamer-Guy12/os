@@ -14,9 +14,5 @@ TCB_t* create_thread(PCB_t* process, void *entry_point);
 void delete_thread(TCB_t* tcb);
 void delete_process(PCB_t* pcb);
 
-/// @param pop should this also pop it off the front
-PCB_t* get_first_process(bool pop);
-void append_process(PCB_t* process);
-
 #endif
 
