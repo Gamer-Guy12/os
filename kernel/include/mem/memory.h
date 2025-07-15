@@ -1,9 +1,9 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <mem/kheap.h>
 #include <libk/bst.h>
 #include <libk/spinlock.h>
+#include <mem/kheap.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -141,7 +141,7 @@ void *decrement_global_brk(size_t amount);
 void init_global_brk(void);
 
 /// returns the addr for rsp
-void *create_new_kernel_stack(vmm_kernel_region_t *region);
+void *create_new_kernel_stack(vmm_kernel_region_t *region, size_t *stack_num);
 
 vmm_kernel_region_t *get_kernel_region(void);
 
