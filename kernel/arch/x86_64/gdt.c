@@ -93,6 +93,9 @@ void create_gdt(void) {
   // Load them here
   __asm__ volatile("lgdt (%0)" : : "r"(&ptr));
 
+  // Load the tss
+  __asm__ volatile("ltr %%ax" ::"a"(0x28));
+
   change_gdt();
 
   // GDT no work without this
