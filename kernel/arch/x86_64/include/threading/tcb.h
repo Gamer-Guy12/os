@@ -9,7 +9,8 @@
 typedef enum {
   THREAD_RUNNING = 1,
   THREAD_WAITING = 2,
-  THREAD_TERMINATED = 3
+  THREAD_TERMINATED = 3,
+  THREAD_STARTING = 4
 } TCB_state_t;
 
 typedef struct {

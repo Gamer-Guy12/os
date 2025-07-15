@@ -39,9 +39,6 @@ void create_kernel_region(vmm_kernel_region_t *region) {
   region->start_mmap = (void *)KERNEL_FREE_MID;
   region->end_mmap = region->start_mmap;
 
-  region->start_stack = (void*)KERNEL_FREE_END;
-  region->end_stack = (void*)(KERNEL_FREE_END - 2 * PAGE_SIZE);
-  map_page(region->end_stack, PT_PRESENT | PT_READ_WRITE, 1);
-  map_page((void*)((size_t)region->end_stack + PAGE_SIZE), PT_PRESENT | PT_READ_WRITE, 1);
-  memset(region->end_stack, 0, PAGE_SIZE);
+  region->stacks_bottom = (void*)KERNEL_FREE_END;
+  region->stack_index = 0;
 }

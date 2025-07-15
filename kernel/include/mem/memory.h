@@ -1,6 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include <mem/kheap.h>
 #include <libk/bst.h>
 #include <libk/spinlock.h>
 #include <stdbool.h>
@@ -60,7 +61,8 @@ typedef struct vmm_region_struct {
 /// brk is at the bottom of address space
 /// MMap grows up to the top
 /// Autogen grows down to meet the break
-/// ignore that it goes brk, autogen, mmap, stack where stack and autogen grow down
+/// ignore that it goes brk, autogen, mmap, stack where stack and autogen grow
+/// down
 typedef struct vmm_kernel_region_struct {
   void *start_brk;
   void *brk;
@@ -72,8 +74,8 @@ typedef struct vmm_kernel_region_struct {
   void *start_mmap;
   void *end_mmap;
 
-  void* start_stack;
-  void* end_stack;
+  void *stacks_bottom;
+  size_t stack_index;
 
   spinlock_t autogen_lock;
   spinlock_t mmap_lock;
@@ -105,21 +107,28 @@ void *kmalloc(size_t size, uint8_t flags);
 void kfree(void *addr);
 
 typedef struct gheap_entry_struct {
-    union {
-        size_t size;
-        struct {
-            uint64_t free : 1;
-            uint64_t reserved : 2;
-            uint64_t useless : 61;
-        };
+  union {
+    size_t size;
+    struct {
+      uint64_t free : 1;
+      uint64_t reserved : 2;
+      uint64_t useless : 61;
     };
-    struct gheap_entry_struct* next;
-    struct gheap_entry_struct* prev;
+  };
+  struct gheap_entry_struct *next;
+  struct gheap_entry_struct *prev;
 } gheap_entry_t;
 
-void* gmalloc(size_t size);
-void gfree(void* ptr);
+typedef struct {
+  heap_entry_t *used_list;
+  heap_entry_t *free_list;
+  spinlock_t heap_lock;
+} heap_info_t;
 
+heap_info_t *get_heap_info(void);
+
+void *gmalloc(size_t size);
+void gfree(void *ptr);
 
 /// Kernel side
 void create_kernel_region(vmm_kernel_region_t *region);
@@ -131,6 +140,9 @@ void *increment_global_brk(size_t amount);
 void *decrement_global_brk(size_t amount);
 void init_global_brk(void);
 
-vmm_kernel_region_t* get_kernel_region(void);
+/// returns the addr for rsp
+void *create_new_kernel_stack(vmm_kernel_region_t *region);
+
+vmm_kernel_region_t *get_kernel_region(void);
 
 #endif
