@@ -74,9 +74,6 @@ gdt_pointer_t create_descriptors(void) {
   gdt[5] = tss_union.lobyte;
   gdt[6] = tss_union.hibyte;
 
-  // Load the tss
-  // __asm__ volatile("ltr %%ax" ::"a"(0x28));
-
   gdt_pointer_t ptr;
   // Add one because of the null descriptor
   ptr.size = sizeof(gdt_descriptor_t) * (DESCRIPTOR_COUNT + 1) - 1;
@@ -92,6 +89,9 @@ void create_gdt(void) {
 
   // Load them here
   __asm__ volatile("lgdt (%0)" : : "r"(&ptr));
+
+  // Load the tss
+  __asm__ volatile("mov %0, %%rax; ltr %%ax" ::"r"((size_t)0x28));
 
   change_gdt();
 
