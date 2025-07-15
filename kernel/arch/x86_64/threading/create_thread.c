@@ -16,7 +16,7 @@ size_t create_id_thread(void) {
   return ret;
 }
 
-TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
+TCB_t *create_thread(PCB_t *process, void *entry_point) {
   TCB_t *tcb = gmalloc(sizeof(TCB_t));
 
   tcb->rip0 = (size_t)entry_point;
