@@ -53,18 +53,6 @@ typedef struct {
 
 void kernel_secondary_start(void);
 
-void NORETURN secondary(void) {
-  kio_printf("Hello there\n");
-
-  TCB_t *tcb = (TCB_t *)rdmsr(0xC0000100);
-  tcb->state = THREAD_TERMINATED;
-
-  execute_next_thread();
-
-  while (1) {
-  }
-}
-
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
   TCB_t *tcb = gmalloc(sizeof(TCB_t));
@@ -143,6 +131,10 @@ void kernel_start(uint8_t *multiboot) {
   change_stacks();
 }
 
+void wait(void) {
+  while (1) {}
+}
+
 void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
@@ -167,22 +159,10 @@ void kernel_secondary_start(void) {
   init_x86_64_hal();
   kio_printf("Initialized HAL\n");
 
-  start_cores();
-
-  queue_thread((TCB_t *)rdmsr(FS_MSR));
-
-  PCB_t *pcb = create_process();
-  union {
-    void *ptr;
-    void (*func)(void);
-  } thingy;
-
-  thingy.func = secondary;
-  TCB_t *tcb = create_thread(pcb, thingy.ptr);
+  create_thread(((TCB_t*)rdmsr(FS_MSR))->pcb, start_cores);
+  create_thread(((TCB_t*)rdmsr(FS_MSR))->pcb, wait);
 
   execute_next_thread();
-
-  delete_thread(tcb);
 
   kernel_main();
 }

@@ -10,7 +10,7 @@
 void swap_threads(TCB_t* tcb);
 
 PCB_t* create_process(void);
-TCB_t* create_thread(PCB_t* process, void *entry_point);
+TCB_t* create_thread(PCB_t* process, void (*entry_point)(void));
 size_t create_id_thread(void);
 
 void delete_process(PCB_t* pcb);
@@ -25,6 +25,7 @@ void queue_thread(TCB_t* tcb);
 TCB_t* pop_thread(void);
 
 void execute_next_thread(void);
+void kill_thread(void);
 
 #endif
 

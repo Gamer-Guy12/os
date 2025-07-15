@@ -43,6 +43,9 @@ TCB_t *pop_thread(void) {
   cls_t *cls = get_cls();
 
   TCB_t *front = cls->tcb_queue;
+  if (front == NULL) {
+    while (1) {}
+  }
   cls->tcb_queue = front->next->queue_next;
 
   front->next->queue_next = NULL;
