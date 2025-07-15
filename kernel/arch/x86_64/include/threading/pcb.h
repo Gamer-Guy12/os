@@ -1,6 +1,7 @@
 #ifndef X86_64_PCB_H
 #define X86_64_PCB_H
 
+#include <mem/kheap.h>
 #include <libk/spinlock.h>
 #include <mem/memory.h>
 #include <stddef.h>
@@ -23,6 +24,7 @@ typedef struct PCB_struct {
   struct PCB_struct* next;
   TCB_t* tcbs;
   spinlock_t pcb_lock;
+  heap_info_t heap_info;
 } PCB_t;
 
 #endif

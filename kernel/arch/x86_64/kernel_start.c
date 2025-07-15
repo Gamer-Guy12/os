@@ -1,6 +1,4 @@
 #include "threading/threading.h"
-#include <threading/pcb.h>
-#include <threading/tcb.h>
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -21,6 +19,8 @@
 #include <pic.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <threading/pcb.h>
+#include <threading/tcb.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);
@@ -55,9 +55,10 @@ void kernel_secondary_start(void);
 
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
-  TCB_t *tcb = gmalloc(sizeof(TCB_t));
+  TCB_t *tcb = create_thread(pcb, NULL);
 
   pcb->state = PROCESS_RUNNING;
+  tcb->state = THREAD_RUNNING;
 
 #define FS_MSR 0xC0000100
 
