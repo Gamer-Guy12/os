@@ -1,8 +1,8 @@
 #ifndef X86_64_PCB_H
 #define X86_64_PCB_H
 
-#include <mem/kheap.h>
 #include <libk/spinlock.h>
+#include <mem/kheap.h>
 #include <mem/memory.h>
 #include <stddef.h>
 
@@ -17,15 +17,15 @@ typedef enum {
 
 typedef struct PCB_struct {
   size_t pid;
-  void* cr3;
-  vmm_kernel_region_t* kernel_region;
-  vmm_region_t* user_region;
+  void *cr3;
+  vmm_kernel_region_t *kernel_region;
+  vmm_region_t *user_region;
   PCB_state_t state;
-  struct PCB_struct* next;
-  TCB_t* tcbs;
+  struct PCB_struct *next;
+  struct PCB_struct *prev;
+  TCB_t *tcbs;
   spinlock_t pcb_lock;
   heap_info_t heap_info;
 } PCB_t;
 
 #endif
-

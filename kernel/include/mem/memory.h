@@ -142,6 +142,7 @@ void init_global_brk(void);
 
 /// returns the addr for rsp
 void *create_new_kernel_stack(vmm_kernel_region_t *region);
+void delete_kernel_stack(size_t stack_index, vmm_kernel_region_t* region);
 
 vmm_kernel_region_t *get_kernel_region(void);
 
