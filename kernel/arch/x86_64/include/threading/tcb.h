@@ -1,6 +1,7 @@
 #ifndef X86_64_TCB_H
 #define X86_64_TCB_H
 
+#include <libk/queue.h>
 #include <gdt.h>
 #include <interrupts.h>
 #include <stddef.h>
@@ -32,7 +33,7 @@ typedef struct TCB_struct {
   PCB_t *pcb;
   struct TCB_struct *next;
   struct TCB_struct *prev;
-  struct TCB_struct *queue_next;
+  queue_node_t node;
 } TCB_t;
 
 #endif

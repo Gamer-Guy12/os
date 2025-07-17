@@ -27,7 +27,7 @@ TCB_t *create_thread(PCB_t *process, void *entry_point) {
   tcb->state = THREAD_STARTING;
   tcb->rip0 = (size_t)entry_point;
 
-  spinlock_acquire(&process->pcb_lock); 
+  spinlock_acquire(&process->pcb_lock);
   tcb->next = process->tcbs;
   tcb->prev = NULL;
   if (process->tcbs)
@@ -35,6 +35,7 @@ TCB_t *create_thread(PCB_t *process, void *entry_point) {
   process->tcbs = tcb;
   spinlock_release(&process->pcb_lock);
 
+  queue_thread(tcb);
+
   return tcb;
 }
-

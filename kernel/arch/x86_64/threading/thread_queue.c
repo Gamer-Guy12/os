@@ -1,40 +1,20 @@
+#include <libk/queue.h>
+#include <libk/spinlock.h>
 #include <stdatomic.h>
-#include <threading/threading.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
-#include <libk/spinlock.h>
+#include <threading/threading.h>
 
-static TCB_t* thread_queue;
-static TCB_t* thread_queue_end;
-static spinlock_t lock = ATOMIC_FLAG_INIT;
+static queue_t thread_queue = {.head = NULL, .tail = NULL};
 
-void queue_thread(TCB_t* tcb) {
-  spinlock_acquire(&lock);
+void queue_thread(TCB_t *tcb) { queue_enqueue(&thread_queue, &tcb->node); }
+
+TCB_t *pop_thread(void) {
+  const queue_node_t *node = queue_dequeue(&thread_queue);
+
+  const size_t offset = offsetof(TCB_t, node);
   
-  if (thread_queue == NULL) {
-    thread_queue = tcb;
-    thread_queue_end = tcb;
-  } else {
-    thread_queue_end->queue_next = tcb;
-    tcb->queue_next = thread_queue;
-    thread_queue_end = tcb;
-  }
-
-  spinlock_release(&lock);
+  return (void*)((uint8_t*)node - offset);
 }
-
-TCB_t* pop_thread(void) {
-  spinlock_acquire(&lock);
-
-  TCB_t* ret = thread_queue;
-  if (thread_queue != NULL)
-  {
-    thread_queue = thread_queue->queue_next;
-    thread_queue_end->queue_next = thread_queue;
-  }
-
-  spinlock_release(&lock);
-
-  return ret;
-}
-
