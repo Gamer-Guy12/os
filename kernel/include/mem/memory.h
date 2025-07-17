@@ -2,7 +2,6 @@
 #define MEMORY_H
 
 #include <mem/kheap.h>
-#include <libk/bst.h>
 #include <libk/spinlock.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -54,7 +53,7 @@ typedef struct vmm_region_struct {
   // Autogen is the same as break
   // Mmap is different and needs information on where to alloc pages, these are
   // stored in a bst with the key being the addr
-  bst_node_t *mmap_regions;
+  size_t padding;
 } vmm_region_t;
 
 /// This is for the kernel
@@ -82,7 +81,7 @@ typedef struct vmm_kernel_region_struct {
   spinlock_t brk_lock;
   spinlock_t stack_lock;
 
-  bst_node_t *mmap_regions;
+  size_t padding;
 } vmm_kernel_region_t;
 
 /// Allocate a physical page

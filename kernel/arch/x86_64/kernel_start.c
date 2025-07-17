@@ -1,4 +1,3 @@
-#include "threading/threading.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -10,6 +9,8 @@
 #include <interrupts.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
+#include <libk/macros.h>
+#include <libk/queue.h>
 #include <libk/vga_kgfx.h>
 #include <mem/kheap.h>
 #include <mem/memory.h>
@@ -21,6 +22,7 @@
 #include <stdint.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
+#include <threading/threading.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);

@@ -2,7 +2,6 @@
 #define X86_64_VIMEMORY_H
 
 #include <threading/pcb.h>
-#include <libk/bst.h>
 #include <libk/spinlock.h>
 #include <stdbool.h>
 #include <stddef.h>

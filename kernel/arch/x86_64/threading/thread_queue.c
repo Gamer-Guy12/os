@@ -15,7 +15,8 @@ void queue_thread(TCB_t* tcb) {
     thread_queue = tcb;
     thread_queue_end = tcb;
   } else {
-    thread_queue_end->next = tcb;
+    thread_queue_end->queue_next = tcb;
+    tcb->queue_next = thread_queue;
     thread_queue_end = tcb;
   }
 
@@ -27,7 +28,10 @@ TCB_t* pop_thread(void) {
 
   TCB_t* ret = thread_queue;
   if (thread_queue != NULL)
-    thread_queue = thread_queue->next;
+  {
+    thread_queue = thread_queue->queue_next;
+    thread_queue_end->queue_next = thread_queue;
+  }
 
   spinlock_release(&lock);
 
