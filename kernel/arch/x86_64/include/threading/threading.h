@@ -9,7 +9,7 @@
 void swap_threads(TCB_t* tcb);
 
 PCB_t* create_process(void);
-TCB_t* create_thread(PCB_t* process, void *entry_point);
+TCB_t* create_thread(PCB_t* process, void (*entry_point)(void));
 
 void delete_process(PCB_t* pcb);
 /// Thread is expected to not be in the queue when deleted
@@ -19,10 +19,13 @@ void delete_thread(TCB_t* tcb);
 void store_process(PCB_t* pcb);
 /// Delete process calls this
 void remove_process(PCB_t* pcb);
+PCB_t* get_proc_list(void);
 
 /// Create thread calls this
 void queue_thread(TCB_t* tcb);
 TCB_t* pop_thread(void);
+
+void run_next_thread(void);
 
 #endif
 

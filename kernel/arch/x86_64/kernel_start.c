@@ -83,6 +83,12 @@ void kernel_start(uint8_t *multiboot) {
   init_global_brk();
   kio_printf("Initialized Global Heap (brk)\n");
 
+  init_cls();
+  kio_printf("Initialized CLS (Core Local Storage)\n");
+
+  create_gdt();
+  kio_printf("Created the GDT\n");
+
   // // kio_clear();
   //
   // size_t phys_1 = (size_t)phys_alloc();
@@ -130,12 +136,6 @@ void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
 
-  init_cls();
-  kio_printf("Initialized CLS (Core Local Storage)\n");
-
-  create_gdt();
-  kio_printf("Created the GDT\n");
-
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
   //*num = 49;
@@ -151,6 +151,9 @@ void kernel_secondary_start(void) {
   kio_printf("Initialized HAL\n");
 
   start_cores();
+  kio_printf("Started all cores\n");
+
+  run_next_thread();
 
   kernel_main();
 }

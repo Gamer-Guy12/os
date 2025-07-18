@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 void init_interrupts(void) {
+  create_handlers();
   register_handlers();
   load_idt();
 

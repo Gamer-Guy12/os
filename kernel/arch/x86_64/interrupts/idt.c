@@ -43,3 +43,4 @@ void enable_idt_gate(uint8_t gate_number) {
   idt_gate_descriptor_t *idt = get_cls()->idt;
   idt[gate_number].present = true;
 }
+

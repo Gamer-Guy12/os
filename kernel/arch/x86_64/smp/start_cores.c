@@ -147,7 +147,6 @@ void start_cores(void) {
   }
 
   bspdone = 0;
-
   for (size_t i = 0; i < core_count; i++) {
     if (core_ids[i] == bspid) {
       continue;

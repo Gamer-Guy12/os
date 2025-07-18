@@ -66,5 +66,6 @@ void load_idt(void);
 // If handler already exists it just sets it to a new one, so make sure u don't
 // already have things
 void register_interrupt_handler(interrupt_handler_t handler, uint8_t index);
+void create_handlers(void);
 
 #endif

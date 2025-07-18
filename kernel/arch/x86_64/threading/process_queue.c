@@ -33,3 +33,7 @@ void remove_process(PCB_t* pcb) {
   spinlock_release(&lock);
 }
 
+PCB_t* get_proc_list(void) {
+  return process_list;
+}
+
