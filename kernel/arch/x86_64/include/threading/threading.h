@@ -9,7 +9,7 @@
 void swap_threads(TCB_t* tcb);
 
 PCB_t* create_process(void);
-TCB_t* create_thread(PCB_t* process, void (*entry_point)(void));
+TCB_t* create_thread(PCB_t* process, void (*entry_point)(void), bool queue);
 
 void delete_process(PCB_t* pcb);
 /// Thread is expected to not be in the queue when deleted

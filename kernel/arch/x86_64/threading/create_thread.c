@@ -1,3 +1,4 @@
+#include <gdt.h>
 #include <libk/spinlock.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
@@ -51,7 +52,7 @@ bool check_in(void *addr, void *pml4) {
 static size_t tid_cur = 0;
 static spinlock_t tid_lock = ATOMIC_FLAG_INIT;
 
-TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
+TCB_t *create_thread(PCB_t *process, void (*entry_point)(void), bool queue) {
   TCB_t *tcb = gmalloc(sizeof(TCB_t));
 
   spinlock_acquire(&tid_lock);
@@ -72,6 +73,10 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
               (PML4_entry_t *)((size_t)tcb->pcb->cr3 + IDENTITY_MAPPED_ADDR));
 
   tcb->registers = gmalloc(sizeof(registers_t));
+  tcb->registers->cs = KERNEL_CODE_SELECTOR;
+  tcb->registers->ds = KERNEL_DATA_SELECTOR;
+  tcb->registers->es = KERNEL_DATA_SELECTOR;
+  tcb->registers->ss = KERNEL_DATA_SELECTOR;
 
   tcb->state = THREAD_STARTING;
   tcb->rip0 = (size_t)entry_point;
@@ -84,7 +89,8 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
   process->tcbs = tcb;
   spinlock_release(&process->pcb_lock);
 
-  queue_thread(tcb);
+  if (queue)
+    queue_thread(tcb);
 
   return tcb;
 }

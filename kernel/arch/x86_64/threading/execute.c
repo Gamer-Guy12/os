@@ -1,5 +1,6 @@
-#include <libk/kio.h>
 #include <asm.h>
+#include <libk/kio.h>
+#include <stddef.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
 #include <threading/threading.h>
@@ -11,10 +12,11 @@ void run_next_thread(void) {
 
   queue_thread(tcb);
 
-  TCB_t* next = pop_thread();
+  TCB_t *next = pop_thread();
 
   if (next == NULL) {
-    while (1) {}
+    while (1) {
+    }
   }
 
   while (next->state == THREAD_TERMINATED) {
@@ -23,7 +25,8 @@ void run_next_thread(void) {
     next = pop_thread();
 
     if (next == NULL) {
-      while (1) {}
+      while (1) {
+      }
     }
   }
 

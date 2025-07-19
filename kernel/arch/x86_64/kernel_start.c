@@ -57,7 +57,7 @@ void kernel_secondary_start(void);
 
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
-  TCB_t *tcb = create_thread(pcb, NULL);
+  TCB_t *tcb = create_thread(pcb, NULL, false);
 
   pcb->state = PROCESS_RUNNING;
   tcb->state = THREAD_RUNNING;
@@ -132,6 +132,18 @@ void kernel_start(uint8_t *multiboot) {
   change_stacks();
 }
 
+void secondary(void) {
+  kio_printf("Hi\n");
+
+  run_next_thread();
+
+  kio_printf("Again!\n");
+
+  run_next_thread();
+
+  while (1) {}
+}
+
 void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
@@ -153,6 +165,11 @@ void kernel_secondary_start(void) {
   start_cores();
   kio_printf("Started all cores\n");
 
+  create_thread(((TCB_t*)rdmsr(FS_MSR))->pcb, secondary, true);
+
+  // Run Next
+  run_next_thread();
+  // Rerun
   run_next_thread();
 
   kernel_main();
