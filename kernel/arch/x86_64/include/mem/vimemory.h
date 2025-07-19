@@ -23,4 +23,6 @@ void *map_phys_page(void *addr, uint16_t flags, bool not_executable,
 
 void create_new_addr_space(PCB_t* pcb);
 
+spinlock_t* get_table_lock(void);
+
 #endif

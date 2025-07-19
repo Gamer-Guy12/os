@@ -1,3 +1,4 @@
+#include <libk/spinlock.h>
 #include <libk/mem.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
@@ -61,6 +62,8 @@ static void do_page(PT_entry_t *pt, size_t index, uint16_t flags,
 
 void *map_page_in(void *addr, uint16_t flags, bool not_executable,
                   PML4_entry_t *pml4) {
+  spinlock_acquire(get_table_lock());
+
   const size_t addr_bits = (size_t)addr & UNCANONICALIZER;
 
   const size_t pt_index = (addr_bits >> 12) & 0x1ff;
@@ -75,6 +78,8 @@ void *map_page_in(void *addr, uint16_t flags, bool not_executable,
       do_pdt((PDT_entry_t *)(pdt + IDENTITY_MAPPED_ADDR), pdt_index);
 
   do_page((void *)(pt + IDENTITY_MAPPED_ADDR), pt_index, flags, not_executable);
+
+  spinlock_release(get_table_lock());
 
   return addr;
 }

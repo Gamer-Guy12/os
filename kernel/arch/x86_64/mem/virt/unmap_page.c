@@ -1,3 +1,4 @@
+#include <libk/spinlock.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
@@ -73,6 +74,8 @@ inline static void check_pdpt(void *addr) {
 }
 
 void *unmap_page(void *addr, bool free) {
+  spinlock_acquire(get_table_lock());
+
   void *phys = unmap_virt(addr);
   if (free)
     phys_free(phys);
@@ -82,6 +85,8 @@ void *unmap_page(void *addr, bool free) {
   check_pdt(addr);
   check_pdpt(addr);
   // No need to check the pml4 because that will never be empty
+  
+  spinlock_release(get_table_lock());
 
   return addr;
 }

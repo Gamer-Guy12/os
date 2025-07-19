@@ -1,3 +1,4 @@
+#include <libk/spinlock.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
@@ -59,6 +60,8 @@ static void *map_pdt(size_t index, size_t pdpt, size_t pml4) {
 }
 
 void *map_page(void *addr, uint16_t flags, bool not_executable) {
+  spinlock_acquire(get_table_lock());
+
   size_t addr_bits = (size_t)addr;
 
   size_t pdt_index = (addr_bits >> 21) & 0x1ff;
@@ -72,6 +75,8 @@ void *map_page(void *addr, uint16_t flags, bool not_executable) {
   void *phys = phys_alloc();
 
   map_virt_to_phys(addr, phys, not_executable, flags | PT_PRESENT);
+
+  spinlock_release(get_table_lock());
 
   return addr;
 }
