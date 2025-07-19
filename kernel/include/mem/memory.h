@@ -141,7 +141,10 @@ void init_global_brk(void);
 
 /// returns the addr for rsp
 void *create_new_kernel_stack(vmm_kernel_region_t *region, bool map);
-void delete_kernel_stack(size_t stack_index, vmm_kernel_region_t* region);
+/// Returns the first addr to delete
+/// 
+/// The second one is the return value + page size
+void *delete_kernel_stack(size_t stack_index, vmm_kernel_region_t* region, bool unmap);
 
 vmm_kernel_region_t *get_kernel_region(void);
 

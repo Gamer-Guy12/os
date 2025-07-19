@@ -16,6 +16,7 @@ void *map_page(void *addr, uint16_t flags, bool not_executable);
 void* map_page_in(void* addr, uint16_t flags, bool not_executable, PML4_entry_t* pml4);
 /// Does not check if page exists already
 void *unmap_page(void *addr, bool free);
+void* unmap_page_in(void* addr, bool free, PML4_entry_t* pml4);
 
 void *map_phys_page(void *addr, uint16_t flags, bool not_executable,
                     void *phys);
