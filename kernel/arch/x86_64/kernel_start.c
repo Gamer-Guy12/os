@@ -1,4 +1,3 @@
-#include "threading/threading.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -10,6 +9,8 @@
 #include <interrupts.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
+#include <libk/macros.h>
+#include <libk/queue.h>
 #include <libk/vga_kgfx.h>
 #include <mem/kheap.h>
 #include <mem/memory.h>
@@ -21,6 +22,7 @@
 #include <stdint.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
+#include <threading/threading.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);
@@ -55,7 +57,7 @@ void kernel_secondary_start(void);
 
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
-  TCB_t *tcb = create_thread(pcb, NULL);
+  TCB_t *tcb = create_thread(pcb, NULL, false);
 
   pcb->state = PROCESS_RUNNING;
   tcb->state = THREAD_RUNNING;
@@ -80,6 +82,12 @@ void kernel_start(uint8_t *multiboot) {
 
   init_global_brk();
   kio_printf("Initialized Global Heap (brk)\n");
+
+  init_cls();
+  kio_printf("Initialized CLS (Core Local Storage)\n");
+
+  create_gdt();
+  kio_printf("Created the GDT\n");
 
   // // kio_clear();
   //
@@ -124,15 +132,33 @@ void kernel_start(uint8_t *multiboot) {
   change_stacks();
 }
 
+void secondary(void) {
+  kio_printf("Hi\n");
+
+  run_next_thread();
+
+  kio_printf("Again!\n");
+
+  kill_cur_thread();
+
+  while (1) {
+    run_next_thread();
+  }
+}
+
+void tertiary(void) {
+  kio_printf("tertiary\n");
+
+  kill_cur_thread();
+
+  while (1) {
+    run_next_thread();
+  }
+}
+
 void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
-
-  init_cls();
-  kio_printf("Initialized CLS (Core Local Storage)\n");
-
-  create_gdt();
-  kio_printf("Created the GDT\n");
 
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
@@ -149,6 +175,15 @@ void kernel_secondary_start(void) {
   kio_printf("Initialized HAL\n");
 
   start_cores();
+  kio_printf("Started all cores\n");
+
+  create_thread(((TCB_t *)rdmsr(FS_MSR))->pcb, secondary, true);
+  create_thread(((TCB_t *)rdmsr(FS_MSR))->pcb, tertiary, true);
+
+  run_next_thread();
+  run_next_thread();
+  kio_printf("Last?\n");
+  run_next_thread();
 
   kernel_main();
 }

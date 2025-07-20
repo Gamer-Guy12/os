@@ -13,7 +13,6 @@ void create_kernel_region(vmm_kernel_region_t *region) {
   atomic_flag_clear_explicit(&region->autogen_lock, memory_order_release);
 
   // IMPORTANT: Change this when u add mmap
-  region->mmap_regions = NULL;
 
 #define KERNEL_FREE_START (260ull * 512ull * GB + (0xffffull << 48))
 #define KERNEL_FREE_END (509ull * 512ull * GB + (0xffffull << 48))
@@ -42,3 +41,4 @@ void create_kernel_region(vmm_kernel_region_t *region) {
   region->stacks_bottom = (void*)KERNEL_FREE_END;
   region->stack_index = 0;
 }
+

@@ -1,13 +1,20 @@
+#include <cls.h>
 #include <interrupts.h>
 #include <libk/err.h>
 #include <libk/kio.h>
 #include <libk/sys.h>
+#include <mem/memory.h>
 #include <stddef.h>
 #include <stdint.h>
 
-interrupt_handler_t handlers[256] = {NULL};
+void create_handlers(void) {
+  cls_t *cls = get_cls();
+  cls->handlers = gmalloc(sizeof(interrupt_handler_t) * 256);
+}
 
 void common_interrupt_handler(idt_registers_t *registers) {
+  interrupt_handler_t *handlers = get_cls()->handlers;
+
   bool is_exception = registers->interrupt_number < 32;
 
   if (is_exception && handlers[registers->interrupt_number] == NULL) {
@@ -38,5 +45,6 @@ void common_interrupt_handler(idt_registers_t *registers) {
 }
 
 void register_interrupt_handler(interrupt_handler_t handler, uint8_t index) {
+  interrupt_handler_t *handlers = get_cls()->handlers;
   handlers[index] = handler;
 }

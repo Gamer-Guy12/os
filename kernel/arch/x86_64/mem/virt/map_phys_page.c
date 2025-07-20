@@ -14,6 +14,7 @@ static bool check_page(void *addr) {
 
   return entries[index].full_entry & PT_PRESENT;
 }
+
 static void *map_pml4(size_t index) {
   size_t map_index = PDPT_ADDR + index * PAGE_SIZE;
   if (check_page((void *)map_index))

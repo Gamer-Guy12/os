@@ -46,6 +46,8 @@ heap_entry_t *find_heap_entry(size_t size, heap_info_t *info) {
     ptr->next->prev = ptr->prev;
   if (ptr->prev)
     ptr->prev->next = ptr->next;
+  if (!ptr->next && !ptr->prev)
+    info->free_list = NULL;
 
   ptr->next = info->used_list;
   if (info->used_list != NULL) {
@@ -94,18 +96,17 @@ void *kmalloc(size_t size, uint8_t flags) {
 }
 
 // Also cloned from Gmalloc (this entire file is basically cloned)
-void kfree(void* ptr) {
-  heap_info_t* info = get_heap_info();
+void kfree(void *ptr) {
+  heap_info_t *info = get_heap_info();
 
   spinlock_acquire(&info->heap_lock);
 
-  heap_entry_t* entry = (heap_entry_t*)ptr - 1;
+  heap_entry_t *entry = (heap_entry_t *)ptr - 1;
   entry->next = info->free_list;
   if (info->free_list != NULL)
-    info->free_list->prev = entry; 
+    info->free_list->prev = entry;
   info->free_list = entry;
-  entry->prev = NULL; 
+  entry->prev = NULL;
 
   spinlock_release(&info->heap_lock);
 }
-

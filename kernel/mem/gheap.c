@@ -56,6 +56,7 @@ gheap_entry_t *find_entry(size_t size) {
     ptr->next->prev = ptr->prev;
   if (ptr->prev)
     ptr->prev->next = ptr->next;
+  if (!ptr->prev && !ptr->next) free_list = NULL;
 
   ptr->free = 0;
   ptr->next = used_list;

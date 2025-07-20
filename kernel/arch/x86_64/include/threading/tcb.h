@@ -3,6 +3,7 @@
 
 #include <gdt.h>
 #include <interrupts.h>
+#include <libk/queue.h>
 #include <stddef.h>
 #include <threading/pcb.h>
 
@@ -22,7 +23,7 @@ typedef struct {
 
 typedef struct TCB_struct {
   size_t tid;
-  registers_t* registers;
+  registers_t *registers;
   size_t stack_num;
   size_t rsp;
   size_t rsp0;
@@ -31,6 +32,8 @@ typedef struct TCB_struct {
   TCB_state_t state;
   PCB_t *pcb;
   struct TCB_struct *next;
+  struct TCB_struct *prev;
+  queue_node_t node;
 } TCB_t;
 
 #endif

@@ -12,6 +12,7 @@ BITS 16
 section .smp_code
 
 trampoline:
+  
   cli
   cld
   
@@ -170,12 +171,26 @@ long_land:
   mov rsp, [rax]
   mov rbp, rsp
 
-  call setup_memory 
-  mov rsi, rax
+  push rdi
 
+  call setup_memory 
+
+  pop rdi
+
+  mov rsi, rax
   mov rdx, 0xfffffe8000000000 - 8
   mov rsp, rdx
   mov rbp, rsp
+
+  mov rcx, 0xC0000100
+  rdmsr
+  shl rdx, 32
+  or rax, rdx
+
+  mov r8, [rax + 64]
+  mov r8, [r8 + 8]
+
+  mov cr3, r8
 
   call smp_start
 

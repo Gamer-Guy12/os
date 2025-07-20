@@ -1,9 +1,8 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <mem/kheap.h>
-#include <libk/bst.h>
 #include <libk/spinlock.h>
+#include <mem/kheap.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -54,7 +53,7 @@ typedef struct vmm_region_struct {
   // Autogen is the same as break
   // Mmap is different and needs information on where to alloc pages, these are
   // stored in a bst with the key being the addr
-  bst_node_t *mmap_regions;
+  size_t padding;
 } vmm_region_t;
 
 /// This is for the kernel
@@ -82,7 +81,7 @@ typedef struct vmm_kernel_region_struct {
   spinlock_t brk_lock;
   spinlock_t stack_lock;
 
-  bst_node_t *mmap_regions;
+  size_t padding;
 } vmm_kernel_region_t;
 
 /// Allocate a physical page
@@ -131,6 +130,8 @@ void *gmalloc(size_t size);
 void gfree(void *ptr);
 
 /// Kernel side
+///
+/// To delete just free the region
 void create_kernel_region(vmm_kernel_region_t *region);
 void *increment_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
 void *decrement_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
@@ -141,7 +142,13 @@ void *decrement_global_brk(size_t amount);
 void init_global_brk(void);
 
 /// returns the addr for rsp
-void *create_new_kernel_stack(vmm_kernel_region_t *region);
+void *create_new_kernel_stack(vmm_kernel_region_t *region, bool map,
+                              size_t *stack_index);
+/// Returns the first addr to delete
+///
+/// The second one is the return value + page size
+void *delete_kernel_stack(size_t stack_index, vmm_kernel_region_t *region,
+                          bool unmap);
 
 vmm_kernel_region_t *get_kernel_region(void);
 

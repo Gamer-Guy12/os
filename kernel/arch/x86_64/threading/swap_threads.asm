@@ -5,7 +5,8 @@ global swap_threads
 ; FS BASE MSR is 0xC0000100
 swap_threads:
   cli
-    ; RAX contains the pointer to the current TCB
+
+  ; RAX contains the pointer to the current TCB
   mov rcx, 0xC0000100
   rdmsr
   shl rdx, 32
@@ -80,7 +81,7 @@ swap_threads:
   mov r8, [rdi + 8]
 
   mov rax, [r8 + 0]
-  mov rbx, [r8 + 8]
+  ; RBX will be loaded at the end
   mov rcx, [r8 + 16]
   mov rdx, [r8 + 24]
   mov rbp, [r8 + 32]
@@ -124,6 +125,9 @@ swap_threads:
   ; Load RIP
   mov rbx, [rdi + 48]
   push rbx
+
+  ; Load rbx
+  mov rbx, [r8 + 8]
 
   ; Load rdi
   mov rdi, [r8 + 40]
