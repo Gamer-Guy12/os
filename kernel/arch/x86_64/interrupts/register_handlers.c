@@ -419,7 +419,7 @@ void register_handlers(void) {
   set_idt_gate(79, &idt_handler_79, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
                0, 0);
   set_idt_gate(80, &idt_handler_80, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
-               0, 0);
+               3, 0);
   set_idt_gate(81, &idt_handler_81, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
                0, 0);
   set_idt_gate(82, &idt_handler_82, KERNEL_CODE_SELECTOR, IDT_INTERRUPT_GATE, 0,
