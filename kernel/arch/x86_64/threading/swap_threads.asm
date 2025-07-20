@@ -5,7 +5,8 @@ global swap_threads
 ; FS BASE MSR is 0xC0000100
 swap_threads:
   cli
-    ; RAX contains the pointer to the current TCB
+
+  ; RAX contains the pointer to the current TCB
   mov rcx, 0xC0000100
   rdmsr
   shl rdx, 32

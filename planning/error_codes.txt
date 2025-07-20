@@ -9,9 +9,14 @@ first 48 bits for error 5:
 Bit 0: IRQ Handling error
 Bit 1: Keyboard handling error
 
+first 48 bits for error 6:
+Bit 0: Thread Self Termination
+Bit 1: Process Self Termination
+
 ERR 0: Memory Allocator Error
 ERR 1: Multiboot Error
 ERR 2: Memory Init Error
 ERR 3: No interrupt handler
 ERR 4: KGFX Error
 ERR 5: HAL init error
+ERR 6: Self Termination error

@@ -1,8 +1,8 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <mem/kheap.h>
 #include <libk/spinlock.h>
+#include <mem/kheap.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -130,6 +130,8 @@ void *gmalloc(size_t size);
 void gfree(void *ptr);
 
 /// Kernel side
+///
+/// To delete just free the region
 void create_kernel_region(vmm_kernel_region_t *region);
 void *increment_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
 void *decrement_kernel_brk(vmm_kernel_region_t *region, uint64_t amount);
@@ -140,11 +142,13 @@ void *decrement_global_brk(size_t amount);
 void init_global_brk(void);
 
 /// returns the addr for rsp
-void *create_new_kernel_stack(vmm_kernel_region_t *region, bool map);
+void *create_new_kernel_stack(vmm_kernel_region_t *region, bool map,
+                              size_t *stack_index);
 /// Returns the first addr to delete
-/// 
+///
 /// The second one is the return value + page size
-void *delete_kernel_stack(size_t stack_index, vmm_kernel_region_t* region, bool unmap);
+void *delete_kernel_stack(size_t stack_index, vmm_kernel_region_t *region,
+                          bool unmap);
 
 vmm_kernel_region_t *get_kernel_region(void);
 

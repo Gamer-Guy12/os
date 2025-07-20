@@ -32,47 +32,47 @@ void *unmap_page_in(void *addr, bool free, PML4_entry_t *pml4) {
   pt_entries[pt_index].full_entry = 0;
 
   // Check if there is anything else in the PT
-  bool dont_unmap_pt = true;
+  bool unmap_pt = true;
   for (size_t i = 0; i < 512; i++) {
     if (pt_entries[i].full_entry != 0) {
-      dont_unmap_pt = false;
+      unmap_pt = false;
       break;
     }
   }
 
-  if (!dont_unmap_pt) {
+  if (unmap_pt) {
     size_t phys_addr = pdt_entries[pdt_index].full_entry & 0x0000fffffffff000;
     phys_free((void *)phys_addr);
     pdt_entries[pdt_index].full_entry = 0;
   }
 
   // Do the same for unmapping the pdt
-  bool dont_unmap_pdt = true;
+  bool unmap_pdt = true;
   for (size_t i = 0; i < 512; i++) {
     if (pdt_entries[i].full_entry != 0) {
-      dont_unmap_pdt = false;
+      unmap_pdt = false;
       break;
     }
   }
 
-  if (!dont_unmap_pdt) {
+  if (unmap_pdt) {
     size_t phys_addr = pdpt_entries[pdpt_index].full_entry & 0x0000fffffffff000;
     phys_free((void *)phys_addr);
     pdpt_entries[pdpt_index].full_entry = 0;
   }
 
   // Finally unmap the pdpt
-  bool dont_unmap_pdpt = false;
+  bool unmap_pdpt = false;
   for (size_t i = 0; i < 512; i++) {
     if (pdpt_entries[i].full_entry != 0) {
-      dont_unmap_pdpt = false;
+      unmap_pdpt = false;
       break;
     }
   }
 
-  if (!dont_unmap_pdpt) {
+  if (unmap_pdpt) {
     size_t phys_addr = pml4[pml4_index].full_entry & 0x0000fffffffff000;
-    phys_free((void*)phys_addr);
+    phys_free((void *)phys_addr);
     pml4[pml4_index].full_entry = 0;
   }
 
@@ -80,4 +80,3 @@ void *unmap_page_in(void *addr, bool free, PML4_entry_t *pml4) {
 
   return addr;
 }
-

@@ -29,11 +29,18 @@ void remove_process(PCB_t* pcb) {
     pcb->prev->next = pcb->next;
   if (pcb->next)
     pcb->next->prev = pcb->prev;
+  if (!pcb->next && !pcb->prev) process_list = NULL;
 
   spinlock_release(&lock);
 }
 
 PCB_t* get_proc_list(void) {
   return process_list;
+}
+
+void clear_processes(void) {
+  spinlock_acquire(&lock);
+  process_list = NULL;
+  spinlock_release(&lock);
 }
 

@@ -57,3 +57,4 @@ void NORETURN kernel_main(void) {
   while (1) {
   }
 }
+

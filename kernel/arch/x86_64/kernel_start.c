@@ -139,9 +139,21 @@ void secondary(void) {
 
   kio_printf("Again!\n");
 
-  run_next_thread();
+  kill_cur_thread();
 
-  while (1) {}
+  while (1) {
+    run_next_thread();
+  }
+}
+
+void tertiary(void) {
+  kio_printf("tertiary\n");
+
+  kill_cur_thread();
+
+  while (1) {
+    run_next_thread();
+  }
 }
 
 void kernel_secondary_start(void) {
@@ -165,11 +177,12 @@ void kernel_secondary_start(void) {
   start_cores();
   kio_printf("Started all cores\n");
 
-  create_thread(((TCB_t*)rdmsr(FS_MSR))->pcb, secondary, true);
+  create_thread(((TCB_t *)rdmsr(FS_MSR))->pcb, secondary, true);
+  create_thread(((TCB_t *)rdmsr(FS_MSR))->pcb, tertiary, true);
 
-  // Run Next
   run_next_thread();
-  // Rerun
+  run_next_thread();
+  kio_printf("Last?\n");
   run_next_thread();
 
   kernel_main();

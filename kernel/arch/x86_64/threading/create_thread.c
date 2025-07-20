@@ -62,7 +62,8 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void), bool queue) {
 
   tcb->pcb = process;
 
-  tcb->rsp0 = (size_t)create_new_kernel_stack(process->kernel_region, false);
+  tcb->rsp0 = (size_t)create_new_kernel_stack(process->kernel_region, false,
+                                              &tcb->stack_num);
 
   size_t addr1 = tcb->rsp0 + 8 - PAGE_SIZE;
   size_t addr2 = addr1 - PAGE_SIZE;
