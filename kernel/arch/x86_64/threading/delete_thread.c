@@ -36,5 +36,6 @@ void delete_thread(TCB_t *tcb) {
                 (PML4_entry_t *)((size_t)tcb->pcb->cr3 + IDENTITY_MAPPED_ADDR));
 
   gfree(tcb->registers);
+  if (tcb->userspace_registers) gfree(tcb->userspace_registers);
   gfree(tcb);
 }

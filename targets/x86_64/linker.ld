@@ -29,7 +29,7 @@ SECTIONS {
 		_loading = .;
 
 		*(.multiboot)
-        *(.loading)
+    *(.loading)
 
 		*(.loading_rodata)
 		*(.loading_data)
