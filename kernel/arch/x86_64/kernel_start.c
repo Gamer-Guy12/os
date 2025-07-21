@@ -1,4 +1,4 @@
-#include "threading/userspace.h"
+#include <threading/userspace.h>
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -133,40 +133,6 @@ void kernel_start(uint8_t *multiboot) {
   change_stacks();
 }
 
-void secondary(void) {
-  kio_printf("Hi\n");
-
-  run_next_thread();
-
-  kio_printf("Again!\n");
-
-  kill_cur_thread();
-
-  while (1) {
-    run_next_thread();
-  }
-}
-
-void tertiary(void) {
-  kio_printf("tertiary\n");
-
-  kill_cur_thread();
-
-  while (1) {
-    run_next_thread();
-  }
-}
-
-void test(void) {
-  while (1) {
-  }
-}
-
-void to_test(void) {
-  kio_printf("Testing\n");
-  jump_to_userspace();
-}
-
 void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
@@ -188,27 +154,6 @@ void kernel_secondary_start(void) {
   start_cores();
   kio_printf("Started all cores\n");
 
-  create_thread(((TCB_t *)rdmsr(FS_MSR))->pcb, secondary, true);
-  create_thread(((TCB_t *)rdmsr(FS_MSR))->pcb, tertiary, true);
-
-  run_next_thread();
-  run_next_thread();
-  kio_printf("Last?\n");
-  run_next_thread();
-
-  TCB_t *user = create_thread(((TCB_t *)rdmsr(FS_MSR))->pcb, to_test, false);
-
-  user->rsp = (size_t) gmalloc(PAGE_SIZE * 2);
-  user->rip = (size_t) test;
-
-  user->userspace_registers = gmalloc(sizeof(registers_t));
-  user->userspace_registers->cs = USER_CODE_SELECTOR;
-  user->userspace_registers->ds = USER_CODE_SELECTOR;
-  user->userspace_registers->es = USER_CODE_SELECTOR;
-  user->userspace_registers->ss = USER_CODE_SELECTOR;
-
-  queue_thread(user);
-  run_next_thread();
-
   kernel_main();
 }
+

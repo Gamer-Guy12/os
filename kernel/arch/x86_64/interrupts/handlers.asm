@@ -1,5 +1,107 @@
 extern common_interrupt_handler
 
+save_user_registers:
+  ; Check if this came from userspace
+  ; RDI contains the idt_registers
+  ; Offset 152 is CS
+  ; Bottom 2 bits contain cpl
+  push rax
+
+  mov rax, [rdi + 152]
+  ; Mask bottom bits
+  and rax, 3
+  cmp rax, 3
+  je .from_users
+  pop rax
+  ret
+
+.from_users
+  push rcx
+  push rdx
+  push r8
+     
+  ; RAX contains the pointer to the current TCB
+  mov rcx, 0xC0000100
+  rdmsr
+  shl rdx, 32
+  or rax, rdx
+
+  ; Save RSP (offset 24) and RIP (40)
+  mov rdx, [rdi + 168]
+  mov [rax + 24], rdx
+
+  mov rdx, [rdi + 144]
+  mov [rax + 40], rdx
+
+  ; Save old registers
+  ; R8 contains the addr to the userspace register struct
+  mov r8, [rax + 96]
+
+  mov rdx, [rdi + 0]
+  mov [r8 + 128], rdx
+  mov [r8 + 136], rdx
+
+  mov rdx, [rdi + 8]
+  mov [r8 + 112], rdx
+
+  mov rdx, [rdi + 16]
+  mov [r8 + 104], rdx
+
+  mov rdx, [rdi + 24]
+  mov [r8 + 96], rdx
+
+  mov rdx, [rdi + 32]
+  mov [r8 + 88], rdx
+
+  mov rdx, [rdi + 40]
+  mov [r8 + 80], rdx
+  
+  mov rdx, [rdi + 48]
+  mov [r8 + 72], rdx
+  
+  mov rdx, [rdi + 56]
+  mov [r8 + 64], rdx
+
+  mov rdx, [rdi + 64]
+  mov [r8 + 56], rdx
+
+  mov rdx, [rdi + 72]
+  mov [r8 + 48], rdx
+
+  mov rdx, [rdi + 80]
+  mov [r8 + 40], rdx
+
+  mov rdx, [rdi + 88]
+  mov [r8 + 32], rdx
+  
+  mov rdx, [rdi + 96]
+  mov [r8 + 24], rdx
+  
+  mov rdx, [rdi + 104]
+  mov [r8 + 16], rdx
+
+  mov rdx, [rdi + 112]
+  mov [r8 + 8], rdx
+
+  mov rdx, [rdi + 120]
+  mov [r8 + 0], rdx
+
+  mov rdx, [rdi + 152]
+  mov [r8 + 120], rdx
+
+  mov rdx, [rdi + 160]
+  mov [r8 + 152], rdx
+
+  mov rdx, [rdi + 176]
+  mov [r8 + 144], rdx
+
+  pop r8
+  pop rdx
+  pop rcx
+  pop rax
+
+  ret
+
 %macro idt_no_error 1
 
 global idt_handler_%1
@@ -39,6 +141,9 @@ idt_handler_%1:
    mov ax, 0x10
    mov ds, ax
    mov es, ax
+
+   mov rdi, rsp
+   call save_user_registers
 
    ; Pass in pointer to the registers
    mov rdi, rsp
@@ -117,6 +222,7 @@ idt_handler_%1:
 
    ; Pass in pointer to the registers
    mov rdi, rsp
+   call save_user_registers
 
    call common_interrupt_handler
 
