@@ -79,7 +79,7 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void), bool queue) {
   tcb->registers->es = KERNEL_DATA_SELECTOR;
   tcb->registers->ss = KERNEL_DATA_SELECTOR;
 
-  tcb->userspace_registers = NULL;
+  tcb->xsave_page = (void*)((size_t)phys_alloc() + IDENTITY_MAPPED_ADDR);
 
   tcb->state = THREAD_STARTING;
   tcb->rip0 = (size_t)entry_point;

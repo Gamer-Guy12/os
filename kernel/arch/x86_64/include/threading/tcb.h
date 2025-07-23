@@ -34,7 +34,7 @@ typedef struct TCB_struct {
   struct TCB_struct *next;
   struct TCB_struct *prev;
   queue_node_t node;
-  registers_t *userspace_registers;
+  void* xsave_page;
 } TCB_t;
 
 #endif

@@ -10,107 +10,28 @@ userspace_jump:
   shl rdx, 32
   or rax, rdx
 
-  ; Save old registers
-  ; R8 contains the addr to the register struct (offset of the struct is 8)
-  mov r8, [rax + 8]
-
-  mov [r8 + 0], rax
-  mov [r8 + 8], rbx
-  mov [r8 + 16], rcx
-  mov [r8 + 24], rdx
-  mov [r8 + 32], rbp
-  mov [r8 + 40], rdi
-  mov [r8 + 48], rsi
-  mov [r8 + 56], r8
-  mov [r8 + 64], r9
-  mov [r8 + 72], r10
-  mov [r8 + 80], r11
-  mov [r8 + 88], r12
-  mov [r8 + 96], r13
-  mov [r8 + 104], r14
-  mov [r8 + 112], r15
-
-  ; Load r10 with rip
+  ; Store old rip into the tcb
   pop r10
 
-; Save segments
-  xor rbx, rbx
-
-  mov bx, cs
-  mov [r8 + 120], rbx
-  
-  mov bx, ds
-  mov [r8 + 128], rbx
-
-  mov bx, es
-  mov [r8 + 136], rbx
-
-  mov bx, ss
-  mov [r8 + 144], rbx
-
-  ; Save Rflags
-  pushf
-  pop rbx
-
-  mov [r8 + 152], rbx
-
-  ; Save RSP and RIP (rsp0 and rip0)
-  mov [rax + 32], rsp 
   mov [rax + 48], r10
 
-  ; RDI contains the pointer to tss which will be used to store the rsp0
-  mov rbx, rsp
-  mov [rdi + 4], rbx
+  ; Store old rsp
+  mov [rax + 32], rsp
 
-  ; set up the things iretq expects
+  ; Push stack segment (user data segment: 0x18 | ring 3: 0x3)
+  push 0x1B
 
-  ; This contains the users space registers address now
-  mov r8, [rax + 96]
+  ; Push stack pointer
+  push qword [rax + 24]
 
-  ; SS
-  push qword [r8 + 144]
+  ; Push rflags (they are cleared except for the interrupt flag which is set to enable them)
+  push (1 << 9)
 
-  ; RSP
-  push qword [rax + 24] 
+  ; Push code segment (user code segment: 0x20 | ring 3: 0x3)
+  push 0x23
 
-  ; RFLAGS
-  push qword [r8 + 152]
-
-  ; CS
-  push qword [r8 + 120]
-
-  ; RIP
+  ; Push rip
   push qword [rax + 40]
 
-  ; Load new registers
-  mov rax, [r8 + 0]
-  ; RBX will be loaded at the end
-  mov rcx, [r8 + 16]
-  mov rdx, [r8 + 24]
-  mov rbp, [r8 + 32]
-  mov rdi, [r8 + 40]
-  mov rsi, [r8 + 48]
-  ; R8 Will be loaded at the end 
-  mov r9, [r8 + 64]
-  mov r10, [r8 + 72]
-  mov r11, [r8 + 80]
-  mov r12, [r8 + 88]
-  mov r13, [r8 + 96]
-  mov r14, [r8 + 104]
-  mov r15, [r8 + 112]
-
-  ; Load new segment registers
-  xor rbx, rbx
-
-  mov rbx, [r8 + 128]
-  mov ds, bx
-
-  mov rbx, [r8 + 136]
-  mov es, bx
-
-  mov rbx, [r8 + 8]
-  mov r8, [r8 + 56]
-
-  sti
   iretq
 

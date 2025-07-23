@@ -31,22 +31,22 @@ gdt_pointer_t create_descriptors(void) {
   gdt[2].limit_1 = 0xFFFF;
   gdt[2].limit_2 = 0xF;
 
-  // User Code
-  // (3 << 5 sets the DPL)
-  gdt[3].access_byte = GDT_ACCESS_PRESENT | GDT_ACCESS_DESCRIPTOR |
-                       GDT_ACCESS_EXECUTABLE | (3 << 5) | GDT_ACCESS_READ_WRITE;
-  gdt[3].flags = GDT_LONG_MODE | GDT_GRANULARITY;
+// User Data
+  gdt[3].access_byte = GDT_ACCESS_PRESENT | GDT_ACCESS_DESCRIPTOR | (3 << 5) |
+                       GDT_ACCESS_READ_WRITE;
+  gdt[3].flags = GDT_LONG_MODE;
   gdt[3].limit_1 = 0xFFFF;
   gdt[3].limit_2 = 0xF;
 
-  // User Data
-  gdt[4].access_byte = GDT_ACCESS_PRESENT | GDT_ACCESS_DESCRIPTOR | (3 << 5) |
-                       GDT_ACCESS_READ_WRITE;
-  gdt[4].flags = GDT_LONG_MODE;
+  // User Code
+  // (3 << 5 sets the DPL)
+  gdt[4].access_byte = GDT_ACCESS_PRESENT | GDT_ACCESS_DESCRIPTOR |
+                       GDT_ACCESS_EXECUTABLE | (3 << 5) | GDT_ACCESS_READ_WRITE;
+  gdt[4].flags = GDT_LONG_MODE | GDT_GRANULARITY;
   gdt[4].limit_1 = 0xFFFF;
   gdt[4].limit_2 = 0xF;
 
-  // TSS
+    // TSS
   tss_t *tss = create_tss();
   cls_t *cls = get_cls();
   cls->tss = tss;

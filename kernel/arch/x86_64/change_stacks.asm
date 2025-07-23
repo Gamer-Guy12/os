@@ -1,6 +1,8 @@
 global change_stacks:function
 extern kernel_secondary_start
 
+section .text
+
 change_stacks:
   mov rcx, 0xC0000100
   rdmsr
@@ -14,7 +16,7 @@ change_stacks:
   
   mov rsp, 0xfffffe8000000000 - 8
   mov rbp, rsp
-  
+
   call kernel_secondary_start
 
   .stop:

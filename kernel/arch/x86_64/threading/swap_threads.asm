@@ -56,6 +56,10 @@ swap_threads:
 
   mov [r8 + 152], rbx
 
+  ; Save using xsave (pointer is at offset 96)
+  mov r12, [rax + 96]
+  xsave [r12]
+
   ; Save RSP and RIP (rsp0 and rip0)
   mov [rax + 32], rsp 
   mov [rax + 48], r10
@@ -104,6 +108,10 @@ swap_threads:
 
   mov rbx, [r8 + 136]
   mov es, bx
+
+  ; Load the new xsave state
+  mov r12, [rdi + 96]
+  xrstor [r12]
 
   ; Load new rsp
   ; mov rsp, [rdi + 32]
