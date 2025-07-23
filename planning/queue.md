@@ -23,3 +23,35 @@ Basic Dequeue:
 updating the head:
 cas(queue.head, saved head, new head)
 
+All nodes should be linked together in the queue (the tail can be updated after the element has been linked)
+Processes should help eachother 
+
+The Enqueue Operation:
+if the head == NULL (tail should be too)
+cas(head, NULL, element)
+cas(tail, NULL, head)
+
+new op cas16
+
+for enqueue
+if head is null tail will be null and vice versa
+if (head && tail == NULL) {
+    cas16(headtail, NULL, element)
+}
+
+if cas(tail.next, NULL, element) {
+    cas (tail, cur_tail, tail.next)
+}
+else {
+    cas(tail, cur_tail, tail.next) 
+}
+
+for dequeue
+store old head
+if (head == tail) {
+    cas (tail, cur_tail, tail.next)
+}
+if (cas (head, old head, head.next)) {
+    return old head
+}
+

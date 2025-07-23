@@ -1,4 +1,3 @@
-#include <threading/userspace.h>
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -24,6 +23,7 @@
 #include <threading/pcb.h>
 #include <threading/tcb.h>
 #include <threading/threading.h>
+#include <threading/userspace.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);
@@ -133,6 +133,75 @@ void kernel_start(uint8_t *multiboot) {
   change_stacks();
 }
 
+queue_t queue = {.head = NULL, .tail = NULL};
+
+void test_queue(void) {
+
+  // Empty insert test
+  kio_printf("QUEUE EMPTY INSERT TEST ");
+  queue_node_t *node1 = gmalloc(sizeof(queue_node_t));
+  queue_enqueue(&queue, node1);
+
+  queue_node_t *node2 = gmalloc(sizeof(queue_node_t));
+  queue_enqueue(&queue, node2);
+
+  queue_node_t *pop1 = queue_dequeue(&queue);
+
+  if (pop1 == node1) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  gfree(node1);
+  node1 = NULL;
+  pop1 = NULL;
+
+  // Consecutive element dequeue test
+  kio_printf("QUEUE CONSECUTIVE ELEMENT DEQUEUE TEST ");
+
+  queue_node_t *pop2 = queue_dequeue(&queue);
+
+  if (pop2 == node2) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  gfree(node2);
+  node2 = NULL;
+  pop2 = NULL;
+
+  // Single element dequeue test
+  kio_printf("QUEUE SINGLE ELEMENT DEQUEUE TEST ");
+
+  queue_node_t *node3 = gmalloc(sizeof(queue_node_t));
+  queue_enqueue(&queue, node3);
+
+  queue_node_t *pop3 = queue_dequeue(&queue);
+
+  if (pop3 == node3) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  gfree(node3);
+  node3 = NULL;
+  pop3 = NULL;
+
+  // Empty dequeue test
+  kio_printf("QUEUE EMPTY DEQUEUE TEST ");
+
+  queue_node_t *pop4 = queue_dequeue(&queue);
+
+  if (pop4 == NULL) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+}
+
 void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
@@ -154,6 +223,26 @@ void kernel_secondary_start(void) {
   start_cores();
   kio_printf("Started all cores\n");
 
+  // queue_node_t *node1 = gmalloc(sizeof(queue_node_t));
+  // queue_node_t *node2 = gmalloc(sizeof(queue_node_t));
+  // queue_node_t *node3 = gmalloc(sizeof(queue_node_t));
+
+  // queue_enqueue(&queue, node1);
+  // queue_enqueue(&queue, node2);
+
+  // queue_node_t *pop1 = queue_dequeue(&queue);
+  // kio_printf("Node 1 %x, %x is %x\n", (size_t)node1, (size_t)pop1,
+  //            (size_t)(node1 == pop1));
+
+  // queue_enqueue(&queue, node3);
+  // queue_node_t *pop2 = queue_dequeue(&queue);
+  // kio_printf("Node 2 %x, %x is %x\n", (size_t)node2, (size_t)pop2,
+  //            (size_t)(node2 == pop2));
+  // queue_node_t *pop3 = queue_dequeue(&queue);
+  // kio_printf("Node 3 %x, %x is %x\n", (size_t)node3, (size_t)pop3,
+  //            (size_t)(node3 == pop3));
+
+  test_queue();
+
   kernel_main();
 }
-

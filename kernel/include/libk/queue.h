@@ -7,12 +7,12 @@
 #include <libk/spinlock.h>
 
 typedef struct queue_node_struct {
-  struct queue_node_struct *next;
+  volatile struct queue_node_struct *next;
 } queue_node_t;
 
 typedef struct {
-  queue_node_t *head;
-  queue_node_t *tail;
+  volatile queue_node_t *head;
+  volatile queue_node_t *tail;
 } queue_t;
 
 void queue_create(queue_t *queue);
