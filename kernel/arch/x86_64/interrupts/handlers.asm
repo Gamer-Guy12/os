@@ -17,6 +17,8 @@ save_xsave:
 
   ; Save using xsave (pointer is at offset 96)
   mov r12, [rax + 96]
+  mov rax, 0xffffffffffffffff
+  mov rdx, 0xffffffffffffffff
   xsave [r12]
 
   pop r12
@@ -40,6 +42,8 @@ restore_xsave:
   or rax, rdx
 
   mov r12, [rax + 96]
+  mov rax, 0xffffffffffffffff
+  mov rdx, 0xffffffffffffffff
   xrstor [r12]
 
   pop r12

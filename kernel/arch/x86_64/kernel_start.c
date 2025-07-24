@@ -142,6 +142,15 @@ void test_queue(void) {
   queue_node_t *node1 = gmalloc(sizeof(queue_node_t));
   queue_enqueue(&queue, node1);
 
+  if (queue.head == queue.tail && queue.head == node1) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+  
+  // Dequeue test
+  kio_printf("QUEUE DEQUEUE TEST ");
+
   queue_node_t *node2 = gmalloc(sizeof(queue_node_t));
   queue_enqueue(&queue, node2);
 

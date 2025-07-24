@@ -58,6 +58,8 @@ swap_threads:
 
   ; Save using xsave (pointer is at offset 96)
   mov r12, [rax + 96]
+  mov rax, 0xffffffffffffffff
+  mov rdx, 0xffffffffffffffff
   xsave [r12]
 
   ; Save RSP and RIP (rsp0 and rip0)
@@ -79,6 +81,12 @@ swap_threads:
   mov r8, [r8 + 8]
 
   mov cr3, r8
+
+  ; Load the new xsave state
+  mov r12, [rdi + 96]
+  mov rax, 0xffffffffffffffff
+  mov rdx, 0xffffffffffffffff
+  xrstor [r12]
 
   ; Load new registers
   ; R8 contains the address to the registers
@@ -108,11 +116,7 @@ swap_threads:
 
   mov rbx, [r8 + 136]
   mov es, bx
-
-  ; Load the new xsave state
-  mov r12, [rdi + 96]
-  xrstor [r12]
-
+  
   ; Load new rsp
   ; mov rsp, [rdi + 32]
 
