@@ -35,7 +35,7 @@ typedef struct {
 
 void rb_create(rbtree_t *tree);
 void rb_insert(rbtree_t *tree, rbnode_t *node);
-void rb_delete(rbnode_t *tree, rbnode_t *node);
+void rb_delete(rbtree_t *tree, rbnode_t *node);
 
 rbnode_t *rb_search(rbtree_t *tree, rbnode_t *node, size_t value);
 rbnode_t *rb_find_min(rbtree_t *tree, rbnode_t *node);
