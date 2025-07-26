@@ -11,6 +11,7 @@
 #include <libk/kio.h>
 #include <libk/macros.h>
 #include <libk/queue.h>
+#include <libk/rbtree.h>
 #include <libk/vga_kgfx.h>
 #include <mem/kheap.h>
 #include <mem/memory.h>
@@ -147,7 +148,7 @@ void test_queue(void) {
   } else {
     kio_printf("[FAILED]\n");
   }
-  
+
   // Dequeue test
   kio_printf("QUEUE DEQUEUE TEST ");
 
@@ -211,6 +212,88 @@ void test_queue(void) {
   }
 }
 
+bool failed = false;
+
+size_t verify_rbnode(rbtree_t *tree, rbnode_t *node) {
+  if (node->color == RB_RED) {
+    if (node->left->color == RB_RED || node->right->color == RB_RED) {
+      failed = true;
+    }
+  }
+
+  size_t left_height = 0;
+  if (node != &tree->nil) {
+    left_height = verify_rbnode(tree, node->left);
+  }
+  size_t right_height = 0;
+  if (node != &tree->nil) {
+    right_height = verify_rbnode(tree, node->right);
+  }
+
+  if (left_height == right_height) {
+    if (node->color == RB_BLACK)
+      return left_height + 1;
+    return left_height;
+  }
+
+  failed = true;
+  return left_height + 1;
+}
+
+bool verify_rbtree(rbtree_t *tree) {
+  verify_rbnode(tree, tree->root);
+
+  return !failed;
+}
+
+void test_rbtree(void) {
+  rbtree_t tree;
+  rb_create(&tree);
+
+  // Empty insert
+  kio_printf("RBTREE EMPTY INSERT ");
+
+  rbnode_t *node1 = gmalloc(sizeof(rbnode_t));
+  node1->value = 3920;
+  rb_insert(&tree, node1);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 3: Root parent
+  kio_printf("RBTREE ROOT PARENT ");
+
+  rbnode_t *node2 = gmalloc(sizeof(rbnode_t));
+  node2->value = 4394949;
+  rb_insert(&tree, node2);
+
+  rbnode_t *node3 = gmalloc(sizeof(rbnode_t));
+  node3->value = 439;
+  rb_insert(&tree, node3);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 2: Red Parent, Black Grandparent, Red Uncle
+  kio_printf("RBTREE RED PARENT BLACK GRANDPARENT RED UNCLE ");
+
+  rbnode_t *node4 = gmalloc(sizeof(rbnode_t));
+  node4->value = 100;
+  rb_insert(&tree, node4);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+}
+
 void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
@@ -252,6 +335,7 @@ void kernel_secondary_start(void) {
   //            (size_t)(node3 == pop3));
 
   test_queue();
+  test_rbtree();
 
   kernel_main();
 }
