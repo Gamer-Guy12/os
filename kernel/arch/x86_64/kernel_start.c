@@ -246,6 +246,29 @@ bool verify_rbtree(rbtree_t *tree) {
   return !failed;
 }
 
+void print_node(rbtree_t* tree, rbnode_t* node, size_t indent) {
+  if (node == &tree->nil) {
+    return;
+  }
+
+  for (size_t i = 0; i < indent; i++) {
+    kio_printf("\t");
+  }
+
+  if (node->color == RB_RED) {
+    kio_printf("RED %u\n", node->value);
+  } else {
+    kio_printf("BLACK %u\n", node->value);
+  }
+
+  print_node(tree, node->left, indent + 1);
+  print_node(tree, node->right, indent + 1);
+}
+
+void print_tree(rbtree_t* tree) {
+  print_node(tree, tree->root, 0); 
+}
+
 void test_rbtree(void) {
   rbtree_t tree;
   rb_create(&tree);
@@ -280,8 +303,8 @@ void test_rbtree(void) {
     kio_printf("[FAILED]\n");
   }
 
-  // Case 2: Red Parent, Black Grandparent, Red Uncle
-  kio_printf("RBTREE RED PARENT BLACK GRANDPARENT RED UNCLE ");
+  // Case 4: Red parent, Root grandparent
+  kio_printf("RBTREE RED PARENT ROOT GRANDPARENT ");
 
   rbnode_t *node4 = gmalloc(sizeof(rbnode_t));
   node4->value = 100;
@@ -292,6 +315,12 @@ void test_rbtree(void) {
   } else {
     kio_printf("[FAILED]\n");
   }
+
+  rbnode_t *node5 = gmalloc(sizeof(rbnode_t));
+  node5->value = 1000;
+  rb_insert(&tree, node5);
+
+  print_tree(&tree);
 }
 
 void kernel_secondary_start(void) {

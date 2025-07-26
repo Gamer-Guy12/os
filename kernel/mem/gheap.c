@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <libk/math.h>
 #include <libk/mem.h>
 #include <libk/spinlock.h>
@@ -14,9 +15,11 @@ static spinlock_t lock = ATOMIC_FLAG_INIT;
 
 /// The maximum number of free poitners it can search before it gives up
 #define GMALLOC_MAX_SEARCH 32
-/// if the size of the entry / GMALLOC_MAX_MULTIPLE is greater than the requested size it is too big
+/// if the size of the entry / GMALLOC_MAX_MULTIPLE is greater than the
+/// requested size it is too big
 ///
-/// eg. if the size requested is 16 and GMALLOC_MAX_MULTIPLE is 2 then anything bigger than 32 (16 * 2) is too big
+/// eg. if the size requested is 16 and GMALLOC_MAX_MULTIPLE is 2 then anything
+/// bigger than 32 (16 * 2) is too big
 #define GMALLOC_MAX_MULTIPLE 2
 
 static bool not_valid(gheap_entry_t *ptr, size_t size) {
@@ -33,6 +36,8 @@ static bool not_valid(gheap_entry_t *ptr, size_t size) {
 
 /// Note this funciton fully formats the entry for use
 gheap_entry_t *find_entry(size_t size) {
+  if (size == 8)
+    kio_printf("Size %x\n", size);
   gheap_entry_t *ptr = free_list;
 
   if (ptr == NULL)
@@ -56,8 +61,10 @@ gheap_entry_t *find_entry(size_t size) {
     ptr->next->prev = ptr->prev;
   if (ptr->prev)
     ptr->prev->next = ptr->next;
-  if (!ptr->prev && !ptr->next) free_list = NULL;
+  if (!ptr->prev && !ptr->next)
+    free_list = NULL;
 
+  kio_printf("Good %x %x\n", size, ptr->size);
   ptr->free = 0;
   ptr->next = used_list;
   if (used_list != NULL)
@@ -68,7 +75,10 @@ gheap_entry_t *find_entry(size_t size) {
 }
 
 gheap_entry_t *create_entry(size_t size) {
+
   gheap_entry_t *ptr = increment_global_brk(0);
+  if (size == 9)
+    kio_printf("Size %x\n", size);
   increment_global_brk(size + sizeof(gheap_entry_t));
 
   ptr->size = size;
@@ -82,6 +92,7 @@ gheap_entry_t *create_entry(size_t size) {
 }
 
 void *gmalloc(size_t size) {
+  kio_printf("Size %x %x\n", size, ROUND_UP(size, 8));
   spinlock_acquire(&lock);
 
   size = ROUND_UP(size, 8);
@@ -111,4 +122,3 @@ void gfree(void *ptr) {
 
   spinlock_release(&lock);
 }
-
