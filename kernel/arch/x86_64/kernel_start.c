@@ -137,6 +137,7 @@ void kernel_start(uint8_t *multiboot) {
 queue_t queue = {.head = NULL, .tail = NULL};
 
 void test_queue(void) {
+  kio_printf("\nLock Free Queue Tests\n\n");
 
   // Empty insert test
   kio_printf("QUEUE EMPTY INSERT TEST ");
@@ -218,6 +219,7 @@ size_t verify_rbnode(rbtree_t *tree, rbnode_t *node) {
   if (node->color == RB_RED) {
     if (node->left->color == RB_RED || node->right->color == RB_RED) {
       failed = true;
+      kio_printf("Here\n");
     }
   }
 
@@ -246,7 +248,7 @@ bool verify_rbtree(rbtree_t *tree) {
   return !failed;
 }
 
-void print_node(rbtree_t* tree, rbnode_t* node, size_t indent) {
+void print_node(rbtree_t *tree, rbnode_t *node, size_t indent) {
   if (node == &tree->nil) {
     return;
   }
@@ -262,19 +264,31 @@ void print_node(rbtree_t* tree, rbnode_t* node, size_t indent) {
   }
 
   print_node(tree, node->left, indent + 1);
+  if (node->left == &tree->nil && node->right != &tree->nil) {
+    for (size_t i = 0; i < indent + 1; i++) {
+      kio_printf("\t");
+    }
+    kio_printf("BLACK NIL\n");
+  }
   print_node(tree, node->right, indent + 1);
+  if (node->right == &tree->nil && node->left != &tree->nil) {
+    for (size_t i = 0; i < indent + 1; i++) {
+      kio_printf("\t");
+    }
+    kio_printf("BLACK NIL\n");
+  }
 }
 
-void print_tree(rbtree_t* tree) {
-  print_node(tree, tree->root, 0); 
-}
+void print_tree(rbtree_t *tree) { print_node(tree, tree->root, 0); }
 
 void test_rbtree(void) {
   rbtree_t tree;
   rb_create(&tree);
 
+  kio_printf("\nRed Black Tree Tests\n\n");
+
   // Empty insert
-  kio_printf("RBTREE EMPTY INSERT ");
+  kio_printf("RBTREE INSERT EMPTY INSERT ");
 
   rbnode_t *node1 = gmalloc(sizeof(rbnode_t));
   node1->value = 3920;
@@ -287,7 +301,7 @@ void test_rbtree(void) {
   }
 
   // Case 3: Root parent
-  kio_printf("RBTREE ROOT PARENT ");
+  kio_printf("RBTREE INSERT ROOT PARENT ");
 
   rbnode_t *node2 = gmalloc(sizeof(rbnode_t));
   node2->value = 4394949;
@@ -304,7 +318,7 @@ void test_rbtree(void) {
   }
 
   // Case 4: Red parent, Root grandparent
-  kio_printf("RBTREE RED PARENT ROOT GRANDPARENT ");
+  kio_printf("RBTREE INSERT RED PARENT ROOT GRANDPARENT ");
 
   rbnode_t *node4 = gmalloc(sizeof(rbnode_t));
   node4->value = 100;
@@ -320,6 +334,102 @@ void test_rbtree(void) {
   node5->value = 1000;
   rb_insert(&tree, node5);
 
+  // Case 2: Red Parent Black Grandparent Red Uncle
+  kio_printf("RBTREE INSERT RED PARENT BLACK GRANDPARENT RED UNCLE ");
+
+  rbnode_t *node6 = gmalloc(sizeof(rbnode_t));
+  node6->value = 19;
+  rb_insert(&tree, node6);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 1: Black Parent
+  kio_printf("RBTREE INSERT BLACK PARENT ");
+
+  rbnode_t *node7 = gmalloc(sizeof(rbnode_t));
+  node7->value = 10;
+  rb_insert(&tree, node7);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 6: Outer Red Parent Black Grandparent Black Uncle
+  kio_printf("RBTREE INSERT OUTER RED PARENT BLACK GRANDPARENT RED UNCLE ");
+
+  rbnode_t *node8 = gmalloc(sizeof(rbnode_t));
+  node8->value = 140;
+  rb_insert(&tree, node8);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  rbnode_t *node9 = gmalloc(sizeof(rbnode_t));
+  node9->value = 1200;
+  rb_insert(&tree, node9);
+
+  // Case 5: Inner Red Parent Black Grandparent Black Uncle
+  kio_printf("RBTREE INSERT INNER RED PARENT BLACK GRANDPARENT RED UNCLE ");
+
+  rbnode_t *node10 = gmalloc(sizeof(rbnode_t));
+  node10->value = 1100;
+  rb_insert(&tree, node10);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  kio_printf("\n");
+
+  // Red Node no Children
+  kio_printf("RBTREE DELETE RED WITH NO KIDS ");
+
+  rb_delete(&tree, node9);
+  gfree(node9);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // 1 Child
+  kio_printf("RBTREE DELETE 1 CHILD ");
+
+  rb_delete(&tree, node10);
+  gfree(node10);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // 2 Children
+  kio_printf("RBTREE DELETE 2 CHILDREN ");
+
+  rb_delete(&tree, node3);
+  while (1) {}
+  gfree(node3);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  kio_printf("\n");
   print_tree(&tree);
 }
 

@@ -46,8 +46,8 @@ heap_entry_t *find_heap_entry(size_t size, heap_info_t *info) {
     ptr->next->prev = ptr->prev;
   if (ptr->prev)
     ptr->prev->next = ptr->next;
-  if (!ptr->next && !ptr->prev)
-    info->free_list = NULL;
+  if (!ptr->prev)
+    info->free_list = ptr->next;
 
   ptr->next = info->used_list;
   if (info->used_list != NULL) {
@@ -102,6 +102,13 @@ void kfree(void *ptr) {
   spinlock_acquire(&info->heap_lock);
 
   heap_entry_t *entry = (heap_entry_t *)ptr - 1;
+
+  if (entry->next)
+    entry->next->prev = entry->prev;
+  if (entry->next)
+    entry->prev->next = entry->next;
+  if (!entry->prev) info->used_list = entry->next;
+
   entry->next = info->free_list;
   if (info->free_list != NULL)
     info->free_list->prev = entry;

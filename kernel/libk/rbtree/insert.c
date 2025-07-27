@@ -81,6 +81,8 @@ void handle_insert(rbtree_t *tree, rbnode_t *node) {
     uncle->color = RB_BLACK;
     grandparent->color = RB_RED;
     node = grandparent;
+
+    parent = node->parent;
   } while (parent);
 }
 

@@ -25,7 +25,7 @@ void delete_thread(TCB_t *tcb) {
   if (tcb->prev)
     tcb->prev->next = tcb->next;
 
-  if (!tcb->next && !tcb->prev) tcb->pcb->tcbs = NULL;
+  if (!tcb->prev) tcb->pcb->tcbs = tcb->next;
 
   void *addr =
       delete_kernel_stack(tcb->stack_num, tcb->pcb->kernel_region, false);

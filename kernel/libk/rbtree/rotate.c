@@ -5,7 +5,7 @@ rbnode_t *rb_rotate(rbtree_t *tree, rbnode_t *node, uint8_t dir) {
   rbnode_t* new_root = node->child[1 - dir];
   rbnode_t* new_child = new_root->child[dir];
 
-  node->child[dir] = new_child;
+  node->child[1 - dir] = new_child;
 
   if (new_child) new_child->parent = node;
 

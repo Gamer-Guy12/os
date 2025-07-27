@@ -1,4 +1,3 @@
-#include "libk/kio.h"
 #include <libk/math.h>
 #include <libk/mem.h>
 #include <libk/spinlock.h>
@@ -36,8 +35,6 @@ static bool not_valid(gheap_entry_t *ptr, size_t size) {
 
 /// Note this funciton fully formats the entry for use
 gheap_entry_t *find_entry(size_t size) {
-  if (size == 8)
-    kio_printf("Size %x\n", size);
   gheap_entry_t *ptr = free_list;
 
   if (ptr == NULL)
@@ -61,38 +58,27 @@ gheap_entry_t *find_entry(size_t size) {
     ptr->next->prev = ptr->prev;
   if (ptr->prev)
     ptr->prev->next = ptr->next;
-  if (!ptr->prev && !ptr->next)
-    free_list = NULL;
+  if (!ptr->prev)
+    free_list = ptr->next;
 
-  kio_printf("Good %x %x\n", size, ptr->size);
   ptr->free = 0;
-  ptr->next = used_list;
-  if (used_list != NULL)
-    used_list->prev = ptr;
-  used_list = ptr;
 
   return ptr;
 }
 
 gheap_entry_t *create_entry(size_t size) {
 
-  gheap_entry_t *ptr = increment_global_brk(0);
-  if (size == 9)
-    kio_printf("Size %x\n", size);
-  increment_global_brk(size + sizeof(gheap_entry_t));
+  gheap_entry_t *ptr = (gheap_entry_t *)((size_t)increment_global_brk(
+                                             size + sizeof(gheap_entry_t)) -
+                                         (size + sizeof(gheap_entry_t)));
 
   ptr->size = size;
   ptr->free = 0;
-  ptr->next = used_list;
-  if (used_list != NULL)
-    used_list->prev = ptr;
-  ptr->prev = NULL;
 
   return ptr;
 }
 
 void *gmalloc(size_t size) {
-  kio_printf("Size %x %x\n", size, ROUND_UP(size, 8));
   spinlock_acquire(&lock);
 
   size = ROUND_UP(size, 8);
@@ -113,6 +99,7 @@ void gfree(void *ptr) {
   spinlock_acquire(&lock);
 
   gheap_entry_t *entry = (gheap_entry_t *)ptr - 1;
+
   entry->next = free_list;
   if (free_list != NULL)
     free_list->prev = entry;

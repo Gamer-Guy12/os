@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <libk/rbtree.h>
 #include <libk/spinlock.h>
 #include <stdbool.h>
@@ -103,7 +104,10 @@ static bool handle_simple(rbtree_t *tree, rbnode_t *node) {
   // Two children
   if (node->right != &tree->nil && node->left != &tree->nil) {
     // Find in order sucessor
-    rbnode_t *successor = rb_find_min(tree, node);
+    rbnode_t *successor = node->right;
+    while (successor->left != &tree->nil) {
+      successor = successor->left;
+    }
 
     swap_nodes(tree, successor, node);
 
