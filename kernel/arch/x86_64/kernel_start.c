@@ -270,6 +270,7 @@ void print_node(rbtree_t *tree, rbnode_t *node, size_t indent) {
     }
     kio_printf("BLACK NIL\n");
   }
+
   print_node(tree, node->right, indent + 1);
   if (node->right == &tree->nil && node->left != &tree->nil) {
     for (size_t i = 0; i < indent + 1; i++) {
@@ -420,7 +421,6 @@ void test_rbtree(void) {
   kio_printf("RBTREE DELETE 2 CHILDREN ");
 
   rb_delete(&tree, node3);
-  while (1) {}
   gfree(node3);
 
   if (verify_rbtree(&tree)) {
@@ -429,8 +429,45 @@ void test_rbtree(void) {
     kio_printf("[FAILED]\n");
   }
 
-  kio_printf("\n");
+  // Case 6: Black Sibling Red Distant Nephew NIL CLOSE NEPHEW
+  kio_printf(
+      "RBTREE DELETE RED DISTANT NEPHEW BLACK SIBLING NIL CLOSE NEPHEW ");
+
+  rb_delete(&tree, node6);
+  gfree(node6);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 1: Root parent
+  kio_printf("RBTREE DELETE ROOT PARENT ");
+
+  rb_delete(&tree, node5);
+  gfree(node5);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 3: Black Parent Close and Distant Nephew Red Sibling
+  kio_printf("RBTREE DELETE BLACK PARENT CLOSE AND DISTANT NEPHEW RED SIBLING ");
+
+  rb_delete(&tree, node2);
+  gfree(node2);
+  
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
   print_tree(&tree);
+  kio_printf("\n");
 }
 
 void kernel_secondary_start(void) {
