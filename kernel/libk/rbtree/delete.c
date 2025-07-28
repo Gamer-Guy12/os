@@ -149,16 +149,18 @@ static void delete(rbtree_t *tree, rbnode_t *node) {
 
   uint8_t dir = RB_DIRECTION(node);
   parent->child[dir] = &tree->nil;
+  goto start_balance;
 
   do {
-    uint8_t dir = RB_DIRECTION(node);
+    dir = RB_DIRECTION(node);
 
+  start_balance:
     sibling = parent->child[1 - dir];
     distant_nephew = sibling->child[1 - dir];
     close_nephew = sibling->child[dir];
 
     if (sibling->color == RB_RED) {
-      rb_rotate(tree, node, dir);
+      rb_rotate(tree, parent, dir);
       parent->color = RB_RED;
       sibling->color = RB_BLACK;
       sibling = close_nephew;
@@ -196,9 +198,9 @@ static void delete(rbtree_t *tree, rbnode_t *node) {
 
     sibling->color = RB_RED;
     node = parent;
+  } while ((parent = node->parent));
 
-    parent = node->parent;
-  } while (parent);
+  if (parent == NULL) return;
 
 case_5:
   rb_rotate(tree, sibling, 1 - dir);
@@ -220,6 +222,10 @@ void rb_delete(rbtree_t *tree, rbnode_t *node) {
   spinlock_acquire(&tree->tree_lock);
 
   delete(tree, node);
+
+  node->left = NULL;
+  node->right = NULL;
+  node->parent = NULL;
 
   spinlock_release(&tree->tree_lock);
 }
