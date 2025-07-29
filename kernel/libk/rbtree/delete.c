@@ -7,7 +7,6 @@
 static void delete(rbtree_t *tree, rbnode_t *node);
 
 static void swap_nodes(rbtree_t *tree, rbnode_t *node1, rbnode_t *node2) {
-
   uint8_t dir1 = 3;
   uint8_t dir2 = 3;
 
@@ -64,6 +63,16 @@ static void swap_nodes(rbtree_t *tree, rbnode_t *node1, rbnode_t *node2) {
 static bool handle_simple(rbtree_t *tree, rbnode_t *node) {
   // Left is non nil
   if (node->right == &tree->nil && node->left != &tree->nil) {
+    if (!node->parent) {
+      node->left->parent = NULL;
+      tree->root = node->left;
+
+      node->left = NULL;
+      node->right = NULL;
+      node->parent = NULL;
+      return true;
+    }
+
     uint8_t direction = RB_DIRECTION(node);
     node->left->parent = node->parent;
     node->parent->child[direction] = node->left;
@@ -79,6 +88,17 @@ static bool handle_simple(rbtree_t *tree, rbnode_t *node) {
 
   // Right is non nil
   if (node->right != &tree->nil && node->left == &tree->nil) {
+    if (!node->parent) {
+      node->right->parent = NULL;
+      tree->root = node->right;
+
+      node->left = NULL;
+      node->right = NULL;
+      node->parent = NULL;
+
+      return true;
+    }
+
     uint8_t direction = RB_DIRECTION(node);
     node->right->parent = node->parent;
     node->parent->child[direction] = node->right;
@@ -200,7 +220,8 @@ static void delete(rbtree_t *tree, rbnode_t *node) {
     node = parent;
   } while ((parent = node->parent));
 
-  if (parent == NULL) return;
+  if (parent == NULL)
+    return;
 
 case_5:
   rb_rotate(tree, sibling, 1 - dir);

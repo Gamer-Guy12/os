@@ -1,11 +1,19 @@
 #ifndef X86_64_TCB_H
 #define X86_64_TCB_H
 
+#include <libk/rbtree.h>
 #include <gdt.h>
 #include <interrupts.h>
 #include <libk/queue.h>
 #include <stddef.h>
 #include <threading/pcb.h>
+
+typedef enum {
+  TP_IDLE,
+  TP_NORMAL,
+  TP_HIGH,
+  TP_IO
+} thread_priority_t;
 
 typedef enum {
   THREAD_RUNNING = 1,
@@ -21,6 +29,7 @@ typedef struct {
   size_t rflags;
 } registers_t;
 
+// The quantum count is stored in the rb node
 typedef struct TCB_struct {
   size_t tid;
   registers_t *registers;
@@ -33,8 +42,10 @@ typedef struct TCB_struct {
   PCB_t *pcb;
   struct TCB_struct *next;
   struct TCB_struct *prev;
-  queue_node_t node;
+  queue_node_t queue_node;
   void* xsave_page;
+  rbnode_t rb_node;
+  thread_priority_t priority;
 } TCB_t;
 
 #endif

@@ -52,7 +52,7 @@ bool check_in(void *addr, void *pml4) {
 static size_t tid_cur = 0;
 static spinlock_t tid_lock = ATOMIC_FLAG_INIT;
 
-TCB_t *create_thread(PCB_t *process, void (*entry_point)(void), bool queue) {
+TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
   TCB_t *tcb = gmalloc(sizeof(TCB_t));
 
   spinlock_acquire(&tid_lock);
@@ -91,9 +91,6 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void), bool queue) {
     process->tcbs->prev = tcb;
   process->tcbs = tcb;
   spinlock_release(&process->pcb_lock);
-
-  if (queue)
-    queue_thread(tcb);
 
   return tcb;
 }

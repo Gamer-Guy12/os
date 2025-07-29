@@ -1,3 +1,4 @@
+#include <threading.h>
 #include <asm.h>
 #include <cls.h>
 #include <gdt.h>
@@ -70,6 +71,8 @@ void smp_start(size_t processor_id, size_t old_page) {
   create_gdt();
 
   init_interrupts();
+
+  kill_cur_thread();
 
   while (1) {
   }

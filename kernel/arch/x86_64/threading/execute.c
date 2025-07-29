@@ -19,8 +19,10 @@ bool bad_tcb(TCB_t *tcb) {
 
 void run_next_thread(void) {
   TCB_t *tcb = (TCB_t *)rdmsr(FS_MSR);
+  // Increment the amount of quantums used
+  tcb->rb_node.value++;
   // This means that if there are no threads this thread could be queued again
-  queue_thread(tcb);
+  queue_thread(tcb, tcb->priority);
   TCB_t *next = pop_thread();
 
   while (bad_tcb(next)) {
@@ -28,13 +30,14 @@ void run_next_thread(void) {
       next = pop_thread();
     } else if (next->state == THREAD_TERMINATED) {
       if (next == tcb) {
-        kio_printf("Ja\n");
         // Faulting if u try to delete urself (suicide kills!)
-        queue_thread(next);
+        TCB_t* temp = pop_thread();
+        queue_thread(next, next->priority);
+        next = temp;
         continue;
       }
 
-      PCB_t* pcb = next->pcb;
+      PCB_t *pcb = next->pcb;
       delete_thread(next);
       if (pcb->tcbs == NULL) {
         delete_process(pcb);
@@ -47,6 +50,6 @@ void run_next_thread(void) {
   }
 
   next->state = THREAD_RUNNING;
+  kio_printf("Hi\n");
   swap_threads(next);
 }
-

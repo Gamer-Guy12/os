@@ -3,13 +3,14 @@
 
 #include <threading/pcb.h>
 #include <threading/tcb.h>
+#include <threading.h>
 
 /// This swaps kernel threads, it is the job of the kernel thread to go (back) to user mode
 /// This also requires that the tcb must be in a running state
 void swap_threads(TCB_t* tcb);
 
 PCB_t* create_process(void);
-TCB_t* create_thread(PCB_t* process, void (*entry_point)(void), bool queue);
+TCB_t* create_thread(PCB_t* process, void (*entry_point)(void));
 
 void delete_process(PCB_t* pcb);
 /// Thread is expected to not be in the queue when deleted
@@ -22,13 +23,9 @@ void remove_process(PCB_t* pcb);
 PCB_t* get_proc_list(void);
 void clear_processes(void);
 
-/// Create thread calls this
-void queue_thread(TCB_t* tcb);
+void queue_thread(TCB_t* tcb, thread_priority_t priority);
+void queue_thread_any(TCB_t* tcb, thread_priority_t priority);
 TCB_t* pop_thread(void);
-
-void run_next_thread(void);
-
-void kill_cur_thread(void);
 
 #endif
 

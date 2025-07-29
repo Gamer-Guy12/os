@@ -59,7 +59,8 @@ void kernel_secondary_start(void);
 
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
-  TCB_t *tcb = create_thread(pcb, NULL, false);
+  TCB_t *tcb = create_thread(pcb, NULL);
+  tcb->priority = TP_NORMAL;
 
   pcb->state = PROCESS_RUNNING;
   tcb->state = THREAD_RUNNING;
@@ -243,7 +244,8 @@ size_t verify_rbnode(rbtree_t *tree, rbnode_t *node) {
 }
 
 bool verify_rbtree(rbtree_t *tree) {
-  if (tree->root == NULL) return true;
+  if (tree->root == NULL)
+    return true;
 
   verify_rbnode(tree, tree->root);
 
@@ -550,6 +552,27 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
+void test1(void) {
+  while (true) {
+    kio_printf("1\n");
+    run_next_thread();
+  }
+}
+
+void test2(void) {
+  while (true) {
+    kio_printf("2\n");
+    run_next_thread();
+  }
+}
+
+void test3(void) {
+  while (true) {
+    kio_printf("3\n");
+    run_next_thread();
+  }
+}
+
 void kernel_secondary_start(void) {
   init_heap();
   kio_printf("Initialized the heap (kernel malloc)\n");
@@ -593,5 +616,16 @@ void kernel_secondary_start(void) {
   test_queue();
   test_rbtree();
 
-  kernel_main();
+  PCB_t *cur_pcb = ((TCB_t *)rdmsr(FS_MSR))->pcb;
+
+  TCB_t *thread1 = create_thread(cur_pcb, test1);
+  TCB_t *thread2 = create_thread(cur_pcb, test2);
+  TCB_t *thread3 = create_thread(cur_pcb, kernel_main);
+  // TCB_t *thread3 = create_thread(cur_pcb, test3);
+
+  queue_thread_any(thread1, TP_NORMAL);
+  queue_thread_any(thread2, TP_NORMAL);
+  queue_thread_any(thread3, TP_NORMAL);
+
+  kill_cur_thread();
 }
