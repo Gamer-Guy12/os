@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 gheap_entry_t *free_list = NULL;
-gheap_entry_t *used_list = NULL;
 
 static spinlock_t lock = ATOMIC_FLAG_INIT;
 

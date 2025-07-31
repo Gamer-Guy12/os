@@ -620,12 +620,13 @@ void kernel_secondary_start(void) {
 
   TCB_t *thread1 = create_thread(cur_pcb, test1);
   TCB_t *thread2 = create_thread(cur_pcb, test2);
-  TCB_t *thread3 = create_thread(cur_pcb, kernel_main);
-  // TCB_t *thread3 = create_thread(cur_pcb, test3);
+  TCB_t *thread3 = create_thread(cur_pcb, test3);
+  TCB_t *thread4 = create_thread(cur_pcb, kernel_main);
 
   queue_thread_any(thread1, TP_NORMAL);
   queue_thread_any(thread2, TP_NORMAL);
   queue_thread_any(thread3, TP_NORMAL);
+  queue_thread_any(thread4, TP_HIGH);
 
   kill_cur_thread();
 }

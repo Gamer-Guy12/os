@@ -18,8 +18,12 @@ void common_interrupt_handler(idt_registers_t *registers) {
   bool is_exception = registers->interrupt_number < 32;
 
   if (is_exception && handlers[registers->interrupt_number] == NULL) {
-    kio_printf("Exception: number %x, error_code %x, registers:\n",
-               registers->interrupt_number, registers->error_code);
+    size_t coreid = 0;
+    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+                   : "=b"(coreid)::"rax");
+
+    kio_printf("Exception: number %x, error_code %x, core %x, registers:\n",
+               registers->interrupt_number, registers->error_code, coreid);
 
     kio_printf("RAX %x, RBX %x, RCX %x, RDX %x\n", registers->rax,
                registers->rbx, registers->rcx, registers->rdx);

@@ -1,4 +1,3 @@
-#include "libk/kio.h"
 #include <cls.h>
 #include <libk/list.h>
 #include <libk/queue.h>

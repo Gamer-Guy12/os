@@ -24,6 +24,7 @@ void init_cls(void) {
   rb_create(&cls->normal_queue);
   rb_create(&cls->priority_queue);
   queue_create(&cls->io_queue);
+  queue_create(&cls->dead_queue);
 
 #define GS_BASE_MSR 0xC0000101
 

@@ -24,6 +24,7 @@ typedef struct {
   rbtree_t normal_queue;
   rbtree_t priority_queue;
   queue_t io_queue;
+  queue_t dead_queue;
   list_node_t node;
 } cls_t;
 
