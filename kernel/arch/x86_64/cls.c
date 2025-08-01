@@ -13,7 +13,16 @@ static spinlock_t lock = ATOMIC_FLAG_INIT;
 size_t core_count_global = 0;
 
 void init_cls(void) {
-  cls_t *cls = gmalloc(sizeof(cls_t));
+  size_t ptr = (size_t)gmalloc(sizeof(cls_t) + 8);
+  cls_t *cls = NULL;
+
+  if (ptr % 16 != 0) {
+    cls = (cls_t *)(ptr + 8);
+  } else {
+    cls = (cls_t *)ptr;
+  }
+
+  cls->true_addr = (void *)ptr;
 
   list_insert(&list, NULL, &cls->node);
   spinlock_acquire(&lock);
@@ -25,6 +34,7 @@ void init_cls(void) {
   rb_create(&cls->priority_queue);
   queue_create(&cls->io_queue);
   queue_create(&cls->dead_queue);
+  queue_create(&cls->load_queue);
 
 #define GS_BASE_MSR 0xC0000101
 
@@ -44,5 +54,5 @@ size_t get_core_count(void) { return core_count_global; }
 cls_t *get_cls_at(size_t index) {
   list_node_t *node = list_find(&list, index);
 
-  return (cls_t*)((size_t)node - offsetof(cls_t, node));
+  return (cls_t *)((size_t)node - offsetof(cls_t, node));
 }

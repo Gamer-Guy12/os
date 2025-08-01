@@ -13,6 +13,7 @@ typedef struct queue_node_struct {
 typedef struct {
   volatile queue_node_t *head;
   volatile queue_node_t *tail;
+  spinlock_t lock;
 } queue_t;
 
 void queue_create(queue_t *queue);

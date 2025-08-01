@@ -16,36 +16,28 @@ size_t core_count = 0;
 size_t cur_core = 0;
 
 void queue_thread_any(TCB_t *tcb, thread_priority_t priority) {
+  tcb->priority = priority;
+
   core_count = get_core_count();
   size_t index =
       (__atomic_add_fetch(&cur_core, 1, __ATOMIC_ACQUIRE) - 1) % core_count;
 
   cls_t *cls = get_cls_at(index);
+  
+  __sync_synchronize();
+  __asm__ volatile ("mfence" ::: "memory");
+  queue_enqueue(&cls->load_queue, &tcb->queue_node);
+  __sync_synchronize();
+  __asm__ volatile ("mfence" ::: "memory");
 
-  switch (priority) {
-  case TP_IDLE:
-    queue_enqueue(&cls->idle_queue, &tcb->queue_node);
-    break;
-  case TP_NORMAL:
-    rb_insert(&cls->normal_queue, &tcb->rb_node);
-    break;
-  case TP_HIGH:
-    rb_insert(&cls->priority_queue, &tcb->rb_node);
-    break;
-  case TP_IO:
-    queue_enqueue(&cls->io_queue, &tcb->queue_node);
-    break;
-  default:
-    rb_insert(&cls->normal_queue, &tcb->rb_node);
-    break;
-  }
 }
 
 void queue_thread(TCB_t *tcb, thread_priority_t priority) {
-  tcb->priority = priority;
-
   cls_t *cls = get_cls();
 
+  __sync_synchronize();
+  __asm__ volatile ("mfence" ::: "memory");  // kio_printf("%x %x %x\n", tcb->rsp0, tcb->rip0, tcb->registers->ss);
+  // kio_printf("Hh\n");
   switch (priority) {
   case TP_IDLE:
     queue_enqueue(&cls->idle_queue, &tcb->queue_node);

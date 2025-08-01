@@ -17,6 +17,13 @@ change_stacks:
   mov rsp, 0xfffffe8000000000 - 8
   mov rbp, rsp
 
+  mov ax, 0x8
+  mov cs, ax
+  mov ax, 0x10
+  mov ds, ax
+  mov es, ax
+  mov ss, ax
+
   call kernel_secondary_start
 
   .stop:

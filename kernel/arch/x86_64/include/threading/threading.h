@@ -1,6 +1,7 @@
 #ifndef X86_64_THREADING_H
 #define X86_64_THREADING_H
 
+#include <stddef.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
 #include <threading.h>

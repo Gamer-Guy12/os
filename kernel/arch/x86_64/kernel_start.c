@@ -554,7 +554,11 @@ void test_rbtree(void) {
 
 void test1(void) {
   while (true) {
-    kio_printf("1\n");
+    size_t coreid = 0;
+    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+                     : "=b"(coreid)::"rax");
+
+    kio_printf("%x %x\n", coreid,( (TCB_t*)rdmsr(FS_MSR))->tid);
     run_next_thread();
   }
 }
@@ -607,7 +611,7 @@ void kernel_secondary_start(void) {
 
   // queue_enqueue(&queue, node3);
   // queue_node_t *pop2 = queue_dequeue(&queue);
-  // kio_printf("Node 2 %x, %x is %x\n", (size_t)node2, (size_t)pop2,
+  // kio_printt("Node 2 %x, %x is %x\n", (size_t)node2, (size_t)pop2,
   //            (size_t)(node2 == pop2));
   // queue_node_t *pop3 = queue_dequeue(&queue);
   // kio_printf("Node 3 %x, %x is %x\n", (size_t)node3, (size_t)pop3,
@@ -618,10 +622,14 @@ void kernel_secondary_start(void) {
 
   PCB_t *cur_pcb = ((TCB_t *)rdmsr(FS_MSR))->pcb;
 
-  TCB_t *thread1 = create_thread(cur_pcb, test1);
-  TCB_t *thread2 = create_thread(cur_pcb, test2);
-  TCB_t *thread3 = create_thread(cur_pcb, test3);
+  TCB_t *thread1 = create_thread(cur_pcb, test2);
+  TCB_t *thread2 = create_thread(cur_pcb, test1);
+  TCB_t *thread3 = create_thread(cur_pcb, test1);
   TCB_t *thread4 = create_thread(cur_pcb, kernel_main);
+  thread1->priority = TP_NORMAL;
+  thread2->priority = TP_NORMAL;
+  thread3->priority = TP_NORMAL;
+  thread4->priority = TP_HIGH;
 
   queue_thread_any(thread1, TP_NORMAL);
   queue_thread_any(thread2, TP_NORMAL);
