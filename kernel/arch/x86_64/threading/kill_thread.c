@@ -9,5 +9,7 @@ void kill_cur_thread(void) {
   tcb->state = THREAD_TERMINATED;
 
   run_next_thread();
+
+  while (1) {}
 }
 
