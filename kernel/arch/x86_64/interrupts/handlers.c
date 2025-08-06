@@ -1,3 +1,4 @@
+#include <asm.h>
 #include <cls.h>
 #include <interrupts.h>
 #include <libk/err.h>
@@ -6,6 +7,9 @@
 #include <mem/memory.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <threading/pcb.h>
+
+#define FS_MSR 0xC0000100
 
 void create_handlers(void) {
   cls_t *cls = get_cls();
@@ -20,10 +24,19 @@ void common_interrupt_handler(idt_registers_t *registers) {
   if (is_exception && handlers[registers->interrupt_number] == NULL) {
     size_t coreid = 0;
     __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
-                   : "=b"(coreid)::"rax");
+                     : "=b"(coreid)::"rax");
+    TCB_t *tcb = (TCB_t *)(rdmsr(FS_MSR));
 
-    kio_printf("Exception: number %x, error_code %x, core %x, registers:\n",
-               registers->interrupt_number, registers->error_code, coreid);
+    if (tcb) {
+      kio_printf("Exception: number %x, error_code %x, core %x, thread %x, "
+                 "registers:\n",
+                 registers->interrupt_number, registers->error_code, coreid,
+                 tcb->tid);
+    } else {
+      kio_printf("Exception: number %x, error_code %x, core %x, "
+                 "registers:\n",
+                 registers->interrupt_number, registers->error_code, coreid);
+    }
 
     kio_printf("RAX %x, RBX %x, RCX %x, RDX %x\n", registers->rax,
                registers->rbx, registers->rcx, registers->rdx);

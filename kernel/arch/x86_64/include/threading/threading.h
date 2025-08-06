@@ -1,6 +1,7 @@
 #ifndef X86_64_THREADING_H
 #define X86_64_THREADING_H
 
+#include <interrupts.h>
 #include <stddef.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
@@ -25,8 +26,9 @@ PCB_t* get_proc_list(void);
 void clear_processes(void);
 
 void queue_thread(TCB_t* tcb, thread_priority_t priority);
-void queue_thread_any(TCB_t* tcb, thread_priority_t priority);
 TCB_t* pop_thread(void);
+
+void init_threading(void);
 
 #endif
 

@@ -29,12 +29,12 @@ void init_cls(void) {
   core_count_global++;
   spinlock_release(&lock);
 
-  queue_create(&cls->idle_queue);
-  rb_create(&cls->normal_queue);
-  rb_create(&cls->priority_queue);
-  queue_create(&cls->io_queue);
-  queue_create(&cls->dead_queue);
-  queue_create(&cls->load_queue);
+  // queue_create(&cls->idle_queue);
+  // rb_create(&cls->normal_queue);
+  // rb_create(&cls->priority_queue);
+  // queue_create(&cls->io_queue);
+  // queue_create(&cls->dead_queue);
+  // queue_create(&cls->load_queue);
 
 #define GS_BASE_MSR 0xC0000101
 

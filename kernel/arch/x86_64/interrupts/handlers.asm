@@ -204,6 +204,9 @@ idt_handler_%1:
    ; Pop interrupt number
    add rsp, 8
 
+   ; Pop error code
+   add rsp, 8
+
    sti
 
    iretq

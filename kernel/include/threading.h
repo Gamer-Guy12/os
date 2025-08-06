@@ -2,6 +2,7 @@
 #define THREADING_H
 
 #include <decls.h>
+#include <stddef.h>
 
 void run_next_thread(void);
 

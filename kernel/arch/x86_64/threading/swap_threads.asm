@@ -1,9 +1,13 @@
 global swap_threads
 
+swap_threads:
+  call swap_actual_threads
+  ret
+
 ; RDI contains a pointer to the TCB
 ; FS contains the pointer to the current TCB
 ; FS BASE MSR is 0xC0000100
-swap_threads:
+swap_actual_threads:
   cli
 
   ; RAX contains the pointer to the current TCB
@@ -32,7 +36,7 @@ swap_threads:
   mov [r8 + 104], r14
   mov [r8 + 112], r15
 
-; R10 contains rip
+  ; R10 contains rip
   pop r10
 
   ; Save segments
@@ -61,7 +65,7 @@ swap_threads:
   push rax
   push rdx
   mov rax, 0xffffffffffffffff
-  mov rdx, 0xffffffffffffffff
+  mov rdx, rax
   xsave [r12]
   pop rdx
   pop rax
@@ -91,7 +95,7 @@ swap_threads:
   push rax
   push rdx
   mov rax, 0xffffffffffffffff
-  mov rdx, 0xffffffffffffffff
+  mov rdx, rax
   xrstor [r12]
   pop rdx
   pop rax
@@ -128,13 +132,15 @@ swap_threads:
   ; Load new rsp
   ; mov rsp, [rdi + 32]
 
-  ; Load new ss
-  push qword [r8 + 144]
-  
-  ; Load new rsp
-  push qword [rdi + 32]
+  ; Load ss
+  mov rbx, [r8 + 144]
+  push rbx
 
-  ; Load rflags
+  ; Load rsp
+  mov rbx, [rdi + 32]
+  push rbx
+
+  ; Load Rflags
   mov rbx, [r8 + 152]
   push rbx
 
@@ -155,6 +161,6 @@ swap_threads:
   ; Load r8
   mov r8, [r8 + 56]
   
-  sti
+  mfence
   iretq
 

@@ -41,6 +41,19 @@ static inline void interrupt(uint8_t interrupt) {
   __asm__ volatile("int %0" ::"i"(interrupt) :);
 }
 
+static inline size_t coreid(void) {
+  size_t coreid = 0;
+  __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+                   : "=b"(coreid)::"rax");
+  return coreid;
+}
+
+#define FS_MSR 0xC0000100
+
+#define MFENCE __asm__ volatile("mfence" ::: "memory")
+#define HLT __asm__ volatile("hlt");
+#define TCB (TCB_t*)(rdmsr(FS_MSR))
+
 /// @return 1 if sucess and 0 if failure
 ///
 /// @param dest this is a pointer to 16 bytes of contiguous memory which is

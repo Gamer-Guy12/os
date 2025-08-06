@@ -23,16 +23,16 @@ void queue_enqueue(queue_t *queue, queue_node_t *element) {
   //     __sync_bool_compare_and_swap(&queue->tail, tail, tail->next);
   //   }
   // }
-  
+
   spinlock_acquire(&queue->lock);
 
-  if (queue->head == queue->tail) {
+  if (queue->head == queue->tail && queue->head == NULL) {
     queue->head = element;
+    queue->tail = element;
+  } else {
+    if (queue->tail)
+      queue->tail->next = element;
+    queue->tail = element;
   }
-  
-  if (queue->tail)
-    queue->tail->next = element;
-  queue->tail = element;
-
   spinlock_release(&queue->lock);
 }
