@@ -29,6 +29,10 @@ typedef struct {
   size_t rflags;
 } registers_t;
 
+typedef enum {
+  TCB_LOADING,
+} tcb_flags_t;
+
 // The quantum count is stored in the rb node
 typedef struct TCB_struct {
   size_t tid;
@@ -46,6 +50,7 @@ typedef struct TCB_struct {
   void* xsave_page;
   rbnode_t rb_node;
   thread_priority_t priority;
+  size_t flags;
 } TCB_t;
 
 #endif

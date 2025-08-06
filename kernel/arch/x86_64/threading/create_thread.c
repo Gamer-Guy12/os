@@ -92,5 +92,7 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
   process->tcbs = tcb;
   spinlock_release(&process->pcb_lock);
 
+  tcb->flags = 0;
+
   return tcb;
 }

@@ -1,3 +1,5 @@
+#include "libk/kio.h"
+#include <threading/tcb.h>
 #include <asm.h>
 #include <libk/queue.h>
 #include <stddef.h>
@@ -14,12 +16,26 @@ void queue_thread(TCB_t *tcb, thread_priority_t priority) {
 }
 
 TCB_t *pop_thread(void) {
-  queue_node_t *node = queue_dequeue(&thread_queue);
+  queue_node_t *node = NULL;
+  TCB_t *tcb = NULL;
+  do {
 
-  if (node == NULL) {
-    return NULL;
-  }
+    node = queue_dequeue(&thread_queue);
 
-  TCB_t *tcb = (TCB_t *)((size_t)node - offsetof(TCB_t, queue_node));
+    if (node == NULL) {
+      kio_printf("Return\n");
+      return NULL;
+    }
+
+    tcb = (TCB_t *)((size_t)node - offsetof(TCB_t, queue_node));
+
+    if (tcb->flags & TCB_LOADING) {
+      kio_printf("Issue\n");
+      queue_thread(tcb, tcb->priority);
+    } else {
+      break;
+    }
+  } while (true);
+  kio_printf("Good\n");
   return tcb;
 }

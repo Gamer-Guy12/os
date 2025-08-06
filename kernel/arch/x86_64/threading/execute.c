@@ -11,6 +11,7 @@
 void run_next_thread(void) {
   TCB_t *tcb = TCB;
   tcb->rb_node.value++;
+  tcb->flags |= TCB_LOADING;
   queue_thread(tcb, tcb->priority);
 
   TCB_t *next = NULL;
@@ -19,6 +20,7 @@ void run_next_thread(void) {
   } while (!(next = pop_thread()));
 
   if (tcb->tid == next->tid) {
+    tcb->flags &= ~(TCB_LOADING);
     return;
   }
 

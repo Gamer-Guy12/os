@@ -58,6 +58,7 @@ typedef struct {
 void kernel_secondary_start(void);
 
 void pause(void) {
+  kio_printf("Here\n");
   while (1) {
   }
 }
@@ -647,7 +648,9 @@ void kernel_secondary_start(void) {
   thread2->priority = TP_NORMAL;
   thread3->priority = TP_NORMAL;
   // thread4->priority = TP_HIGH;
-
+  
+  // swap_threads(thread3);
+  
   queue_thread(thread1, TP_NORMAL);
   queue_thread(thread2, TP_NORMAL);
   queue_thread(thread3, TP_NORMAL);
