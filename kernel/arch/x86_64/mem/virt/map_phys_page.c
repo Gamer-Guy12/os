@@ -80,7 +80,10 @@ void *map_phys_page(void *addr, uint16_t flags, bool not_executable,
   size_t pdpt_index = (addr_bits >> 30) & 0x1ff;
   size_t pml4_index = (addr_bits >> 39) & 0x1ff;
 
-  map_pml4(pml4_index);
+  if (pml4_index < 256) {
+    map_pml4(pml4_index);
+  }
+
   map_pdpt(pdpt_index, pml4_index);
   map_pdt(pdt_index, pdpt_index, pml4_index);
 

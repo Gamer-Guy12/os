@@ -171,14 +171,15 @@ long_land:
   mov rsp, [rax]
   mov rbp, rsp
 
-  push rdi
+  mov r12, rdi
 
+  ; After this rdx should contain the stack pointer while
+  ; rax contains the old page
   call setup_memory 
 
-  pop rdi
+  mov rdi, r12
 
   mov rsi, rax
-  mov rdx, 0xfffffe8000000000 - 8
   mov rsp, rdx
   mov rbp, rsp
 

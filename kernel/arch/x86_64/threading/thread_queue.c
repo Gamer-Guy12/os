@@ -36,6 +36,5 @@ TCB_t *pop_thread(void) {
       break;
     }
   } while (true);
-  kio_printf("Good\n");
   return tcb;
 }

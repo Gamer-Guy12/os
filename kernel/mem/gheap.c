@@ -1,5 +1,3 @@
-#include "libk/kio.h"
-#include "threading/tcb.h"
 #include <libk/math.h>
 #include <libk/mem.h>
 #include <libk/spinlock.h>

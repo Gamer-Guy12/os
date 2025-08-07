@@ -1,5 +1,5 @@
-#include <libk/spinlock.h>
 #include <libk/mem.h>
+#include <libk/spinlock.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
@@ -10,6 +10,9 @@
 
 // Returns the physical pointer
 static size_t do_pml4(PML4_entry_t *pml4, size_t index) {
+  if (index > 256) {
+    return true;
+  }
 
   if (!(pml4[index].flags & PML4_PRESENT)) {
 

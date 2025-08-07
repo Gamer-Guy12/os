@@ -17,7 +17,6 @@ PCB_t *create_process(void) {
   create_new_addr_space(pcb);
 
   pcb->tcbs = NULL;
-  pcb->state = PROCESS_STARTING;
   
   spinlock_acquire(&pid_lock);
 
@@ -29,10 +28,6 @@ PCB_t *create_process(void) {
   pcb->tcbs = NULL;
 
   store_process(pcb);
-
-  atomic_flag_clear_explicit(&pcb->heap_info.heap_lock, memory_order_release);
-  pcb->heap_info.free_list = NULL;
-  pcb->heap_info.used_list = NULL;
 
   return pcb;
 }

@@ -14,20 +14,20 @@ static bool check_page(void *addr) {
   return entries[index].full_entry & PT_PRESENT;
 }
 
-static void *map_pml4(size_t index) {
-  size_t map_index = PDPT_ADDR + index * PAGE_SIZE;
-  if (check_page((void *)map_index))
-    return (void *)map_index;
-
-  void *phys = phys_alloc();
-
-  /// These flags are here because they mean that no matter what it can be
-  /// allocated
-  /// At the bottom actual flags are made
-  return map_virt_to_phys((void *)map_index, phys, 0,
-                          PML4_PRESENT | PML4_READ_WRITE | PML4_USER_PAGE);
-}
-
+ static void *map_pml4(size_t index) {
+   size_t map_index = PDPT_ADDR + index * PAGE_SIZE;
+   if (check_page((void *)map_index))
+     return (void *)map_index;
+ 
+   void *phys = phys_alloc();
+ 
+   /// These flags are here because they mean that no matter what it can be
+   /// allocated
+   /// At the bottom actual flags are made
+   return map_virt_to_phys((void *)map_index, phys, 0,
+                           PML4_PRESENT | PML4_READ_WRITE | PML4_USER_PAGE);
+ }
+ 
 static void *map_pdpt(size_t index, size_t pml4) {
   size_t map_index = PDT_ADDR + index * PAGE_SIZE + pml4 * 512 * PAGE_SIZE;
   if (check_page((void *)map_index))
@@ -68,7 +68,10 @@ void *map_page(void *addr, uint16_t flags, bool not_executable) {
   size_t pdpt_index = (addr_bits >> 30) & 0x1ff;
   size_t pml4_index = (addr_bits >> 39) & 0x1ff;
 
-  map_pml4(pml4_index);
+  if (pml4_index < 256){
+    map_pml4(pml4_index);
+  }
+
   map_pdpt(pdpt_index, pml4_index);
   map_pdt(pdt_index, pdpt_index, pml4_index);
 

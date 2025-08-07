@@ -24,8 +24,6 @@ void delete_process(PCB_t *pcb) {
     tcb = next;
   }
 
-  delete_addr_space(pcb);
-
   remove_process(pcb);
 
   gfree(pcb);

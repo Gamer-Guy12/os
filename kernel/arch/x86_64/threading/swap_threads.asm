@@ -164,7 +164,7 @@ swap_actual_threads:
 ; RDI contains a pointer to the TCB
 ; FS contains the pointer to the current TCB
 ; FS BASE MSR is 0xC0000100
-iret_swap_threads
+iret_swap_threads:
   cli
 
   ; RAX contains the pointer to the current TCB

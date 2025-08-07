@@ -13,7 +13,6 @@
 #include <libk/queue.h>
 #include <libk/rbtree.h>
 #include <libk/vga_kgfx.h>
-#include <mem/kheap.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
@@ -68,7 +67,6 @@ void create_local_proccess(void) {
   TCB_t *tcb = create_thread(pcb, pause);
   tcb->priority = TP_NORMAL;
 
-  pcb->state = PROCESS_RUNNING;
   tcb->state = THREAD_RUNNING;
 
 #define FS_MSR 0xC0000100
@@ -592,8 +590,6 @@ void test3(void) {
 }
 
 void kernel_secondary_start(void) {
-  init_heap();
-  kio_printf("Initialized the heap (kernel malloc)\n");
 
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
@@ -651,6 +647,7 @@ void kernel_secondary_start(void) {
   
   // swap_threads(thread3);
   
+  while (1) {}
   queue_thread(thread1, TP_NORMAL);
   queue_thread(thread2, TP_NORMAL);
   queue_thread(thread3, TP_NORMAL);

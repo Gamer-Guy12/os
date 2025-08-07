@@ -668,8 +668,9 @@ static void map_vga_mem(void) {
 
   for (size_t i = 0; i < page_count; i++) {
     map_phys_page((void *)(VGA_MEM_ADDR + i * PAGE_SIZE),
-                  PT_PRESENT | PT_READ_WRITE | PT_PAGE_WRITE_THROUGH | PT_PAGE_CACHE_DISABLED, true,
-                  (void *)((size_t)framebuffer_addr + i * PAGE_SIZE));
+                  PT_PRESENT | PT_READ_WRITE | PT_PAGE_WRITE_THROUGH |
+                      PT_PAGE_CACHE_DISABLED,
+                  true, (void *)((size_t)framebuffer_addr + i * PAGE_SIZE));
   }
 }
 
@@ -722,6 +723,42 @@ static void map_apic(void) {
                 1, (void *)(io_apic_addr - IDENTITY_MAPPED_ADDR));
 }
 
+#define UNCANONICALIZER 0x0000fffffffff000
+
+static bool check_page(void *addr) {
+  PT_entry_t *entries = (PT_entry_t *)PT_ADDR;
+  // Get the address and page index
+  size_t index = ((size_t)addr & UNCANONICALIZER) / PAGE_SIZE;
+
+  return entries[index].full_entry & PT_PRESENT;
+}
+
+static void *map_pml4(size_t index) {
+  size_t map_index = PDPT_ADDR + index * PAGE_SIZE;
+  if (check_page((void *)map_index))
+    return (void *)map_index;
+
+  void *phys = phys_alloc();
+
+  /// These flags are here because they mean that no matter what it can be
+  /// allocated
+  /// At the bottom actual flags are made
+  void *ret = map_virt_to_phys((void *)map_index, phys, 0,
+                               PML4_PRESENT | PML4_READ_WRITE | PML4_USER_PAGE);
+
+  memset(ret, 0, PAGE_SIZE);
+
+  return ret;
+}
+
+/// PDPTs should be created so that they can be shared so this one goes and
+/// checks to see if any haven't been created and creates them if they haven't
+static void create_pdpts(void) {
+  for (size_t i = 256; i < 512; i++) {
+    map_pml4(i);
+  }
+}
+
 /// This function cannot call mmap or physical map or anything cuz like they
 /// depend on it being ready
 void init_memory_manager(void) {
@@ -737,6 +774,8 @@ void init_memory_manager(void) {
   create_physical_structures();
 
   reserve_kernel_structures();
+
+  create_pdpts();
 
   // Do this one for every core
   identity_map_257();

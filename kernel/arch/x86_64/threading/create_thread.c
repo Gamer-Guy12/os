@@ -62,16 +62,7 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
 
   tcb->pcb = process;
 
-  tcb->rsp0 = (size_t)create_new_kernel_stack(process->kernel_region, false,
-                                              &tcb->stack_num);
-
-  size_t addr1 = tcb->rsp0 + 8 - PAGE_SIZE;
-  size_t addr2 = addr1 - PAGE_SIZE;
-
-  map_page_in((void *)addr1, PT_PRESENT | PT_READ_WRITE, 1,
-              (PML4_entry_t *)((size_t)tcb->pcb->cr3 + IDENTITY_MAPPED_ADDR));
-  map_page_in((void *)addr2, PT_PRESENT | PT_READ_WRITE, 1,
-              (PML4_entry_t *)((size_t)tcb->pcb->cr3 + IDENTITY_MAPPED_ADDR));
+  tcb->rsp0 = (size_t)create_new_kernel_stack(&tcb->stack_num);
 
   tcb->registers = gmalloc(sizeof(registers_t));
   tcb->registers->cs = KERNEL_CODE_SELECTOR;
