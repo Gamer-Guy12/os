@@ -64,16 +64,10 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
 
   tcb->rsp0 = (size_t)create_new_kernel_stack(&tcb->stack_num);
 
-  tcb->registers = gmalloc(sizeof(registers_t));
-  tcb->registers->cs = KERNEL_CODE_SELECTOR;
-  tcb->registers->ds = KERNEL_DATA_SELECTOR;
-  tcb->registers->es = KERNEL_DATA_SELECTOR;
-  tcb->registers->ss = KERNEL_DATA_SELECTOR;
-
   tcb->xsave_page = (void *)((size_t)phys_alloc() + IDENTITY_MAPPED_ADDR);
 
   tcb->state = THREAD_STARTING;
-  tcb->rip0 = (size_t)entry_point;
+  tcb->entry_point = (size_t)entry_point;
 
   spinlock_acquire(&process->pcb_lock);
   tcb->next = process->tcbs;
@@ -82,8 +76,6 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
     process->tcbs->prev = tcb;
   process->tcbs = tcb;
   spinlock_release(&process->pcb_lock);
-
-  tcb->flags = 0;
 
   return tcb;
 }

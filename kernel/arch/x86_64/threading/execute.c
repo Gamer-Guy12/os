@@ -11,19 +11,25 @@
 void run_next_thread(void) {
   TCB_t *tcb = TCB;
   tcb->rb_node.value++;
-  tcb->flags |= TCB_LOADING;
-  queue_thread(tcb, tcb->priority);
 
   TCB_t *next = NULL;
+
   do {
+    next = pop_thread();
+  } while (next == NULL);
 
-  } while (!(next = pop_thread()));
+  // The thread that was just executed will be in rax when this thread resumes
+  // which means it gets treated as a return value Therefore the thread that was
+  // just preempted can be queued
+  TCB_t *old = NULL;
 
-  if (tcb->tid == next->tid) {
-    tcb->flags &= ~(TCB_LOADING);
-    return;
+  if (next->state == THREAD_STARTING) {
+    old = start_thread(next);
+  } else if (next->state == THREAD_RUNNING) {
+    old = switch_threads(next);
   }
 
-  MFENCE;
-  swap_threads(next);
+  if (old->state == THREAD_RUNNING) {
+    queue_thread(old, old->priority);
+  }
 }

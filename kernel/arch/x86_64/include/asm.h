@@ -52,7 +52,7 @@ static inline size_t coreid(void) {
 
 #define MFENCE __asm__ volatile("mfence" ::: "memory")
 #define HLT __asm__ volatile("hlt");
-#define TCB (TCB_t*)(rdmsr(FS_MSR))
+#define TCB ((TCB_t*)(rdmsr(FS_MSR)))
 
 /// @return 1 if sucess and 0 if failure
 ///

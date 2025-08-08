@@ -1,9 +1,8 @@
-#include "libk/kio.h"
-#include <threading/tcb.h>
 #include <asm.h>
 #include <libk/queue.h>
 #include <stddef.h>
 #include <threading/pcb.h>
+#include <threading/tcb.h>
 #include <threading/threading.h>
 
 queue_t thread_queue;
@@ -18,23 +17,14 @@ void queue_thread(TCB_t *tcb, thread_priority_t priority) {
 TCB_t *pop_thread(void) {
   queue_node_t *node = NULL;
   TCB_t *tcb = NULL;
-  do {
 
-    node = queue_dequeue(&thread_queue);
+  node = queue_dequeue(&thread_queue);
 
-    if (node == NULL) {
-      kio_printf("Return\n");
-      return NULL;
-    }
+  if (node == NULL) {
+    return NULL;
+  }
 
-    tcb = (TCB_t *)((size_t)node - offsetof(TCB_t, queue_node));
+  tcb = (TCB_t *)((size_t)node - offsetof(TCB_t, queue_node));
 
-    if (tcb->flags & TCB_LOADING) {
-      kio_printf("Issue\n");
-      queue_thread(tcb, tcb->priority);
-    } else {
-      break;
-    }
-  } while (true);
   return tcb;
 }

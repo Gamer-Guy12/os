@@ -1,3 +1,4 @@
+#include "threading.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -644,10 +645,9 @@ void kernel_secondary_start(void) {
   thread2->priority = TP_NORMAL;
   thread3->priority = TP_NORMAL;
   // thread4->priority = TP_HIGH;
-  
+
   // swap_threads(thread3);
-  
-  while (1) {}
+
   queue_thread(thread1, TP_NORMAL);
   queue_thread(thread2, TP_NORMAL);
   queue_thread(thread3, TP_NORMAL);

@@ -23,15 +23,10 @@ typedef enum {
 } TCB_state_t;
 
 typedef struct {
-  size_t rax, rbx, rcx, rdx, rbp, rdi, rsi;
-  size_t r8, r9, r10, r11, r12, r13, r14, r15;
-  size_t cs, ds, es, ss;
   size_t rflags;
+  size_t rbx, rbp, r12, r13, r14, r15;
+  size_t rip0;
 } registers_t;
-
-typedef enum {
-  TCB_LOADING,
-} tcb_flags_t;
 
 // The quantum count is stored in the rb node
 typedef struct TCB_struct {
@@ -41,7 +36,7 @@ typedef struct TCB_struct {
   size_t rsp;
   size_t rsp0;
   size_t rip;
-  size_t rip0;
+  size_t entry_point;
   TCB_state_t state;
   PCB_t *pcb;
   struct TCB_struct *next;
@@ -50,7 +45,6 @@ typedef struct TCB_struct {
   void* xsave_page;
   rbnode_t rb_node;
   thread_priority_t priority;
-  size_t flags;
 } TCB_t;
 
 #endif
