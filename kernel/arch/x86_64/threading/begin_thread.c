@@ -7,6 +7,8 @@ void begin_thread(TCB_t* old) {
 
   if (old->state == THREAD_RUNNING) {
     queue_thread(old, old->priority);
+  } else if (old->state == THREAD_TERMINATED) {
+    delete_thread(old);   
   }
 
   __asm__ volatile("jmp %0" :: "r"(TCB->entry_point));

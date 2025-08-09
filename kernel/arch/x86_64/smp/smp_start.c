@@ -70,9 +70,5 @@ void smp_start(size_t processor_id, size_t old_page) {
 
   init_interrupts();
 
-  // kill_cur_thread();
-
-  while (1) {
-    run_next_thread();
-  }
+  kill_cur_thread();
 }

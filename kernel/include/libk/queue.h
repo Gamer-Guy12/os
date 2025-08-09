@@ -4,7 +4,9 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
+#include <decls.h>
 #include <libk/spinlock.h>
+#include <stddef.h>
 
 typedef struct queue_node_struct {
   volatile struct queue_node_struct *next;
@@ -14,7 +16,8 @@ typedef struct {
   volatile queue_node_t *head;
   volatile queue_node_t *tail;
   spinlock_t lock;
-} queue_t;
+  size_t count;
+} ALIGN(16) queue_t;
 
 void queue_create(queue_t *queue);
 void queue_enqueue(queue_t *queue, queue_node_t *element);

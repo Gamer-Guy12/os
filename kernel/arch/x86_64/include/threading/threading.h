@@ -35,6 +35,6 @@ void init_threading(void);
 
 /// This is the function that new threads should go to, it will set up the
 /// thread and then ret to it
-void begin_thread(TCB_t* old);
+void begin_thread(TCB_t *old);
 
 #endif

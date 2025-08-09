@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-static void delete(rbtree_t *tree, rbnode_t *node);
+void delete(rbtree_t *tree, rbnode_t *node);
 
 static void swap_nodes(rbtree_t *tree, rbnode_t *node1, rbnode_t *node2) {
   uint8_t dir1 = 3;
@@ -156,7 +156,7 @@ static bool handle_simple(rbtree_t *tree, rbnode_t *node) {
   return false;
 }
 
-static void delete(rbtree_t *tree, rbnode_t *node) {
+void delete(rbtree_t *tree, rbnode_t *node) {
   if (handle_simple(tree, node)) {
     return;
   }
@@ -249,4 +249,6 @@ void rb_delete(rbtree_t *tree, rbnode_t *node) {
   node->parent = NULL;
 
   spinlock_release(&tree->tree_lock);
+
+  __atomic_fetch_sub(&tree->count, 1, __ATOMIC_RELEASE);
 }

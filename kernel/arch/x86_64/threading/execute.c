@@ -12,11 +12,12 @@ void run_next_thread(void) {
   TCB_t *tcb = TCB;
   tcb->rb_node.value++;
 
-  TCB_t *next = NULL;
+  TCB_t *next = pop_thread();
 
-  do {
-    next = pop_thread();
-  } while (next == NULL);
+  // If there is nothign to do then keep going
+  if (next == NULL) {
+    return;
+  }
 
   // The thread that was just executed will be in rax when this thread resumes
   // which means it gets treated as a return value Therefore the thread that was
@@ -31,5 +32,7 @@ void run_next_thread(void) {
 
   if (old->state == THREAD_RUNNING) {
     queue_thread(old, old->priority);
+  } else if (old->state == THREAD_TERMINATED) {
+    delete_thread(old);
   }
 }

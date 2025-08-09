@@ -11,4 +11,6 @@ void rb_create(rbtree_t *tree) {
   tree->nil.left = NULL;
   tree->nil.right = NULL;
   tree->nil.parent = NULL;
+
+  tree->count = 0;
 }

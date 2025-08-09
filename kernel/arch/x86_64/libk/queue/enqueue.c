@@ -34,5 +34,8 @@ void queue_enqueue(queue_t *queue, queue_node_t *element) {
       queue->tail->next = element;
     queue->tail = element;
   }
+  
+  __atomic_fetch_add(&queue->count, 1, __ATOMIC_RELEASE);
+
   spinlock_release(&queue->lock);
 }

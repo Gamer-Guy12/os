@@ -45,5 +45,7 @@ list_node_t *list_delete(list_t *list, list_node_t *node) {
 
   spinlock_release(&list->lock);
 
+  __atomic_fetch_sub(&list->count, 1, __ATOMIC_RELEASE);
+
   return node;
 }

@@ -30,7 +30,6 @@ void delete_thread(TCB_t *tcb) {
 
   delete_kernel_stack(tcb->stack_num);
 
-  gfree(tcb->registers);
   void *xsave_addr = (void *)((size_t)tcb->xsave_page - IDENTITY_MAPPED_ADDR);
   phys_free(xsave_addr);
   gfree(tcb);

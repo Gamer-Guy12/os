@@ -3,5 +3,7 @@
 
 void list_create(list_t* list) {
   list->head = NULL;
+
+  list->count = 0;
 }
 

@@ -639,21 +639,19 @@ void kernel_secondary_start(void) {
   TCB_t *thread1 = create_thread(cur_pcb, test1);
   TCB_t *thread2 = create_thread(cur_pcb, test2);
   TCB_t *thread3 = create_thread(cur_pcb, test3);
-  // TCB_t *thread4 = create_thread(cur_pcb, kernel_main);
+  TCB_t *thread4 = create_thread(cur_pcb, kernel_main);
 
   thread1->priority = TP_NORMAL;
   thread2->priority = TP_NORMAL;
   thread3->priority = TP_NORMAL;
-  // thread4->priority = TP_HIGH;
+  thread4->priority = TP_HIGH;
 
   // swap_threads(thread3);
 
   queue_thread(thread1, TP_NORMAL);
   queue_thread(thread2, TP_NORMAL);
   queue_thread(thread3, TP_NORMAL);
-  // queue_thread(thread4, TP_HIGH);
+  queue_thread(thread4, TP_HIGH);
 
-  while (1) {
-    run_next_thread();
-  }
+  kill_cur_thread();
 }

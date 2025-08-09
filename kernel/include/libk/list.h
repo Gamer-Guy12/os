@@ -12,6 +12,7 @@ typedef struct list_node_struct {
 typedef struct {
   list_node_t *head;
   spinlock_t lock;
+  size_t count;
 } list_t;
 
 /// input null to input at the front

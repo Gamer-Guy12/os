@@ -31,6 +31,7 @@ typedef struct {
   rbnode_t *root;
   spinlock_t tree_lock;
   rbnode_t nil;
+  size_t count;
 } rbtree_t;
 
 void rb_create(rbtree_t *tree);
@@ -40,6 +41,8 @@ void rb_delete(rbtree_t *tree, rbnode_t *node);
 rbnode_t *rb_search(rbtree_t *tree, rbnode_t *node, size_t value);
 rbnode_t *rb_find_min(rbtree_t *tree, rbnode_t *node);
 rbnode_t *rb_find_max(rbtree_t *tree, rbnode_t *node);
+
+rbnode_t* rb_delete_min(rbtree_t *tree, rbnode_t *node);
 
 /// Internal do not use
 rbnode_t *rb_rotate(rbtree_t *tree, rbnode_t *node, uint8_t dir);

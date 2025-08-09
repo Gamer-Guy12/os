@@ -103,4 +103,6 @@ void rb_insert(rbtree_t *tree, rbnode_t *node) {
   handle_insert(tree, node);
 
   spinlock_release(&tree->tree_lock);
+
+  __atomic_fetch_add(&tree->count, 1, __ATOMIC_RELEASE);
 }

@@ -34,4 +34,6 @@ void list_insert(list_t *list, list_node_t *after, list_node_t *node) {
   insert_head(list, node);
 
   spinlock_release(&list->lock);
+
+  __atomic_fetch_add(&list->count, 1, __ATOMIC_RELEASE);
 }
