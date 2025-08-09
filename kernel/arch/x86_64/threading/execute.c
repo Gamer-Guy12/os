@@ -14,7 +14,7 @@ void run_next_thread(void) {
 
   TCB_t *next = pop_thread();
 
-  // If there is nothign to do then keep going
+  // If there is nothing continue on
   if (next == NULL) {
     return;
   }

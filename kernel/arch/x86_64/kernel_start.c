@@ -1,4 +1,3 @@
-#include "threading.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -21,6 +20,7 @@
 #include <pic.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <threading.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
 #include <threading/threading.h>

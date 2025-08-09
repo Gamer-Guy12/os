@@ -11,13 +11,9 @@
 
 #define FS_MSR 0xC0000100
 
-void create_handlers(void) {
-  cls_t *cls = get_cls();
-  cls->handlers = gmalloc(sizeof(interrupt_handler_t) * 256);
-}
+interrupt_handler_t handlers[256];
 
 void common_interrupt_handler(idt_registers_t *registers) {
-  interrupt_handler_t *handlers = get_cls()->handlers;
 
   bool is_exception = registers->interrupt_number < 32;
 
@@ -62,6 +58,5 @@ void common_interrupt_handler(idt_registers_t *registers) {
 }
 
 void register_interrupt_handler(interrupt_handler_t handler, uint8_t index) {
-  interrupt_handler_t *handlers = get_cls()->handlers;
   handlers[index] = handler;
 }
