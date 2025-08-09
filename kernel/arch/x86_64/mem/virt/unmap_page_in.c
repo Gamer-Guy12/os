@@ -61,21 +61,6 @@ void *unmap_page_in(void *addr, bool free, PML4_entry_t *pml4) {
     pdpt_entries[pdpt_index].full_entry = 0;
   }
 
-  // Finally unmap the pdpt
-  bool unmap_pdpt = false;
-  for (size_t i = 0; i < 512; i++) {
-    if (pdpt_entries[i].full_entry != 0) {
-      unmap_pdpt = false;
-      break;
-    }
-  }
-
-  if (unmap_pdpt) {
-    size_t phys_addr = pml4[pml4_index].full_entry & 0x0000fffffffff000;
-    phys_free((void *)phys_addr);
-    pml4[pml4_index].full_entry = 0;
-  }
-
   spinlock_release(get_table_lock());
 
   return addr;

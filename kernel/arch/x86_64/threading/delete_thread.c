@@ -25,17 +25,12 @@ void delete_thread(TCB_t *tcb) {
   if (tcb->prev)
     tcb->prev->next = tcb->next;
 
-  if (!tcb->next && !tcb->prev) tcb->pcb->tcbs = NULL;
+  if (!tcb->prev)
+    tcb->pcb->tcbs = tcb->next;
 
-  void *addr =
-      delete_kernel_stack(tcb->stack_num, tcb->pcb->kernel_region, false);
+  delete_kernel_stack(tcb->stack_num);
 
-  unmap_page_in(addr, true,
-                (PML4_entry_t *)((size_t)tcb->pcb->cr3 + IDENTITY_MAPPED_ADDR));
-  unmap_page_in((void *)((size_t)addr + PAGE_SIZE), true,
-                (PML4_entry_t *)((size_t)tcb->pcb->cr3 + IDENTITY_MAPPED_ADDR));
-
-  gfree(tcb->registers);
-  if (tcb->userspace_registers) gfree(tcb->userspace_registers);
+  void *xsave_addr = (void *)((size_t)tcb->xsave_page - IDENTITY_MAPPED_ADDR);
+  phys_free(xsave_addr);
   gfree(tcb);
 }

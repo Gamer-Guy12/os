@@ -4,10 +4,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
+idt_gate_descriptor_t idt[256];
+
 void set_idt_gate(uint8_t gate_number, void (*handler)(void),
                   uint16_t seg_descriptor, uint8_t gate_type, bool present,
                   uint8_t dpl, uint8_t ist) {
-  idt_gate_descriptor_t *idt = get_cls()->idt;
 
   idt_gate_descriptor_t *descriptor = &idt[gate_number];
 
@@ -27,7 +28,6 @@ void set_idt_gate(uint8_t gate_number, void (*handler)(void),
 }
 
 void load_idt(void) {
-  idt_gate_descriptor_t *idt = get_cls()->idt;
 
   idt_descriptor_t descriptor;
   descriptor.size = sizeof(idt_gate_descriptor_t) * 256 - 1;
@@ -40,7 +40,6 @@ void load_idt(void) {
 }
 
 void enable_idt_gate(uint8_t gate_number) {
-  idt_gate_descriptor_t *idt = get_cls()->idt;
   idt[gate_number].present = true;
 }
 

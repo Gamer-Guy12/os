@@ -8,15 +8,16 @@
 #include <stdint.h>
 
 gheap_entry_t *free_list = NULL;
-gheap_entry_t *used_list = NULL;
 
 static spinlock_t lock = ATOMIC_FLAG_INIT;
 
 /// The maximum number of free poitners it can search before it gives up
 #define GMALLOC_MAX_SEARCH 32
-/// if the size of the entry / GMALLOC_MAX_MULTIPLE is greater than the requested size it is too big
+/// if the size of the entry / GMALLOC_MAX_MULTIPLE is greater than the
+/// requested size it is too big
 ///
-/// eg. if the size requested is 16 and GMALLOC_MAX_MULTIPLE is 2 then anything bigger than 32 (16 * 2) is too big
+/// eg. if the size requested is 16 and GMALLOC_MAX_MULTIPLE is 2 then anything
+/// bigger than 32 (16 * 2) is too big
 #define GMALLOC_MAX_MULTIPLE 2
 
 static bool not_valid(gheap_entry_t *ptr, size_t size) {
@@ -56,27 +57,22 @@ gheap_entry_t *find_entry(size_t size) {
     ptr->next->prev = ptr->prev;
   if (ptr->prev)
     ptr->prev->next = ptr->next;
-  if (!ptr->prev && !ptr->next) free_list = NULL;
+  if (!ptr->prev)
+    free_list = ptr->next;
 
   ptr->free = 0;
-  ptr->next = used_list;
-  if (used_list != NULL)
-    used_list->prev = ptr;
-  used_list = ptr;
 
   return ptr;
 }
 
 gheap_entry_t *create_entry(size_t size) {
-  gheap_entry_t *ptr = increment_global_brk(0);
-  increment_global_brk(size + sizeof(gheap_entry_t));
+
+  gheap_entry_t *ptr = (gheap_entry_t *)((size_t)increment_global_brk(
+                                             size + sizeof(gheap_entry_t)) -
+                                         (size + sizeof(gheap_entry_t)));
 
   ptr->size = size;
   ptr->free = 0;
-  ptr->next = used_list;
-  if (used_list != NULL)
-    used_list->prev = ptr;
-  ptr->prev = NULL;
 
   return ptr;
 }
@@ -102,6 +98,7 @@ void gfree(void *ptr) {
   spinlock_acquire(&lock);
 
   gheap_entry_t *entry = (gheap_entry_t *)ptr - 1;
+
   entry->next = free_list;
   if (free_list != NULL)
     free_list->prev = entry;
@@ -111,4 +108,3 @@ void gfree(void *ptr) {
 
   spinlock_release(&lock);
 }
-

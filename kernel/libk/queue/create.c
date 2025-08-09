@@ -6,4 +6,6 @@
 void queue_create(queue_t *queue) {
   queue->head = NULL;
   queue->tail = NULL;
+
+  queue->count = 0;
 }

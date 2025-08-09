@@ -52,7 +52,7 @@ bool check_in(void *addr, void *pml4) {
 static size_t tid_cur = 0;
 static spinlock_t tid_lock = ATOMIC_FLAG_INIT;
 
-TCB_t *create_thread(PCB_t *process, void (*entry_point)(void), bool queue) {
+TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
   TCB_t *tcb = gmalloc(sizeof(TCB_t));
 
   spinlock_acquire(&tid_lock);
@@ -62,27 +62,12 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void), bool queue) {
 
   tcb->pcb = process;
 
-  tcb->rsp0 = (size_t)create_new_kernel_stack(process->kernel_region, false,
-                                              &tcb->stack_num);
+  tcb->rsp0 = (size_t)create_new_kernel_stack(&tcb->stack_num);
 
-  size_t addr1 = tcb->rsp0 + 8 - PAGE_SIZE;
-  size_t addr2 = addr1 - PAGE_SIZE;
-
-  map_page_in((void *)addr1, PT_PRESENT | PT_READ_WRITE, 1,
-              (PML4_entry_t *)((size_t)tcb->pcb->cr3 + IDENTITY_MAPPED_ADDR));
-  map_page_in((void *)addr2, PT_PRESENT | PT_READ_WRITE, 1,
-              (PML4_entry_t *)((size_t)tcb->pcb->cr3 + IDENTITY_MAPPED_ADDR));
-
-  tcb->registers = gmalloc(sizeof(registers_t));
-  tcb->registers->cs = KERNEL_CODE_SELECTOR;
-  tcb->registers->ds = KERNEL_DATA_SELECTOR;
-  tcb->registers->es = KERNEL_DATA_SELECTOR;
-  tcb->registers->ss = KERNEL_DATA_SELECTOR;
-
-  tcb->userspace_registers = NULL;
+  tcb->xsave_page = (void *)((size_t)phys_alloc() + IDENTITY_MAPPED_ADDR);
 
   tcb->state = THREAD_STARTING;
-  tcb->rip0 = (size_t)entry_point;
+  tcb->entry_point = (size_t)entry_point;
 
   spinlock_acquire(&process->pcb_lock);
   tcb->next = process->tcbs;
@@ -92,9 +77,5 @@ TCB_t *create_thread(PCB_t *process, void (*entry_point)(void), bool queue) {
   process->tcbs = tcb;
   spinlock_release(&process->pcb_lock);
 
-  if (queue)
-    queue_thread(tcb);
-
   return tcb;
 }
-

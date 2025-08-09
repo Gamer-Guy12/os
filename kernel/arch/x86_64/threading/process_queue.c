@@ -29,7 +29,7 @@ void remove_process(PCB_t* pcb) {
     pcb->prev->next = pcb->next;
   if (pcb->next)
     pcb->next->prev = pcb->prev;
-  if (!pcb->next && !pcb->prev) process_list = NULL;
+  if (!pcb->prev) process_list = pcb->next;
 
   spinlock_release(&lock);
 }

@@ -38,7 +38,33 @@ static inline void cpuid(int code, uint32_t *a, uint32_t *d) {
 }
 
 static inline void interrupt(uint8_t interrupt) {
-  __asm__ volatile("int %0" :: "i"(interrupt):);
+  __asm__ volatile("int %0" ::"i"(interrupt) :);
 }
+
+static inline size_t coreid(void) {
+  size_t coreid = 0;
+  __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+                   : "=b"(coreid)::"rax");
+  return coreid;
+}
+
+#define FS_MSR 0xC0000100
+
+#define MFENCE __asm__ volatile("mfence" ::: "memory")
+#define HLT __asm__ volatile("hlt");
+#define TCB ((TCB_t*)(rdmsr(FS_MSR)))
+
+/// @return 1 if sucess and 0 if failure
+///
+/// @param dest this is a pointer to 16 bytes of contiguous memory which is
+/// compared
+///
+/// @param value this is the value that both elements are checked against
+///
+/// @param new this is the new value that will be loaded into memory
+///
+/// It checks that both values in a 16 byte contiguous range of memory are equal
+/// to value and if so returns 1 and loads new into all 128 bytes
+uint64_t cmpxchg16b(void *dest, uint64_t value, uint64_t new);
 
 #endif

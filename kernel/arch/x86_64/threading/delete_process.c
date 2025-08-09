@@ -24,7 +24,7 @@ void delete_process(PCB_t *pcb) {
     tcb = next;
   }
 
-  delete_addr_space(pcb);
+  // Unmap Lower addr space
 
   remove_process(pcb);
 

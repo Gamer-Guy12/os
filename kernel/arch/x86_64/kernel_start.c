@@ -1,4 +1,3 @@
-#include <threading/userspace.h>
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -12,8 +11,8 @@
 #include <libk/kio.h>
 #include <libk/macros.h>
 #include <libk/queue.h>
+#include <libk/rbtree.h>
 #include <libk/vga_kgfx.h>
-#include <mem/kheap.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
@@ -21,9 +20,11 @@
 #include <pic.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <threading.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
 #include <threading/threading.h>
+#include <threading/userspace.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);
@@ -56,11 +57,17 @@ typedef struct {
 
 void kernel_secondary_start(void);
 
+void pause(void) {
+  kio_printf("Here\n");
+  while (1) {
+  }
+}
+
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
-  TCB_t *tcb = create_thread(pcb, NULL, false);
+  TCB_t *tcb = create_thread(pcb, pause);
+  tcb->priority = TP_NORMAL;
 
-  pcb->state = PROCESS_RUNNING;
   tcb->state = THREAD_RUNNING;
 
 #define FS_MSR 0xC0000100
@@ -133,9 +140,457 @@ void kernel_start(uint8_t *multiboot) {
   change_stacks();
 }
 
+queue_t queue = {.head = NULL, .tail = NULL};
+
+void test_queue(void) {
+  kio_printf("\nLock Free Queue Tests\n\n");
+
+  // Empty insert test
+  kio_printf("QUEUE EMPTY INSERT TEST ");
+  queue_node_t *node1 = gmalloc(sizeof(queue_node_t));
+  queue_enqueue(&queue, node1);
+
+  if (queue.head == queue.tail && queue.head == node1) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Dequeue test
+  kio_printf("QUEUE DEQUEUE TEST ");
+
+  queue_node_t *node2 = gmalloc(sizeof(queue_node_t));
+  queue_enqueue(&queue, node2);
+
+  queue_node_t *pop1 = queue_dequeue(&queue);
+
+  if (pop1 == node1) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  gfree(node1);
+  node1 = NULL;
+  pop1 = NULL;
+
+  // Consecutive element dequeue test
+  kio_printf("QUEUE CONSECUTIVE ELEMENT DEQUEUE TEST ");
+
+  queue_node_t *pop2 = queue_dequeue(&queue);
+
+  if (pop2 == node2) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  gfree(node2);
+  node2 = NULL;
+  pop2 = NULL;
+
+  // Single element dequeue test
+  kio_printf("QUEUE SINGLE ELEMENT DEQUEUE TEST ");
+
+  queue_node_t *node3 = gmalloc(sizeof(queue_node_t));
+  queue_enqueue(&queue, node3);
+
+  queue_node_t *pop3 = queue_dequeue(&queue);
+
+  if (pop3 == node3) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  gfree(node3);
+  node3 = NULL;
+  pop3 = NULL;
+
+  // Empty dequeue test
+  kio_printf("QUEUE EMPTY DEQUEUE TEST ");
+
+  queue_node_t *pop4 = queue_dequeue(&queue);
+
+  if (pop4 == NULL) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+}
+
+bool failed = false;
+
+size_t verify_rbnode(rbtree_t *tree, rbnode_t *node) {
+  if (node->color == RB_RED) {
+    if (node->left->color == RB_RED || node->right->color == RB_RED) {
+      failed = true;
+      kio_printf("Here\n");
+    }
+  }
+
+  size_t left_height = 0;
+  if (node != &tree->nil) {
+    left_height = verify_rbnode(tree, node->left);
+  }
+  size_t right_height = 0;
+  if (node != &tree->nil) {
+    right_height = verify_rbnode(tree, node->right);
+  }
+
+  if (left_height == right_height) {
+    if (node->color == RB_BLACK)
+      return left_height + 1;
+    return left_height;
+  }
+
+  failed = true;
+  return left_height + 1;
+}
+
+bool verify_rbtree(rbtree_t *tree) {
+  if (tree->root == NULL)
+    return true;
+
+  verify_rbnode(tree, tree->root);
+
+  return !failed;
+}
+
+void print_node(rbtree_t *tree, rbnode_t *node, size_t indent) {
+  if (node == &tree->nil) {
+    return;
+  }
+
+  for (size_t i = 0; i < indent; i++) {
+    kio_printf("\t");
+  }
+
+  if (node->color == RB_RED) {
+    kio_printf("RED %u\n", node->value);
+  } else {
+    kio_printf("BLACK %u\n", node->value);
+  }
+
+  print_node(tree, node->left, indent + 1);
+  if (node->left == &tree->nil && node->right != &tree->nil) {
+    for (size_t i = 0; i < indent + 1; i++) {
+      kio_printf("\t");
+    }
+    kio_printf("BLACK NIL\n");
+  }
+
+  print_node(tree, node->right, indent + 1);
+  if (node->right == &tree->nil && node->left != &tree->nil) {
+    for (size_t i = 0; i < indent + 1; i++) {
+      kio_printf("\t");
+    }
+    kio_printf("BLACK NIL\n");
+  }
+}
+
+void print_tree(rbtree_t *tree) {
+  if (tree->root != NULL) {
+    print_node(tree, tree->root, 0);
+  } else {
+    kio_printf("NULL TREE\n");
+  }
+}
+
+void test_rbtree(void) {
+  rbtree_t tree;
+  rb_create(&tree);
+
+  kio_printf("\nRed Black Tree Tests\n\n");
+
+  // Empty insert
+  kio_printf("RBTREE INSERT EMPTY INSERT ");
+
+  rbnode_t *node1 = gmalloc(sizeof(rbnode_t));
+  node1->value = 3920;
+  rb_insert(&tree, node1);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 3: Root parent
+  kio_printf("RBTREE INSERT ROOT PARENT ");
+
+  rbnode_t *node2 = gmalloc(sizeof(rbnode_t));
+  node2->value = 4394949;
+  rb_insert(&tree, node2);
+
+  rbnode_t *node3 = gmalloc(sizeof(rbnode_t));
+  node3->value = 439;
+  rb_insert(&tree, node3);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 4: Red parent, Root grandparent
+  kio_printf("RBTREE INSERT RED PARENT ROOT GRANDPARENT ");
+
+  rbnode_t *node4 = gmalloc(sizeof(rbnode_t));
+  node4->value = 100;
+  rb_insert(&tree, node4);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  rbnode_t *node5 = gmalloc(sizeof(rbnode_t));
+  node5->value = 1000;
+  rb_insert(&tree, node5);
+
+  // Case 2: Red Parent Black Grandparent Red Uncle
+  kio_printf("RBTREE INSERT RED PARENT BLACK GRANDPARENT RED UNCLE ");
+
+  rbnode_t *node6 = gmalloc(sizeof(rbnode_t));
+  node6->value = 19;
+  rb_insert(&tree, node6);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 1: Black Parent
+  kio_printf("RBTREE INSERT BLACK PARENT ");
+
+  rbnode_t *node7 = gmalloc(sizeof(rbnode_t));
+  node7->value = 10;
+  rb_insert(&tree, node7);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 6: Outer Red Parent Black Grandparent Black Uncle
+  kio_printf("RBTREE INSERT OUTER RED PARENT BLACK GRANDPARENT RED UNCLE ");
+
+  rbnode_t *node8 = gmalloc(sizeof(rbnode_t));
+  node8->value = 140;
+  rb_insert(&tree, node8);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  rbnode_t *node9 = gmalloc(sizeof(rbnode_t));
+  node9->value = 1200;
+  rb_insert(&tree, node9);
+
+  // Case 5: Inner Red Parent Black Grandparent Black Uncle
+  kio_printf("RBTREE INSERT INNER RED PARENT BLACK GRANDPARENT RED UNCLE ");
+
+  rbnode_t *node10 = gmalloc(sizeof(rbnode_t));
+  node10->value = 1100;
+  rb_insert(&tree, node10);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  kio_printf("\n");
+
+  // Red Node no Children
+  kio_printf("RBTREE DELETE RED WITH NO KIDS ");
+
+  rb_delete(&tree, node9);
+  gfree(node9);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // 1 Child
+  kio_printf("RBTREE DELETE 1 CHILD ");
+
+  rb_delete(&tree, node10);
+  gfree(node10);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // 2 Children
+  kio_printf("RBTREE DELETE 2 CHILDREN ");
+
+  rb_delete(&tree, node3);
+  gfree(node3);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 6: Red Distant Black Sibling
+  kio_printf("RBTREE DELETE RED DISTANT BLACK SIBLING ");
+
+  rb_delete(&tree, node7);
+  gfree(node7);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  // Case 4: Red Parent Black Sibling
+  kio_printf("RBTREE DELETE RED PARENT BLACK SIBLING ");
+
+  rb_delete(&tree, node8);
+  gfree(node8);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  rbnode_t *node11 = gmalloc(sizeof(rbnode_t));
+  node11->value = 2000;
+  rb_insert(&tree, node11);
+
+  rbnode_t *node12 = gmalloc(sizeof(rbnode_t));
+  node12->value = 5;
+  rb_insert(&tree, node12);
+
+  rbnode_t *node13 = gmalloc(sizeof(rbnode_t));
+  node13->value = 90;
+  rb_insert(&tree, node13);
+
+  // Case 5: Red CLose Nephew
+  kio_printf("RBTREE DELETE RED CLOSE NEPHEW ");
+
+  rb_delete(&tree, node12);
+  gfree(node12);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  rbnode_t *node14 = gmalloc(sizeof(rbnode_t));
+  node14->value = 3000;
+  rb_insert(&tree, node14);
+
+  rbnode_t *node15 = gmalloc(sizeof(rbnode_t));
+  node15->value = 1500;
+  rb_insert(&tree, node15);
+
+  rb_delete(&tree, node11);
+  gfree(node11);
+
+  rb_delete(&tree, node2);
+  gfree(node2);
+
+  rb_delete(&tree, node15);
+  gfree(node15);
+
+  rb_delete(&tree, node1);
+  gfree(node1);
+
+  // Case 3: Red Sibling
+  kio_printf("RBTREE DELETE RED SIBLING ");
+
+  rb_delete(&tree, node13);
+  gfree(node13);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  rb_delete(&tree, node6);
+  gfree(node6);
+
+  // Case 2: All Black
+  kio_printf("RBTREE DELETE ALL BLACK ");
+
+  rb_delete(&tree, node14);
+  gfree(node14);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  rb_delete(&tree, node4);
+  gfree(node4);
+
+  // Case 1: Root
+  kio_printf("RBTREE DELETE ROOT ");
+
+  rb_delete(&tree, node5);
+  gfree(node5);
+
+  if (verify_rbtree(&tree)) {
+    kio_printf("[PASSED]\n");
+  } else {
+    kio_printf("[FAILED]\n");
+  }
+
+  kio_printf("\n");
+}
+
+void test1(void) {
+  while (true) {
+    size_t coreid = 0;
+    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+                     : "=b"(coreid)::"rax");
+
+    kio_printf("%x 1\n", coreid);
+    run_next_thread();
+  }
+}
+
+void test2(void) {
+  while (true) {
+    size_t coreid = 0;
+    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+                     : "=b"(coreid)::"rax");
+
+    kio_printf("%x 2\n", coreid);
+    run_next_thread();
+  }
+}
+
+void test3(void) {
+  while (true) {
+    size_t coreid = 0;
+    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+                     : "=b"(coreid)::"rax");
+
+    kio_printf("%x 3\n", coreid);
+    run_next_thread();
+  }
+}
+
 void kernel_secondary_start(void) {
-  init_heap();
-  kio_printf("Initialized the heap (kernel malloc)\n");
 
   // Uncomment to make the kernel fault to show that moving the break backwards
   // unmaps the pages
@@ -151,9 +606,52 @@ void kernel_secondary_start(void) {
   init_x86_64_hal();
   kio_printf("Initialized HAL\n");
 
+  init_threading();
+  kio_printf("Initialized Threading\n");
+
   start_cores();
   kio_printf("Started all cores\n");
 
-  kernel_main();
-}
+  // queue_node_t *node1 = gmalloc(sizeof(queue_node_t));
+  // queue_node_t *node2 = gmalloc(sizeof(queue_node_t));
+  // queue_node_t *node3 = gmalloc(sizeof(queue_node_t));
 
+  // queue_enqueue(&queue, node1);
+  // queue_enqueue(&queue, node2);
+
+  // queue_node_t *pop1 = queue_dequeue(&queue);
+  // kio_printf("Node 1 %x, %x is %x\n", (size_t)node1, (size_t)pop1,
+  //            (size_t)(node1 == pop1));
+
+  // queue_enqueue(&queue, node3);
+  // queue_node_t *pop2 = queue_dequeue(&queue);
+  // kio_printf("Node 2 %x, %x is %x\n", (size_t)node2, (size_t)pop2,
+  //            (size_t)(node2 == pop2));
+  // queue_node_t *pop3 = queue_dequeue(&queue);
+  // kio_printf("Node 3 %x, %x is %x\n", (size_t)node3, (size_t)pop3,
+  //            (size_t)(node3 == pop3));
+
+  test_queue();
+  test_rbtree();
+
+  PCB_t *cur_pcb = ((TCB_t *)rdmsr(FS_MSR))->pcb;
+
+  TCB_t *thread1 = create_thread(cur_pcb, test1);
+  TCB_t *thread2 = create_thread(cur_pcb, test2);
+  TCB_t *thread3 = create_thread(cur_pcb, test3);
+  TCB_t *thread4 = create_thread(cur_pcb, kernel_main);
+
+  thread1->priority = TP_NORMAL;
+  thread2->priority = TP_NORMAL;
+  thread3->priority = TP_NORMAL;
+  thread4->priority = TP_HIGH;
+
+  // swap_threads(thread3);
+
+  queue_thread(thread1, TP_NORMAL);
+  queue_thread(thread2, TP_NORMAL);
+  queue_thread(thread3, TP_NORMAL);
+  queue_thread(thread4, TP_HIGH);
+
+  kill_cur_thread();
+}

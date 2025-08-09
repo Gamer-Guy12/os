@@ -1,3 +1,4 @@
+#include <asm.h>
 #include <cls.h>
 #include <interrupts.h>
 #include <libk/err.h>
@@ -6,20 +7,32 @@
 #include <mem/memory.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <threading/pcb.h>
 
-void create_handlers(void) {
-  cls_t *cls = get_cls();
-  cls->handlers = gmalloc(sizeof(interrupt_handler_t) * 256);
-}
+#define FS_MSR 0xC0000100
+
+interrupt_handler_t handlers[256];
 
 void common_interrupt_handler(idt_registers_t *registers) {
-  interrupt_handler_t *handlers = get_cls()->handlers;
 
   bool is_exception = registers->interrupt_number < 32;
 
   if (is_exception && handlers[registers->interrupt_number] == NULL) {
-    kio_printf("Exception: number %x, error_code %x, registers:\n",
-               registers->interrupt_number, registers->error_code);
+    size_t coreid = 0;
+    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+                     : "=b"(coreid)::"rax");
+    TCB_t *tcb = (TCB_t *)(rdmsr(FS_MSR));
+
+    if (tcb) {
+      kio_printf("Exception: number %x, error_code %x, core %x, thread %x, "
+                 "registers:\n",
+                 registers->interrupt_number, registers->error_code, coreid,
+                 tcb->tid);
+    } else {
+      kio_printf("Exception: number %x, error_code %x, core %x, "
+                 "registers:\n",
+                 registers->interrupt_number, registers->error_code, coreid);
+    }
 
     kio_printf("RAX %x, RBX %x, RCX %x, RDX %x\n", registers->rax,
                registers->rbx, registers->rcx, registers->rdx);
@@ -45,6 +58,5 @@ void common_interrupt_handler(idt_registers_t *registers) {
 }
 
 void register_interrupt_handler(interrupt_handler_t handler, uint8_t index) {
-  interrupt_handler_t *handlers = get_cls()->handlers;
   handlers[index] = handler;
 }

@@ -1,8 +1,9 @@
-#include <mem/memory.h>
 #include <decls.h>
 #include <libk/kio.h>
+#include <mem/memory.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <threading.h>
 
 void test_gmalloc(void) {
   uint64_t *ptr1 = gmalloc(8);
@@ -54,7 +55,7 @@ void NORETURN kernel_main(void) {
   // kio_printf("Malloc %u\n", *num1);
   // kio_printf("Malloc %u\n", *num3);
 
-  while (1) {
-  }
-}
+  kill_cur_thread();
 
+  while (1) {}
+}

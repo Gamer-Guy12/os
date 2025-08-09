@@ -20,6 +20,11 @@ void init_global_brk(void) {
 
 void *increment_global_brk(size_t amount) {
   spinlock_acquire(&global_brk_lock);
+  if (amount == 0) {
+    void* ret = global_brk;
+    spinlock_release(&global_brk_lock);
+    return ret;
+  }
 
   size_t brk = (size_t)global_brk;
   size_t cur_page_index = ROUND_DOWN(brk, PAGE_SIZE) / PAGE_SIZE;
