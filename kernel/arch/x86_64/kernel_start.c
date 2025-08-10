@@ -1,3 +1,4 @@
+#include <apic_timer.h>
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -5,8 +6,8 @@
 #include <decls.h>
 #include <gdt.h>
 #include <hal/hal.h>
-#include <hal/irq.h>
 #include <interrupts.h>
+#include <irq.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/macros.h>
@@ -559,34 +560,31 @@ void test_rbtree(void) {
 
 void test1(void) {
   while (true) {
-    size_t coreid = 0;
-    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
-                     : "=b"(coreid)::"rax");
+    // size_t coreid = 0;
+    // __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+    //                  : "=b"(coreid)::"rax");
 
-    kio_printf("%x 1\n", coreid);
-    run_next_thread();
+    // kio_printf("%x 1\n", coreid);
   }
 }
 
 void test2(void) {
   while (true) {
-    size_t coreid = 0;
-    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
-                     : "=b"(coreid)::"rax");
+    // size_t coreid = 0;
+    // __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+    //                  : "=b"(coreid)::"rax");
 
-    kio_printf("%x 2\n", coreid);
-    run_next_thread();
+    // kio_printf("%x 2\n", coreid);
   }
 }
 
 void test3(void) {
   while (true) {
-    size_t coreid = 0;
-    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
-                     : "=b"(coreid)::"rax");
+    // size_t coreid = 0;
+    // __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
+    //                  : "=b"(coreid)::"rax");
 
-    kio_printf("%x 3\n", coreid);
-    run_next_thread();
+    // kio_printf("%x 3\n", coreid);
   }
 }
 
@@ -603,11 +601,17 @@ void kernel_secondary_start(void) {
   init_interrupts();
   kio_printf("Initialized Interrupts\n");
 
+  init_irq();
+  kio_printf("Initialized IRQs\n");
+
   init_x86_64_hal();
   kio_printf("Initialized HAL\n");
 
   init_threading();
   kio_printf("Initialized Threading\n");
+
+  init_apic_timer();
+  kio_printf("Initialized APIC Timer\n");
 
   start_cores();
   kio_printf("Started all cores\n");
@@ -633,6 +637,9 @@ void kernel_secondary_start(void) {
 
   test_queue();
   test_rbtree();
+ 
+  enable_preemption();
+  kio_printf("Preemption Enabled\n");
 
   PCB_t *cur_pcb = ((TCB_t *)rdmsr(FS_MSR))->pcb;
 

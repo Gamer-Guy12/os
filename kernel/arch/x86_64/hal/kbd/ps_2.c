@@ -1,7 +1,7 @@
 #include <cls.h>
-#include <hal/irq.h>
 #include <hal/kbd.h>
 #include <interrupts.h>
+#include <irq.h>
 #include <libk/key.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
@@ -96,14 +96,14 @@ static void on_key_event(idt_registers_t *registers) {
     }
   }
 
-  hal_irq_t irqs = get_hal_irq();
+  irq_t irqs = get_irq();
   irqs.unmask_irq(0x1);
   irqs.eoi();
 }
 
 static void setup_irq(void) {
   register_interrupt_handler(on_key_event, 0x30);
-  hal_irq_t irqs = get_hal_irq();
+  irq_t irqs = get_irq();
   irqs.map_irq(0x30, 0x1);
   irqs.unmask_irq(0x1);
 }

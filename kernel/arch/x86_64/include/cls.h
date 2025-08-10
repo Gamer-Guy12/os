@@ -5,7 +5,7 @@
 
 #include <decls.h>
 #include <gdt.h>
-#include <hal/irq.h>
+#include <irq.h>
 #include <hal/kbd.h>
 #include <interrupts.h>
 #include <libk/list.h>

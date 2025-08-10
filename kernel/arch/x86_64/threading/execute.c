@@ -1,3 +1,4 @@
+#include "apic_timer.h"
 #include <asm.h>
 #include <cls.h>
 #include <libk/kio.h>
@@ -9,6 +10,8 @@
 #include <threading/threading.h>
 
 void run_next_thread(void) {
+  disable_preemption();
+
   TCB_t *tcb = TCB;
   tcb->rb_node.value++;
 
@@ -35,4 +38,6 @@ void run_next_thread(void) {
   } else if (old->state == THREAD_TERMINATED) {
     delete_thread(old);
   }
+
+  enable_preemption();
 }
