@@ -1,16 +1,20 @@
+#include <apic_timer.h>
 #include <asm.h>
 #include <threading/tcb.h>
 #include <threading/threading.h>
 
-void begin_thread(TCB_t* old) {
-  TCB->state = THREAD_RUNNING;
+void begin_thread(TCB_t *old) {
+  TCB_t *tcb = TCB;
+  tcb->state = THREAD_RUNNING;
 
   if (old->state == THREAD_RUNNING) {
     queue_thread(old, old->priority);
   } else if (old->state == THREAD_TERMINATED) {
-    delete_thread(old);   
+    delete_thread(old);
   }
 
-  __asm__ volatile("jmp %0" :: "r"(TCB->entry_point));
-}
+  STI;
+  enable_preemption();
 
+  __asm__ volatile("jmp *%0" ::"r"(tcb->entry_point));
+}

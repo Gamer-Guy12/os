@@ -60,3 +60,4 @@ void common_interrupt_handler(idt_registers_t *registers) {
 void register_interrupt_handler(interrupt_handler_t handler, uint8_t index) {
   handlers[index] = handler;
 }
+

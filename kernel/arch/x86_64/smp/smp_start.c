@@ -1,4 +1,4 @@
-#include <threading.h>
+#include <apic_timer.h>
 #include <asm.h>
 #include <cls.h>
 #include <gdt.h>
@@ -15,6 +15,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <threading.h>
+#include <threading/threading.h>
 #include <x86_64.h>
 
 extern void create_local_proccess(void);
@@ -33,7 +35,7 @@ setup_ret_t setup_memory(void) {
     if (i != 510)
       pml4[i] = cur_pml4[i];
   }
-  
+
   // Recursive mapping
   size_t phys_pml4 = (size_t)pml4 - IDENTITY_MAPPED_ADDR;
   pml4[510].full_entry = phys_pml4;
@@ -50,10 +52,8 @@ setup_ret_t setup_memory(void) {
   old_page = ROUND_DOWN(old_page, PAGE_SIZE);
 
   MFENCE;
-  setup_ret_t ret = {
-    .phys_addr = virt_to_phys(old_page),
-    .stack_addr = ((TCB_t*)(TCB))->rsp0
-  };
+  setup_ret_t ret = {.phys_addr = virt_to_phys(old_page),
+                     .stack_addr = ((TCB_t *)(TCB))->rsp0};
 
   return ret;
 }
@@ -70,5 +70,11 @@ void smp_start(size_t processor_id, size_t old_page) {
 
   init_interrupts();
 
+  init_apic_timer();
+  start_preemption();
+
+  TCB_t *idle_task = create_thread(TCB->pcb, idle);
+  idle_task->priority = TP_IDLE;
+  queue_thread(idle_task, idle_task->priority);
   kill_cur_thread();
 }

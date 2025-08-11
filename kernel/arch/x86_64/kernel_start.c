@@ -1,12 +1,13 @@
 #include <acpi/acpi.h>
 #include <apic.h>
+#include <apic_timer.h>
 #include <asm.h>
 #include <cls.h>
 #include <decls.h>
 #include <gdt.h>
 #include <hal/hal.h>
-#include <hal/irq.h>
 #include <interrupts.h>
+#include <irq.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
 #include <libk/macros.h>
@@ -57,15 +58,9 @@ typedef struct {
 
 void kernel_secondary_start(void);
 
-void pause(void) {
-  kio_printf("Here\n");
-  while (1) {
-  }
-}
-
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
-  TCB_t *tcb = create_thread(pcb, pause);
+  TCB_t *tcb = create_thread(pcb, NULL);
   tcb->priority = TP_NORMAL;
 
   tcb->state = THREAD_RUNNING;
@@ -557,39 +552,6 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
-void test1(void) {
-  while (true) {
-    size_t coreid = 0;
-    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
-                     : "=b"(coreid)::"rax");
-
-    kio_printf("%x 1\n", coreid);
-    run_next_thread();
-  }
-}
-
-void test2(void) {
-  while (true) {
-    size_t coreid = 0;
-    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
-                     : "=b"(coreid)::"rax");
-
-    kio_printf("%x 2\n", coreid);
-    run_next_thread();
-  }
-}
-
-void test3(void) {
-  while (true) {
-    size_t coreid = 0;
-    __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
-                     : "=b"(coreid)::"rax");
-
-    kio_printf("%x 3\n", coreid);
-    run_next_thread();
-  }
-}
-
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -603,11 +565,17 @@ void kernel_secondary_start(void) {
   init_interrupts();
   kio_printf("Initialized Interrupts\n");
 
+  init_irq();
+  kio_printf("Initialized IRQs\n");
+
   init_x86_64_hal();
   kio_printf("Initialized HAL\n");
 
   init_threading();
   kio_printf("Initialized Threading\n");
+
+  init_apic_timer();
+  kio_printf("Initialized APIC Timer\n");
 
   start_cores();
   kio_printf("Started all cores\n");
@@ -634,24 +602,13 @@ void kernel_secondary_start(void) {
   test_queue();
   test_rbtree();
 
-  PCB_t *cur_pcb = ((TCB_t *)rdmsr(FS_MSR))->pcb;
+  start_preemption();
+  enable_preemption();
+  kio_printf("Preemption Started\n");
 
-  TCB_t *thread1 = create_thread(cur_pcb, test1);
-  TCB_t *thread2 = create_thread(cur_pcb, test2);
-  TCB_t *thread3 = create_thread(cur_pcb, test3);
-  TCB_t *thread4 = create_thread(cur_pcb, kernel_main);
-
-  thread1->priority = TP_NORMAL;
-  thread2->priority = TP_NORMAL;
-  thread3->priority = TP_NORMAL;
-  thread4->priority = TP_HIGH;
-
-  // swap_threads(thread3);
-
-  queue_thread(thread1, TP_NORMAL);
-  queue_thread(thread2, TP_NORMAL);
-  queue_thread(thread3, TP_NORMAL);
-  queue_thread(thread4, TP_HIGH);
+  TCB_t *idle_task = create_thread(TCB->pcb, idle);
+  idle_task->priority = TP_IDLE;
+  queue_thread(idle_task, idle_task->priority);
 
   kill_cur_thread();
 }

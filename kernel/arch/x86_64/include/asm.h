@@ -33,8 +33,9 @@ static inline uint64_t rdmsr(uint64_t msr) {
   return ((uint64_t)high << 32) | low;
 }
 
-static inline void cpuid(int code, uint32_t *a, uint32_t *d) {
-  __asm__ volatile("cpuid" : "=a"(*a), "=d"(*d) : "0"(code) : "ebx", "ecx");
+static inline void cpuid(int code, uint32_t *a, uint32_t *d, uint32_t *c,
+                         uint32_t *b) {
+  __asm__ volatile("cpuid" : "=a"(*a), "=d"(*d), "=c"(*c), "=b"(*b) : "0"(code));
 }
 
 static inline void interrupt(uint8_t interrupt) {
@@ -52,7 +53,10 @@ static inline size_t coreid(void) {
 
 #define MFENCE __asm__ volatile("mfence" ::: "memory")
 #define HLT __asm__ volatile("hlt");
-#define TCB ((TCB_t*)(rdmsr(FS_MSR)))
+#define TCB ((TCB_t *)(rdmsr(FS_MSR)))
+#define CLI __asm__ volatile("cli");
+#define STI __asm__ volatile("sti")
+#define DIV0 __asm__ volatile("div %%rcx" :: "c"(0));
 
 /// @return 1 if sucess and 0 if failure
 ///

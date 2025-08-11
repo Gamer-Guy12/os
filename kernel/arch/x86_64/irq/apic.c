@@ -1,16 +1,16 @@
-#include "libk/kio.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
-#include <hal/irq.h>
 #include <interrupts.h>
+#include <irq.h>
 #include <mem/pimemory.h>
 #include <stddef.h>
 #include <stdint.h>
 
 bool check_apic(void) {
   uint32_t a, d;
-  cpuid(1, &a, &d);
+  uint32_t c, b;
+  cpuid(1, &a, &d, &c, &b);
   return d & (1 << 9);
 }
 
@@ -153,17 +153,19 @@ void apic_set_edge_triggered(bool edge, uint32_t irq) {
   write_io_apic_reg(offset, redirect_lobyte);
 }
 
-hal_irq_t init_apic(void) {
+irq_t init_apic(void) {
   // Set the spurious interrupt vecor
   write_apic_register(SPURIOUS_INTERRUPT_VECTOR_REG, 0xFF | (1 << 8));
 
-  hal_irq_t ret;
+  irq_t ret;
   ret.eoi = apic_eoi;
   ret.map_irq = apic_map_irq;
   ret.mask_irq = apic_mask_irq;
   ret.unmask_irq = apic_unmask_irq;
   ret.mask_all_irqs = apic_mask_all_irqs;
   ret.set_edge_triggered = apic_set_edge_triggered;
+
+  apic_mask_all_irqs();
 
   return ret;
 }

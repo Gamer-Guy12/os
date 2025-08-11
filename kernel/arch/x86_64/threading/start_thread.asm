@@ -9,6 +9,7 @@ start_thread:
 ; Says it returns the old thread
 ; It actually passes in the old thread into rdi
 start_thread_actual:
+  cli
   ; RAX Now contains the current TCB
   mov rcx, 0xC0000100
   rdmsr

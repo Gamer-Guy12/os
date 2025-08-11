@@ -17,3 +17,8 @@
 
 - [ ] Add to the handlers a part where it will store rsp and rip if the interrupt came from cpl != 0 and put them into the TCB
 
+# Remeber
+
+- [ ] Save GS and FS in the jmp to userspace
+- [ ] Clear out the user page tables when deleting a process
+

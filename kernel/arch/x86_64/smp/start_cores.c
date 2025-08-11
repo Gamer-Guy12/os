@@ -112,6 +112,7 @@ void wait_for_delivery(void) {
 }
 
 void start_cores(void) {
+  CLI;
   uint8_t core_count = get_cores(NULL);
   uint8_t core_ids[core_count];
   get_cores(core_ids);
@@ -217,4 +218,5 @@ void start_cores(void) {
   for (size_t i = 0; i < page_count; i++) {
     unmap_page((void *)(0x8000 + i * PAGE_SIZE), false);
   }
+  STI;
 }
