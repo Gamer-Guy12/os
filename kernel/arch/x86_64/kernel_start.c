@@ -606,9 +606,5 @@ void kernel_secondary_start(void) {
   enable_preemption();
   kio_printf("Preemption Started\n");
 
-  TCB_t *idle_task = create_thread(TCB->pcb, idle);
-  idle_task->priority = TP_IDLE;
-  queue_thread(idle_task, idle_task->priority);
-
   kill_cur_thread();
 }

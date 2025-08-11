@@ -15,13 +15,16 @@ void run_next_thread(void) {
   TCB_t *tcb = TCB;
   tcb->rb_node.value++;
 
-  TCB_t *next = pop_thread();
+  TCB_t *next = pop_thread(&get_cls()->thread_queue);
 
   // If there is nothing continue on
   if (next == NULL) {
-    STI;
-    enable_preemption();
-    return;
+    next = steal_thread();
+    if (next == NULL) {
+      STI;
+      enable_preemption();
+      return;
+    }
   }
 
   // The thread that was just executed will be in rax when this thread resumes
@@ -36,7 +39,7 @@ void run_next_thread(void) {
   }
 
   if (old->state == THREAD_RUNNING) {
-    queue_thread(old, old->priority);
+    queue_thread(old, old->priority, &get_cls()->thread_queue);
   } else if (old->state == THREAD_TERMINATED) {
     delete_thread(old);
   }

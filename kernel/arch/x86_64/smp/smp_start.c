@@ -60,7 +60,7 @@ setup_ret_t setup_memory(void) {
 
 void smp_start(size_t processor_id, size_t old_page) {
 
-  __asm__ volatile("cli");
+  CLI;
 
   phys_free((void *)old_page);
 
@@ -70,11 +70,10 @@ void smp_start(size_t processor_id, size_t old_page) {
 
   init_interrupts();
 
+  init_threading();
+
   init_apic_timer();
   start_preemption();
 
-  TCB_t *idle_task = create_thread(TCB->pcb, idle);
-  idle_task->priority = TP_IDLE;
-  queue_thread(idle_task, idle_task->priority);
   kill_cur_thread();
 }

@@ -10,6 +10,20 @@ userspace_jump:
   shl rdx, 32
   or rax, rdx
 
+  ; RDX contains the pointer to the CLS
+  push rax
+  mov rcx, 0xC0000101
+  rdmsr
+  shl rdx, 32
+  or rdx, rax
+  pop rax
+
+  ; Offset 0 into the cls contains the place to save the TCB
+  mov [rax], rdx
+
+  ; Load the new gs
+  swapgs
+
   ; Store old rip into the tcb
   pop r10
 

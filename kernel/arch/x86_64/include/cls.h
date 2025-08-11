@@ -5,24 +5,27 @@
 
 #include <decls.h>
 #include <gdt.h>
-#include <irq.h>
 #include <hal/kbd.h>
 #include <interrupts.h>
+#include <irq.h>
 #include <libk/list.h>
 #include <libk/queue.h>
 #include <libk/rbtree.h>
 #include <stddef.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
+#include <threading/threading.h>
 
 typedef struct {
+  /// IMPORTANT: This should only be used to save the current tcb when it is
+  /// necessary not for common use
+  /// user fs is saved when in kernel space which makes it even more important
+  /// not to mess with this
+  TCB_t *cur_tcb;
   ALIGN(0x10) gdt_descriptor_t gdt[DESCRIPTOR_COUNT];
   tss_t *tss;
-  void* true_addr;
-  // queue_t idle_queue;
-  // queue_t normal_queue;
-  // rbtree_t priority_queue;
-  // rbtree_t io_queue;
+  void *true_addr;
+  thread_queue_t thread_queue;
   list_node_t node;
 } cls_t;
 

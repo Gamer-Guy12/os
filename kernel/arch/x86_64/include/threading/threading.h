@@ -2,10 +2,19 @@
 #define X86_64_THREADING_H
 
 #include <interrupts.h>
+#include <libk/queue.h>
+#include <libk/rbtree.h>
 #include <stddef.h>
 #include <threading.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
+
+typedef struct {
+  queue_t idle_queue;
+  queue_t normal_queue;
+  rbtree_t priority_queue;
+  rbtree_t io_queue;
+} thread_queue_t;
 
 /// Loads a new thread
 /// Returns the old thread
@@ -14,13 +23,6 @@ TCB_t *switch_threads(TCB_t *thread);
 /// Returns the old thread
 TCB_t *start_thread(TCB_t *thread);
 
-PCB_t *create_process(void);
-TCB_t *create_thread(PCB_t *process, void (*entry_point)(void));
-
-void delete_process(PCB_t *pcb);
-/// Thread is expected to not be in the queue when deleted
-void delete_thread(TCB_t *tcb);
-
 /// Create process calls this
 void store_process(PCB_t *pcb);
 /// Delete process calls this
@@ -28,8 +30,11 @@ void remove_process(PCB_t *pcb);
 PCB_t *get_proc_list(void);
 void clear_processes(void);
 
-void queue_thread(TCB_t *tcb, thread_priority_t priority);
-TCB_t *pop_thread(void);
+void queue_thread(TCB_t *tcb, thread_priority_t priority,
+                  thread_queue_t *queue);
+TCB_t *pop_thread(thread_queue_t *queue);
+
+TCB_t *steal_thread(void);
 
 void init_threading(void);
 

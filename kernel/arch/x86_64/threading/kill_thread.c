@@ -9,3 +9,8 @@ void kill_cur_thread(void) {
     run_next_thread();
   }
 }
+
+void kill_thread(TCB_t* thread) {
+  delete_thread(thread); 
+}
+
