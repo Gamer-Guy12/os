@@ -11,5 +11,6 @@ void run_next_thread(void);
 
 void NORETURN kill_cur_thread(void);
 
-#endif
+void idle(void);
 
+#endif

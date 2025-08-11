@@ -56,6 +56,7 @@ static inline size_t coreid(void) {
 #define TCB ((TCB_t *)(rdmsr(FS_MSR)))
 #define CLI __asm__ volatile("cli");
 #define STI __asm__ volatile("sti")
+#define DIV0 __asm__ volatile("div %%rcx" :: "c"(0));
 
 /// @return 1 if sucess and 0 if failure
 ///

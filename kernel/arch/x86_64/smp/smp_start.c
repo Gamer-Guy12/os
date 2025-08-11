@@ -16,6 +16,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <threading.h>
+#include <threading/threading.h>
 #include <x86_64.h>
 
 extern void create_local_proccess(void);
@@ -70,7 +71,10 @@ void smp_start(size_t processor_id, size_t old_page) {
   init_interrupts();
 
   init_apic_timer();
-  enable_preemption();
+  start_preemption();
 
+  TCB_t *idle_task = create_thread(TCB->pcb, idle);
+  idle_task->priority = TP_IDLE;
+  queue_thread(idle_task, idle_task->priority);
   kill_cur_thread();
 }

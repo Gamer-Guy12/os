@@ -1,10 +1,10 @@
 #include "libk/kio.h"
-#include <libk/spinlock.h>
-#include <irq.h>
 #include <apic.h>
 #include <apic_timer.h>
 #include <asm.h>
 #include <interrupts.h>
+#include <irq.h>
+#include <libk/spinlock.h>
 #include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -61,11 +61,10 @@ void on_preempt(idt_registers_t *regs) {
   // __asm__ volatile ("mov $0x38, %rax; mov $0x0, %rbx; div %rbx");
   irq_t irq = get_irq();
   irq.eoi();
-  return;
   run_next_thread();
 }
 
-static void dummy_irq(idt_registers_t* regs) {
+static void dummy_irq(idt_registers_t *regs) {
   irq_t irq = get_irq();
   irq.eoi();
 }
@@ -73,7 +72,7 @@ static void dummy_irq(idt_registers_t* regs) {
 /// The APIC should have masked everything so this shouldn't make an interrupt
 void calculate_frequency(void) {
   spinlock_acquire(&frequency_lock);
-  
+
   if (frequency != 0) {
     spinlock_release(&frequency_lock);
     return;
@@ -99,11 +98,11 @@ void calculate_frequency(void) {
   WRITE_PIT_DATA_0(count && 0xff);
   io_wait();
   WRITE_PIT_DATA_0((count && 0xff00) >> 8);
-  
+
   write_apic_register(TIMER_INITIAL_COUNT_REG, apic_count);
 
   // wait for pit to finish
-  
+
   while (true) {
     WRITE_PIT_COMMAND(PIT_LATCH_COUNT_VAL | PIT_CHANNEL_0);
     io_wait();
@@ -120,9 +119,10 @@ void calculate_frequency(void) {
 
   // Get the current apic time count
   uint32_t cur_count = read_apic_register(TIMER_CUR_COUNT_REG);
-  
-  // We used a 16 divider so multiply by 16 and also make it into a number that counted up
-  // We are using a uint32_t so its important that we set the same bits 
+
+  // We used a 16 divider so multiply by 16 and also make it into a number that
+  // counted up We are using a uint32_t so its important that we set the same
+  // bits
   uint32_t bits_set = -1;
   size_t calculation_frequency = bits_set;
   calculation_frequency -= cur_count;
@@ -136,20 +136,18 @@ void calculate_frequency(void) {
   spinlock_release(&frequency_lock);
 }
 
-void init_apic_timer(void) {
-  calculate_frequency();
-}
+void init_apic_timer(void) { calculate_frequency(); }
 
-void enable_preemption(void) {
+void start_preemption(void) {
   // Assumptions: This CPU supports cpuid leaf 0x15, This CPU is using an
   // integrated LAPIC and not discrete This means that I can use the core
   // crystal frequency from ecx in leaf 0x15 to find the frequency of the APIC
   // Timer
 
-  // Divide by 2 should be used
+  // Divide by 16 should be used
   // This is because on the wiki it says bochs cant handle 1
   // so we must be nice
-  write_apic_register(TIMER_DIV_CONFIG_REG, TIMER_DIV_2);
+  write_apic_register(TIMER_DIV_CONFIG_REG, TIMER_DIV_16);
 
   // The preemption vector is 0x60
   register_interrupt_handler(on_preempt, 0x60);
@@ -159,11 +157,21 @@ void enable_preemption(void) {
 
   // This is in hertz
   const size_t targeted_frequency = 1000 / QUANTUM_LENGTH;
-  // The timer runs at half the speed of the clock this means that we want to wait for half as many ticks
-  const size_t count_value = (frequency / targeted_frequency) / 2;
+  // The timer runs at half the speed of the clock this means that we want to
+  // wait for half as many ticks Above is wrong it runs at a sixteenth of a
+  // speed
+  const size_t count_value = (frequency / targeted_frequency) / 16 / 10;
   write_apic_register(TIMER_INITIAL_COUNT_REG, count_value);
+
+  STI;
+}
+
+void enable_preemption(void) {
+  write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | TIMER_PERIODIC);
+  STI;
 }
 
 void disable_preemption(void) {
-  write_apic_register(TIMER_INITIAL_COUNT_REG, 0);
+  write_apic_register(LVT_TIMER_REG,
+                      LVT_VECTOR(0x60) | TIMER_PERIODIC | LVT_MASK);
 }

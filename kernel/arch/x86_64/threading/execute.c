@@ -1,4 +1,4 @@
-#include "apic_timer.h"
+#include <apic_timer.h>
 #include <asm.h>
 #include <cls.h>
 #include <libk/kio.h>
@@ -19,6 +19,8 @@ void run_next_thread(void) {
 
   // If there is nothing continue on
   if (next == NULL) {
+    STI;
+    enable_preemption();
     return;
   }
 
@@ -39,5 +41,6 @@ void run_next_thread(void) {
     delete_thread(old);
   }
 
+  STI;
   enable_preemption();
 }
