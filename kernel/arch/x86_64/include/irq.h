@@ -1,6 +1,7 @@
 #ifndef X86_64_HAL_IRQ_H
 #define X86_64_HAL_IRQ_H
 
+#include <decls.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -15,7 +16,7 @@ typedef struct {
 } irq_t;
 
 void init_irq(void);
-irq_t get_irq(void);
+irq_t WUNUSED get_irq(void);
 
 /// List of check functions
 bool check_apic(void);

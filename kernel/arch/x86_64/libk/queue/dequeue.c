@@ -41,7 +41,8 @@ queue_node_t *queue_dequeue(queue_t *queue) {
 
   spinlock_release(&queue->lock);
 
-  __atomic_fetch_sub(&queue->count, 1, __ATOMIC_RELEASE);
+  if (ret)
+    __atomic_fetch_sub(&queue->count, 1, __ATOMIC_RELEASE);
 
   return (queue_node_t *)ret;
 }

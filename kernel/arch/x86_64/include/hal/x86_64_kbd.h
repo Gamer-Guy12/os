@@ -3,10 +3,11 @@
 
 #include <hal/kbd.h>
 #include <stdbool.h>
+#include <decls.h>
 
-bool check_ps_2(void);
+bool WUNUSED check_ps_2(void);
 
-hal_kbd_t init_ps_2(void);
+hal_kbd_t WUNUSED init_ps_2(void);
 
 #endif
 

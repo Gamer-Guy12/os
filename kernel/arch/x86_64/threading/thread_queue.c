@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <asm.h>
 #include <cls.h>
 #include <libk/queue.h>
@@ -48,6 +49,7 @@ void queue_thread(TCB_t *tcb, thread_priority_t priority,
 TCB_t *pop_thread(thread_queue_t *queue) {
   CLI;
   thread_priority_t cur_priority = TCB->priority;
+  size_t cur_state = TCB->state;
 
   MFENCE;
   rbnode_t *rb_node = rb_delete_min(&queue->io_queue, queue->io_queue.root);
@@ -55,7 +57,7 @@ TCB_t *pop_thread(thread_queue_t *queue) {
     return (TCB_t *)((size_t)rb_node - offsetof(TCB_t, rb_node));
   }
 
-  if (cur_priority == TP_IO) {
+  if (cur_priority == TP_IO && cur_state != THREAD_TERMINATED) {
     return NULL;
   }
 
@@ -64,7 +66,7 @@ TCB_t *pop_thread(thread_queue_t *queue) {
     return (TCB_t *)((size_t)rb_node - offsetof(TCB_t, rb_node));
   }
 
-  if (cur_priority == TP_HIGH) {
+  if (cur_priority == TP_HIGH && cur_state != THREAD_TERMINATED) {
     return NULL;
   }
 
@@ -73,7 +75,7 @@ TCB_t *pop_thread(thread_queue_t *queue) {
     return (TCB_t *)((size_t)queue_node - offsetof(TCB_t, queue_node));
   }
 
-  if (cur_priority == TP_NORMAL) {
+  if (cur_priority == TP_NORMAL && cur_state != THREAD_TERMINATED) {
     return NULL;
   }
 
@@ -84,4 +86,3 @@ TCB_t *pop_thread(thread_queue_t *queue) {
 
   return NULL;
 }
-

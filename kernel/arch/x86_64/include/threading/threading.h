@@ -18,21 +18,21 @@ typedef struct {
 
 /// Loads a new thread
 /// Returns the old thread
-TCB_t *switch_threads(TCB_t *thread);
+TCB_t *WUNUSED switch_threads(TCB_t *thread);
 /// If a thread has state started then instead u want to start it
 /// Returns the old thread
-TCB_t *start_thread(TCB_t *thread);
+TCB_t *WUNUSED start_thread(TCB_t *thread);
 
 /// Create process calls this
 void store_process(PCB_t *pcb);
 /// Delete process calls this
 void remove_process(PCB_t *pcb);
-PCB_t *get_proc_list(void);
+PCB_t *WUNUSED get_proc_list(void);
 void clear_processes(void);
 
 void queue_thread(TCB_t *tcb, thread_priority_t priority,
                   thread_queue_t *queue);
-TCB_t *pop_thread(thread_queue_t *queue);
+TCB_t *WUNUSED pop_thread(thread_queue_t *queue);
 
 void init_threading(void);
 

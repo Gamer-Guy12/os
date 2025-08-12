@@ -554,7 +554,7 @@ void test_rbtree(void) {
 
 void test(void) {
   while (1) {
-    kio_printf("%x\n", TCB);
+    kio_printf("%x %x\n", TCB->tid, coreid());
   }
 }
 
@@ -612,9 +612,12 @@ void kernel_secondary_start(void) {
   enable_preemption();
   kio_printf("Preemption Started\n");
 
-  TCB_t* tcb = create_thread(TCB->pcb, test);
+  TCB_t *tcb = create_thread(TCB->pcb, test);
+  TCB_t *tcb2 = create_thread(TCB->pcb, test);
   tcb->priority = TP_NORMAL;
+  tcb2->priority = TP_NORMAL;
   schedule_thread(tcb, TP_NORMAL);
+  schedule_thread(tcb2, TP_NORMAL);
 
   kill_cur_thread();
 }

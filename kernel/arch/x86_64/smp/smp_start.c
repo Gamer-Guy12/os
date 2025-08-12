@@ -74,6 +74,7 @@ void smp_start(size_t processor_id, size_t old_page) {
 
   init_apic_timer();
   start_preemption();
+  enable_preemption();
 
   kill_cur_thread();
 }

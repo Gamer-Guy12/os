@@ -14,7 +14,6 @@
 interrupt_handler_t handlers[256];
 
 void common_interrupt_handler(idt_registers_t *registers) {
-
   bool is_exception = registers->interrupt_number < 32;
 
   if (is_exception && handlers[registers->interrupt_number] == NULL) {

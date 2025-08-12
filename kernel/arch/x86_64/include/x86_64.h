@@ -1,6 +1,7 @@
 #ifndef X86_64_KERNEL_H
 #define X86_64_KERNEL_H
 
+#include <decls.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -17,8 +18,8 @@ void start_cores(void);
 
 // Multiboot
 void init_multiboot(uint8_t *multiboot);
-uint8_t *get_multiboot(void);
-size_t get_multiboot_size(void);
+uint8_t *WUNUSED get_multiboot(void);
+size_t WUNUSED get_multiboot_size(void);
 void print_multiboot_info(void);
 
 uint8_t *move_to_type(uint32_t type);

@@ -64,6 +64,6 @@ typedef struct {
   XSDP_t xsdp;
 } PACKED mltbt_rsdp_new_t;
 
-void *multiboot_get_tag(uint32_t type);
+void *WUNUSED multiboot_get_tag(uint32_t type);
 
 #endif

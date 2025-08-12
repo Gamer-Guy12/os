@@ -30,9 +30,9 @@ typedef struct {
 } cls_t;
 
 void init_cls(void);
-cls_t *get_cls(void);
-list_t *get_cls_list(void);
-cls_t *get_cls_at(size_t index);
-size_t get_core_count(void);
+cls_t *WUNUSED get_cls(void);
+list_t *WUNUSED get_cls_list(void);
+cls_t *WUNUSED get_cls_at(size_t index);
+size_t WUNUSED get_core_count(void);
 
 #endif

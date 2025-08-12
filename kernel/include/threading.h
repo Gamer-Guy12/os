@@ -12,8 +12,8 @@ void run_next_thread(void);
 
 void NORETURN kill_cur_thread(void);
 
-PCB_t *create_process(void);
-TCB_t *create_thread(PCB_t *process, void (*entry_point)(void));
+PCB_t *WUNUSED create_process(void);
+TCB_t *WUNUSED create_thread(PCB_t *process, void (*entry_point)(void));
 
 void delete_process(PCB_t *pcb);
 /// Thread is expected to not be in the queue when deleted

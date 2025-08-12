@@ -7,6 +7,7 @@
 #define CONSTRUCTOR
 #define DESTRUCTOR
 #define ALIGN(to)
+#define WUNUSED
 
 #define LOOP while (1)
 
@@ -29,6 +30,9 @@
 
 #undef ALIGN
 #define ALIGN(to) __attribute__((aligned(to)))
+
+#undef WUNUSED
+#define WUNUSED __attribute__((warn_unused_result))
 
 #endif
 

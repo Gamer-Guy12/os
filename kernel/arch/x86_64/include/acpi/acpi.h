@@ -73,8 +73,8 @@ typedef struct {
   uint32_t flags;
 } PACKED MADT_entry_0_t;
 
-void *acpi_get_struct(char signature[4]);
-XSDP_t *get_xsdp(void);
-XSDT_t *get_xsdt(void);
+void *WUNUSED acpi_get_struct(char signature[4]);
+XSDP_t *WUNUSED get_xsdp(void);
+XSDT_t *WUNUSED get_xsdt(void);
 
 #endif
