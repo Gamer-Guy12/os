@@ -85,8 +85,3 @@ TCB_t *pop_thread(thread_queue_t *queue) {
   return NULL;
 }
 
-TCB_t *steal_thread(void) {
-  /// TODO: Implement stealing
-  return NULL;
-}
-

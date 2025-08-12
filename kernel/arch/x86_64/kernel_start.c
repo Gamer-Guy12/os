@@ -552,6 +552,12 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
+void test(void) {
+  while (1) {
+    kio_printf("%x\n", TCB);
+  }
+}
+
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -605,6 +611,10 @@ void kernel_secondary_start(void) {
   start_preemption();
   enable_preemption();
   kio_printf("Preemption Started\n");
+
+  TCB_t* tcb = create_thread(TCB->pcb, test);
+  tcb->priority = TP_NORMAL;
+  schedule_thread(tcb, TP_NORMAL);
 
   kill_cur_thread();
 }

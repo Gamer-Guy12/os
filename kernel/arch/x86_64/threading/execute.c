@@ -19,12 +19,9 @@ void run_next_thread(void) {
 
   // If there is nothing continue on
   if (next == NULL) {
-    next = steal_thread();
-    if (next == NULL) {
-      STI;
-      enable_preemption();
-      return;
-    }
+    STI;
+    enable_preemption();
+    return;
   }
 
   // The thread that was just executed will be in rax when this thread resumes

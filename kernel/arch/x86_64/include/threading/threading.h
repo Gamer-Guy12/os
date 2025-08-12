@@ -34,8 +34,6 @@ void queue_thread(TCB_t *tcb, thread_priority_t priority,
                   thread_queue_t *queue);
 TCB_t *pop_thread(thread_queue_t *queue);
 
-TCB_t *steal_thread(void);
-
 void init_threading(void);
 
 /// This is the function that new threads should go to, it will set up the
