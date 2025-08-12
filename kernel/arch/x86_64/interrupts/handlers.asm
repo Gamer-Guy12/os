@@ -10,9 +10,9 @@ save_fs_gs:
   push r8
 
   ; CS is stored at offset 152
-  ; We also pushed 24 more bytes so that also needs to be accounted for
-  ; This adds to 176
-  mov rax, [rsp + 176]
+  ; We also pushed 40 more bytes so that also needs to be accounted for and also call pushes another 8 bytes
+  ; This adds to 200
+  mov rax, [rsp + 200]
   cmp rax, 0x8
   je .return
 
@@ -63,12 +63,12 @@ load_fs_gs:
   push r8
 
   ; CS is stored at offset 152
-  ; We also pushed 24 more bytes so that also needs to be accounted for
-  ; This adds to 176
-  mov rax, [rsp + 176]
+  ; We also pushed 40 more bytes so that also needs to be accounted for and also call pushes another 8 bytes
+  ; This adds to 200
+  mov rax, [rsp + 200]
   cmp rax, 0x8
   je .return
-  
+
   ; Save the current fs value
 
   ; R12 now contains the pointer to the cls
