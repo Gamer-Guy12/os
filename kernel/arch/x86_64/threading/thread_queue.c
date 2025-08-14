@@ -11,11 +11,8 @@
 void init_threading(void) {
   cls_t *cls = get_cls();
 
-  queue_create(&cls->thread_queue.idle_queue);
-  queue_create(&cls->thread_queue.normal_queue);
-  rb_create(&cls->thread_queue.priority_queue);
-  rb_create(&cls->thread_queue.io_queue);
-
+  thread_queue_create(&cls->thread_queue);
+  
   TCB_t *idle_task = create_thread(TCB->pcb, idle);
   idle_task->priority = TP_IDLE;
   schedule_thread(idle_task, idle_task->priority);

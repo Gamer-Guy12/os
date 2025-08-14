@@ -5,6 +5,7 @@
 #include <libk/queue.h>
 #include <libk/rbtree.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <threading.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
@@ -15,6 +16,18 @@ typedef struct {
   rbtree_t priority_queue;
   rbtree_t io_queue;
 } thread_queue_t;
+
+typedef struct semaphore_struct {
+  int64_t current_count; 
+  thread_queue_t queue;
+} semaphore_t; 
+
+static inline void thread_queue_create(thread_queue_t* queue) {
+  queue_create(&queue->idle_queue);
+  queue_create(&queue->normal_queue);
+  rb_create(&queue->priority_queue);
+  rb_create(&queue->io_queue);
+}
 
 /// Loads a new thread
 /// Returns the old thread

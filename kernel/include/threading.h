@@ -5,6 +5,14 @@
 #include <decls.h>
 #include <stddef.h>
 
+typedef struct semaphore_struct semaphore_t;
+
+void semaphore_create(semaphore_t* semaphore, int64_t max);
+/// Decrement value
+void semaphore_wait(semaphore_t *semaphore);
+/// Increment value
+void semaphore_signal(semaphore_t* semaphore);
+
 /// In MS
 #define QUANTUM_LENGTH 10
 

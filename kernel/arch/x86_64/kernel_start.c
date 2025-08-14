@@ -217,6 +217,11 @@ void test_queue(void) {
 bool failed = false;
 
 size_t verify_rbnode(rbtree_t *tree, rbnode_t *node) {
+  if ((node->left == NULL || node->right == NULL) && node != &tree->nil) {
+    failed = true;
+    return 0;
+  }
+
   if (node->color == RB_RED) {
     if (node->left->color == RB_RED || node->right->color == RB_RED) {
       failed = true;
@@ -552,9 +557,13 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
+size_t value = 0;
+semaphore_t *semaphore = NULL;
+
 void test(void) {
   while (1) {
-    kio_printf("%x %x\n", TCB->tid, coreid());
+    semaphore_wait(semaphore);
+    semaphore_signal(semaphore);
   }
 }
 
@@ -612,6 +621,8 @@ void kernel_secondary_start(void) {
   enable_preemption();
   kio_printf("Preemption Started\n");
 
+  semaphore = gmalloc(sizeof(semaphore_t));
+  semaphore_create(semaphore, 1);
   TCB_t *tcb = create_thread(TCB->pcb, test);
   TCB_t *tcb2 = create_thread(TCB->pcb, test);
   tcb->priority = TP_NORMAL;

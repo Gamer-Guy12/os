@@ -1,8 +1,10 @@
 #include <libk/rbtree.h>
+#include <libk/spinlock.h>
+#include <stddef.h>
 
 void delete(rbtree_t *tree, rbnode_t *node);
 
-rbnode_t* rb_delete_min(rbtree_t *tree, rbnode_t *node) {
+rbnode_t *rb_delete_min(rbtree_t *tree, rbnode_t *node) {
   if (node == NULL) {
     return NULL;
   }
@@ -19,4 +21,3 @@ rbnode_t* rb_delete_min(rbtree_t *tree, rbnode_t *node) {
 
   return node;
 }
-
