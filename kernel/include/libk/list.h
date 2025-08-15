@@ -2,8 +2,8 @@
 #define LIST_H
 
 #include <libk/spinlock.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 typedef struct list_node_struct {
   struct list_node_struct *next;
@@ -12,6 +12,7 @@ typedef struct list_node_struct {
 
 typedef struct {
   list_node_t *head;
+  list_node_t *tail;
   spinlock_t lock;
   size_t count;
 } list_t;
@@ -24,10 +25,10 @@ list_node_t *list_delete(list_t *list, list_node_t *node);
 void list_create(list_t *list);
 
 list_node_t *list_find(list_t *list, size_t index);
-bool list_contains(list_t* list, list_node_t* node);
+bool list_contains(list_t *list, list_node_t *node);
 
 #define LIST_ITERATE(list)                                                     \
-  for (list_node_t *cur_node = (list)->head; cur_node != NULL;                   \
+  for (list_node_t *cur_node = (list)->head; cur_node != NULL;                 \
        cur_node = cur_node->next)
 
 #endif

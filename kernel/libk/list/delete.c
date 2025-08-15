@@ -14,6 +14,7 @@ static list_node_t *handle_head(list_t *list) {
     node->next->prev = NULL;
   } else {
     list->head = NULL;
+    list->tail = NULL;
   }
 
   node->next = NULL;
@@ -43,6 +44,9 @@ list_node_t *list_delete(list_t *list, list_node_t *node) {
 
   if (node->next)
     node->next->prev = node->prev;
+  else {
+    list->tail = node->prev;
+  }
 
   node->next = NULL;
   node->prev = NULL;

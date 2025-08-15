@@ -10,6 +10,7 @@ static void insert_after(list_t *list, list_node_t *after, list_node_t *node) {
     node->next = next;
   } else {
     node->next = NULL;
+    list->tail = node;
   }
 
   after->next = node;
@@ -20,6 +21,10 @@ static void insert_head(list_t *list, list_node_t *node) {
   node->next = list->head;
   if (list->head)
     list->head->prev = node;
+  else {
+    list->tail = node;
+  }
+
   node->prev = NULL;
 
   list->head = node;
