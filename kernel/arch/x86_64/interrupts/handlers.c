@@ -35,7 +35,7 @@ void common_interrupt_handler(idt_registers_t *registers) {
 
     kio_printf("RAX %x, RBX %x, RCX %x, RDX %x\n", registers->rax,
                registers->rbx, registers->rcx, registers->rdx);
-    kio_printf("RBP %x, RSI %x, RDI %x\n", registers->rbp, registers->rsi,
+    kio_printf("RBP %x, RBP %x, RSI %x, RDI %x\n", registers->rbp, registers->rsp, registers->rsi,
                registers->rdi);
     kio_printf("R8 %x, R9 %x, R10 %x, R11 %x\n", registers->r8, registers->r9,
                registers->r10, registers->r11);
@@ -44,7 +44,7 @@ void common_interrupt_handler(idt_registers_t *registers) {
 
     kio_printf("Other info:\n");
 
-    kio_printf("CS %x, DS %x\n", registers->cs, registers->ds);
+    kio_printf("CS %x, DS %x, SS %x\n", registers->cs, registers->ds, registers->ss);
     kio_printf("RIP %x, RFLAGS %x\n", registers->rip, registers->rflags);
   }
 

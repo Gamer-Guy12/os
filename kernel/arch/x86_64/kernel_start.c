@@ -627,7 +627,6 @@ void kernel_secondary_start(void) {
 
   semaphore = gmalloc(sizeof(semaphore_t));
   semaphore_create(semaphore, 1);
-  while (1) {}
   TCB_t *tcb = create_thread(TCB->pcb, test);
   TCB_t *tcb2 = create_thread(TCB->pcb, test);
   tcb->priority = TP_NORMAL;

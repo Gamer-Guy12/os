@@ -1,39 +1,39 @@
-#include <apic_timer.h>
 #include <asm.h>
-#include <libk/queue.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <threading.h>
 #include <threading/tcb.h>
 #include <threading/threading.h>
 
-void semaphore_create(semaphore_t *semaphore, int64_t max) {
+void semaphore_create(semaphore_t *semaphore, int64_t max_value) {
   thread_queue_create(&semaphore->queue);
 
-  semaphore->current_count = max;
+  semaphore->current_count = max_value;
 }
 
+/// Decrement Value
 void semaphore_wait(semaphore_t *semaphore) {
-  /// This is the value before the subtraction
-  int64_t held_value =
-      __atomic_fetch_sub(&semaphore->current_count, 1, __ATOMIC_RELEASE);
+  int64_t held_value = ATOMIC_DEC(&semaphore->current_count);
 
   if (held_value > 0) {
     return;
   }
 
-  TCB_t *tcb = TCB;
+  TCB_t *thread = TCB;
 
-  tcb->state = THREAD_WAITING;
-  queue_thread(tcb, tcb->priority, &semaphore->queue);
+  thread->state = THREAD_WAITING;
+
+  queue_thread(thread, thread->priority, &semaphore->queue);
+  run_next_thread();
 }
 
+/// Increment value
 void semaphore_signal(semaphore_t *semaphore) {
-  int64_t held_value =
-      __atomic_fetch_add(&semaphore->current_count, 1, __ATOMIC_RELEASE);
+  int64_t held_value = ATOMIC_INC(&semaphore->current_count);
 
   if (held_value < 0) {
     TCB_t *thread = pop_thread(&semaphore->queue);
-    schedule_thread(thread, thread->priority == TP_IO ? TP_IO : TP_HIGH);
+
+    thread_priority_t priority = thread->priority == TP_IO ? TP_IO : TP_HIGH;
+    schedule_thread(thread, priority);
   }
 }

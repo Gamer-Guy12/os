@@ -18,8 +18,8 @@ typedef struct {
 } thread_queue_t;
 
 typedef struct semaphore_struct {
-  int64_t current_count; 
   thread_queue_t queue;
+  int64_t current_count; 
 } semaphore_t; 
 
 static inline void thread_queue_create(thread_queue_t* queue) {
