@@ -1,3 +1,4 @@
+#include <libk/list.h>
 #include <asm.h>
 #include <libk/err.h>
 #include <libk/spinlock.h>

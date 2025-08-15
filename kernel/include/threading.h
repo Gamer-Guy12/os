@@ -1,11 +1,15 @@
 #ifndef THREADING_H
 #define THREADING_H
 
-#include <threading/tcb.h>
 #include <decls.h>
 #include <stddef.h>
+#include <stdint.h>
+
+typedef enum { TP_IDLE, TP_NORMAL, TP_HIGH, TP_IO } thread_priority_t;
 
 typedef struct semaphore_struct semaphore_t;
+typedef struct TCB_struct TCB_t;
+typedef struct PCB_struct PCB_t;
 
 void semaphore_create(semaphore_t* semaphore, int64_t max);
 /// Decrement value

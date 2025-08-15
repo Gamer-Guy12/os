@@ -1,6 +1,7 @@
 #ifndef X86_64_THREADING_H
 #define X86_64_THREADING_H
 
+#include <libk/list.h>
 #include <interrupts.h>
 #include <libk/queue.h>
 #include <libk/rbtree.h>

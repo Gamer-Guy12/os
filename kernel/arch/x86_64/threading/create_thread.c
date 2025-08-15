@@ -1,3 +1,4 @@
+#include <libk/list.h>
 #include <gdt.h>
 #include <libk/spinlock.h>
 #include <mem/memory.h>

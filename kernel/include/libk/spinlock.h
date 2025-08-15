@@ -3,17 +3,13 @@
 
 #include <stdatomic.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef atomic_flag spinlock_t;
 
 void spinlock_acquire(spinlock_t *lock);
 void spinlock_release(spinlock_t *lock);
 
-/// This one will acquire and release the lock automatically
-inline void spinlock_with(int (*func)(void), spinlock_t *lock) {
-  spinlock_acquire(lock);
-  func();
-  spinlock_release(lock);
-}
+#define SPINLOCK_WITH(lock) for (spinlock_acquire(lock); false; spinlock_release(lock))
 
 #endif
