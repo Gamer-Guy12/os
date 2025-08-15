@@ -80,7 +80,7 @@ gheap_entry_t *create_entry(size_t size) {
 void *gmalloc(size_t size) {
   spinlock_acquire(&lock);
 
-  size = ROUND_UP(size, 8);
+  size = ROUND_UP(size, 16);
 
   gheap_entry_t *entry = find_entry(size);
 

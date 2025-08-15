@@ -24,6 +24,7 @@ typedef struct gheap_entry_struct {
   };
   struct gheap_entry_struct *next;
   struct gheap_entry_struct *prev;
+  size_t padding;
 } gheap_entry_t;
 
 void WUNUSED *gmalloc(size_t size);
