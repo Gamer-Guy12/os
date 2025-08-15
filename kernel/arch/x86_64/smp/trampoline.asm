@@ -146,10 +146,21 @@ long_land:
 
   mov cr4, rax
 
+  mov rax, 1
+  cpuid
+  and rcx, (1 << 28)
+  cmp rcx, 0
+  jne .no_avx
+
   xor rcx, rcx
   xgetbv
   or rax, 7
   xsetbv
+
+  ; R13 will contain feature flags
+  mov r13, 1
+
+  .no_avx:
 
   ; Enable NX Bit
   mov rcx, 0xc0000080
@@ -192,6 +203,14 @@ long_land:
   mov r8, [r8 + 8]
 
   mov cr3, r8
+
+  mov rax, 0
+  mov rdx, rax
+  mov rcx, 0xC0000101
+  wrmsr
+
+  ; Now 3rd parameter is feature flags
+  mov rdx, r13
 
   call smp_start
 

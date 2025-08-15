@@ -58,13 +58,13 @@ setup_ret_t setup_memory(void) {
   return ret;
 }
 
-void smp_start(size_t processor_id, size_t old_page) {
+void smp_start(size_t processor_id, size_t old_page, size_t feature_flags) {
 
   CLI;
 
   phys_free((void *)old_page);
 
-  init_cls();
+  init_cls(feature_flags);
 
   create_gdt();
 

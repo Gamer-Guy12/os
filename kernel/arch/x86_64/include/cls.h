@@ -27,9 +27,10 @@ typedef struct {
   void *true_addr;
   thread_queue_t thread_queue;
   list_node_t node;
+  size_t feature_flags;
 } cls_t;
 
-void init_cls(void);
+void init_cls(size_t feature_flags);
 cls_t *WUNUSED get_cls(void);
 list_t *WUNUSED get_cls_list(void);
 cls_t *WUNUSED get_cls_at(size_t index);

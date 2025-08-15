@@ -1,6 +1,7 @@
 BITS 64
 
 global extend
+global feature_flags
 extern extend_ret
 
 extend:
@@ -36,12 +37,29 @@ extend:
 
   mov cr4, rax
 
+  mov rax, 1
+  cpuid
+  and rcx, (1 << 28)
+  cmp rcx, 0
+  je .no_avx
+
   xor rcx, rcx
   xgetbv
   or rax, 7
   xsetbv
 
+  mov rax, [feature_flags]
+  or rax, 1
+  mov [feature_flags], rax
+
+  .no_avx:
+
   pop rcx
   pop rbx
   pop rax
   jmp extend_ret
+
+section .data
+feature_flags:
+dq 0
+

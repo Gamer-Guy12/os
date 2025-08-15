@@ -12,7 +12,7 @@ list_t list = {.head = NULL, .lock = ATOMIC_FLAG_INIT};
 static spinlock_t lock = ATOMIC_FLAG_INIT;
 size_t core_count_global = 0;
 
-void init_cls(void) {
+void init_cls(size_t feature_flags) {
   size_t ptr = (size_t)gmalloc(sizeof(cls_t) + 8);
   cls_t *cls = NULL;
 
@@ -28,6 +28,8 @@ void init_cls(void) {
   spinlock_acquire(&lock);
   core_count_global++;
   spinlock_release(&lock);
+
+  cls->feature_flags = feature_flags;
 
   // queue_create(&cls->idle_queue);
   // queue_create(&cls->normal_queue);

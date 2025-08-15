@@ -1,4 +1,3 @@
-#include "libk/kio.h"
 #include <asm.h>
 #include <cls.h>
 #include <libk/queue.h>

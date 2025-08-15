@@ -61,6 +61,10 @@ static inline size_t WUNUSED coreid(void) {
 #define STI __asm__ volatile("sti")
 #define DIV0 __asm__ volatile("div %%rcx" ::"c"(0));
 
+/// Returns original value
+#define ATOMIC_INC(ptr) __atomic_fetch_add(ptr, 1, __ATOMIC_RELEASE)
+#define ATOMIC_DEC(ptr) __atomic_fetch_sub(ptr, 1, __ATOMIC_RELEASE)
+
 /// @return 1 if sucess and 0 if failure
 ///
 /// @param dest this is a pointer to 16 bytes of contiguous memory which is

@@ -70,6 +70,8 @@ void create_local_proccess(void) {
   wrmsr(FS_MSR, (size_t)tcb);
 }
 
+extern size_t feature_flags;
+
 void kernel_start(uint8_t *multiboot) {
 
   //  test_print(multiboot);
@@ -86,7 +88,7 @@ void kernel_start(uint8_t *multiboot) {
   init_global_brk();
   kio_printf("Initialized Global Heap (brk)\n");
 
-  init_cls();
+  init_cls(feature_flags);
   kio_printf("Initialized CLS (Core Local Storage)\n");
 
   create_gdt();
@@ -563,6 +565,8 @@ semaphore_t *semaphore = NULL;
 void test(void) {
   while (1) {
     semaphore_wait(semaphore);
+    value++;
+    kio_printf("%x %x\n", value, TCB->tid);
     semaphore_signal(semaphore);
   }
 }
@@ -623,6 +627,7 @@ void kernel_secondary_start(void) {
 
   semaphore = gmalloc(sizeof(semaphore_t));
   semaphore_create(semaphore, 1);
+  while (1) {}
   TCB_t *tcb = create_thread(TCB->pcb, test);
   TCB_t *tcb2 = create_thread(TCB->pcb, test);
   tcb->priority = TP_NORMAL;
