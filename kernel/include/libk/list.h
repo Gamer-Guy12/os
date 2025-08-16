@@ -27,8 +27,7 @@ void list_create(list_t *list);
 list_node_t *list_find(list_t *list, size_t index);
 bool list_contains(list_t *list, list_node_t *node);
 
-#define LIST_ITERATE(list)                                                     \
-  for (list_node_t *cur_node = (list)->head; cur_node != NULL;                 \
-       cur_node = cur_node->next)
+#define LIST_ITERATE(list, name)                                               \
+  for (list_node_t *name = (list)->head; name != NULL; name = name->next)
 
 #endif

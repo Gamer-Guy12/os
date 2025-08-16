@@ -1,3 +1,4 @@
+#include "libk/math.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <apic_timer.h>
@@ -6,6 +7,7 @@
 #include <decls.h>
 #include <gdt.h>
 #include <hal/hal.h>
+#include <hpet.h>
 #include <interrupts.h>
 #include <irq.h>
 #include <libk/kgfx.h>
@@ -559,18 +561,6 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
-size_t value = 0;
-semaphore_t *semaphore = NULL;
-
-void test(void) {
-  while (1) {
-    semaphore_wait(semaphore);
-    value++;
-    kio_printf("%x %x\n", value, TCB->tid);
-    semaphore_signal(semaphore);
-  }
-}
-
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -625,14 +615,9 @@ void kernel_secondary_start(void) {
   enable_preemption();
   kio_printf("Preemption Started\n");
 
-  semaphore = gmalloc(sizeof(semaphore_t));
-  semaphore_create(semaphore, 1);
-  TCB_t *tcb = create_thread(TCB->pcb, test);
-  TCB_t *tcb2 = create_thread(TCB->pcb, test);
-  tcb->priority = TP_NORMAL;
-  tcb2->priority = TP_NORMAL;
-  schedule_thread(tcb, TP_NORMAL);
-  schedule_thread(tcb2, TP_NORMAL);
+  if (check_for_hpet()) {
+    enable_hpet();
+  }
 
   kill_cur_thread();
 }
