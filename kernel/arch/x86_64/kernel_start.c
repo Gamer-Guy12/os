@@ -1,4 +1,3 @@
-#include "libk/math.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <apic_timer.h>
@@ -614,10 +613,6 @@ void kernel_secondary_start(void) {
   start_preemption();
   enable_preemption();
   kio_printf("Preemption Started\n");
-
-  if (check_for_hpet()) {
-    enable_hpet();
-  }
 
   kill_cur_thread();
 }

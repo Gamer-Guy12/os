@@ -13,6 +13,6 @@ typedef struct {
 } hal_clk_t;
 
 hal_clk_t *hal_get_clock(void);
-void hal_give_clock(hal_clk_t *);
+void hal_give_clock(hal_clk_t *clock);
 
 #endif

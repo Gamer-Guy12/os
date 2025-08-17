@@ -217,7 +217,7 @@
 
 | IRQ | Usage |
 | --- | ----- |
-| 0 | HPET |
+| 0 | Free |
 | 1 | Keyboard |
 | 2 | HPET |
 | 3 | Free |
@@ -225,7 +225,7 @@
 | 5 | PCI/Audio |
 | 6 | Free |
 | 7 | Free |
-| 8 | HPET |
+| 8 | Free |
 | 9 | Free |
 | 10 | PCI |
 | 11 | PCI |
@@ -233,9 +233,9 @@
 | 13 | Free |
 | 14 | Free |
 | 15 | Free |
-| 16 | Free |
-| 17 | Free |
-| 18 | Free |
+| 16 | HPET |
+| 17 | HPET |
+| 18 | HPET |
 | 19 | Free |
 | 20 | Free |
 | 21 | Free |

@@ -4,13 +4,13 @@ DECLS?=
 ifeq ($(ARCH), x86_64)
 CC=x86_64-elf-gcc
 INCLUDE := kernel/include
-CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c -I $(INCLUDE) -I $(dev_includes) -std=c11 -mcmodel=kernel -no-pie -mno-avx -mmmx -msse -mno-red-zone
+CFLAGS := -Wall -Werror -Wpedantic -O3 -ffreestanding -nostdlib -nostartfiles -c -I $(INCLUDE) -I $(dev_includes) -std=c11 -mcmodel=kernel -no-pie -mno-avx -mmmx -msse -mno-red-zone -fipa-icf 
 
 ASM := nasm
 ASMFLAGS?=-felf64
 
 LD:=ld
-LDFLAGS=-T targets/x86_64/linker.ld -z noexecstack -L.
+LDFLAGS=-T targets/x86_64/linker.ld -z noexecstack -L. 
 endif
 
 kernel-c-srcs := $(shell find kernel -name "*.c")

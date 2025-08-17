@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <acpi/acpi.h>
 #include <asm.h>
 #include <hal/clk.h>
@@ -5,20 +6,128 @@
 #include <interrupts.h>
 #include <irq.h>
 #include <libk/math.h>
+#include <mem/memory.h>
 #include <mem/vimemory.h>
 #include <stddef.h>
 #include <stdint.h>
 
 size_t clock_period = 0;
+
+/// There are 1000000000000 femtoseconds in a millisecond
+/// divide that by clock_period to get how many cycles to wait for a millisecond
+#define CYCLES_TO_WAIT(ms) ((ms * 1000000000000) / clock_period)
 typedef void (*clock_callback)(void);
-static clock_callback callbacks[32] = {NULL};
+static volatile clock_callback callbacks[32] = {NULL};
+static bool bits64 = false;
+
+static void interrupt_in(uint32_t ms, uint8_t hpet) {
+  size_t cycles_to_wait = CYCLES_TO_WAIT(ms);
+  size_t current_cycle_count =
+      *(volatile size_t *)(HPET_ADDR + MAIN_COUNTER_VALUE_OFFSET);
+  size_t store_value = current_cycle_count + cycles_to_wait;
+
+  volatile size_t *comparator_register =
+      (volatile size_t *)(HPET_ADDR + HPET_TIMER_COMPARATOR_VAL_OFFSET(hpet));
+  *comparator_register = store_value;
+  HPET_timer_config_caps_t *config =
+      (HPET_timer_config_caps_t *)(HPET_ADDR +
+                                   HPET_TIMER_CONFIG_CAP_OFFSET(hpet));
+  config->int_enable = 1;
+}
+
+#define CREATE_HPET_CALLBACK(x)                                                \
+  static void interrupt_in_hpet_##x(uint32_t ms, void (*callback)(void)) {     \
+    size_t i = x;                                                              \
+                                                                               \
+    callbacks[i] = callback;                                                   \
+                                                                               \
+    interrupt_in(ms, i);                                                       \
+  }
+
+CREATE_HPET_CALLBACK(0)
+CREATE_HPET_CALLBACK(1)
+CREATE_HPET_CALLBACK(2)
+CREATE_HPET_CALLBACK(3)
+CREATE_HPET_CALLBACK(4)
+CREATE_HPET_CALLBACK(5)
+CREATE_HPET_CALLBACK(6)
+CREATE_HPET_CALLBACK(7)
+CREATE_HPET_CALLBACK(8)
+CREATE_HPET_CALLBACK(9)
+CREATE_HPET_CALLBACK(10)
+CREATE_HPET_CALLBACK(11)
+CREATE_HPET_CALLBACK(12)
+CREATE_HPET_CALLBACK(13)
+CREATE_HPET_CALLBACK(14)
+CREATE_HPET_CALLBACK(15)
+CREATE_HPET_CALLBACK(16)
+CREATE_HPET_CALLBACK(17)
+CREATE_HPET_CALLBACK(18)
+CREATE_HPET_CALLBACK(19)
+CREATE_HPET_CALLBACK(20)
+CREATE_HPET_CALLBACK(21)
+CREATE_HPET_CALLBACK(22)
+CREATE_HPET_CALLBACK(23)
+CREATE_HPET_CALLBACK(24)
+CREATE_HPET_CALLBACK(25)
+CREATE_HPET_CALLBACK(26)
+CREATE_HPET_CALLBACK(27)
+CREATE_HPET_CALLBACK(28)
+CREATE_HPET_CALLBACK(29)
+CREATE_HPET_CALLBACK(30)
+CREATE_HPET_CALLBACK(31)
+
+#define USE_HPET_CALLBACK(i)                                                   \
+  hal_clk_t *clock_##i = gmalloc(sizeof(hal_clk_t));                           \
+  clock_##i->interrupt_in = &interrupt_in_hpet_##i;                            \
+  hal_give_clock(clock_##i);
+
+static void create_clocks(const size_t timer_count) {
+  USE_HPET_CALLBACK(0)
+  USE_HPET_CALLBACK(1)
+  USE_HPET_CALLBACK(2)
+  USE_HPET_CALLBACK(3)
+  USE_HPET_CALLBACK(4)
+  USE_HPET_CALLBACK(5)
+  USE_HPET_CALLBACK(6)
+  USE_HPET_CALLBACK(7)
+  USE_HPET_CALLBACK(8)
+  USE_HPET_CALLBACK(9)
+  USE_HPET_CALLBACK(10)
+  USE_HPET_CALLBACK(11)
+  USE_HPET_CALLBACK(12)
+  USE_HPET_CALLBACK(13)
+  USE_HPET_CALLBACK(14)
+  USE_HPET_CALLBACK(15)
+  USE_HPET_CALLBACK(16)
+  USE_HPET_CALLBACK(17)
+  USE_HPET_CALLBACK(18)
+  USE_HPET_CALLBACK(19)
+  USE_HPET_CALLBACK(20)
+  USE_HPET_CALLBACK(21)
+  USE_HPET_CALLBACK(22)
+  USE_HPET_CALLBACK(23)
+  USE_HPET_CALLBACK(24)
+  USE_HPET_CALLBACK(25)
+  USE_HPET_CALLBACK(26)
+  USE_HPET_CALLBACK(27)
+  USE_HPET_CALLBACK(28)
+  USE_HPET_CALLBACK(29)
+  USE_HPET_CALLBACK(30)
+  USE_HPET_CALLBACK(31)
+}
 
 void hpet_int_handler(idt_registers_t *registers) {
   size_t hpet_int_status_reg_val =
-      *(volatile size_t *)(HPET_ADDR + HPET_GENERAL_INT);
+      *(volatile size_t *)(HPET_ADDR + HPET_GEN_INT_STATUS_OFFSET);
   volatile size_t *hpet_int_status_reg =
-      (volatile size_t *)(HPET_ADDR + HPET_GENERAL_INT);
+      (volatile size_t *)(HPET_ADDR + HPET_GEN_INT_STATUS_OFFSET);
   size_t hpet_num = math_log(hpet_int_status_reg_val, 2);
+
+  HPET_timer_config_caps_t *config =
+      (HPET_timer_config_caps_t *)(HPET_ADDR +
+                                   HPET_TIMER_CONFIG_CAP_OFFSET(hpet_num));
+  config->int_enable = 0;
 
   if (callbacks[hpet_num] != NULL)
     callbacks[hpet_num]();
@@ -27,6 +136,8 @@ void hpet_int_handler(idt_registers_t *registers) {
   irq_t irq = get_irq();
   irq.eoi();
 }
+
+// static void test(void) { kio_printf("Done\n"); }
 
 size_t enable_hpet(void) {
   const HPET_t *hpet = acpi_get_struct("HPET");
@@ -40,8 +151,8 @@ size_t enable_hpet(void) {
   HPET_gen_config_t *config =
       (HPET_gen_config_t *)(HPET_ADDR + HPET_GEN_CONFIG_OFFSET);
 
-  config->enable_timer = 1;
   config->legacy_mapping_enabled = 0;
+  config->enable_timer = 0;
 
   HPET_gen_caps_t *capabilities =
       (HPET_gen_caps_t *)(HPET_ADDR + HPET_GEN_CAPS_OFFSET);
@@ -49,21 +160,7 @@ size_t enable_hpet(void) {
   size_t timer_count = capabilities->timer_count + 1;
   size_t usable_timer_count = timer_count;
 
-  irq_t irq = get_irq();
-  irq.map_irq(HPET_GENERAL_INT, 0x2);
-  irq.map_irq(HPET_GENERAL_INT, 0x0);
-  irq.map_irq(HPET_GENERAL_INT, 0x8);
-
-  irq.unmask_irq(0x2);
-  irq.unmask_irq(0x0);
-  irq.unmask_irq(0x8);
-
-  /// The irqs are level triggered
-  irq.set_edge_triggered(false, 0x2);
-  irq.set_edge_triggered(false, 0x0);
-  irq.set_edge_triggered(false, 0x8);
-
-  for (size_t i = 0; i < timer_count; i++) {
+    for (size_t i = 0; i < timer_count; i++) {
     HPET_timer_config_caps_t *config =
         (HPET_timer_config_caps_t *)(HPET_ADDR +
                                      HPET_TIMER_CONFIG_CAP_OFFSET(i));
@@ -72,6 +169,7 @@ size_t enable_hpet(void) {
     config->trigger_type = 1;
     config->periodic = 0;
     config->fsb_int_mapping = 0;
+    config->int_enable = 0;
 
     /// Attempt to map to irq 2
     if (config->ioapic_support_bit & (1 << 2)) {
@@ -79,15 +177,21 @@ size_t enable_hpet(void) {
       continue;
     }
 
-    /// Attempt to map to irq 0
-    if (config->ioapic_support_bit & (1 << 0)) {
-      config->ioapic_route = 0;
+    /// Attempt to map to irq 16
+    if (config->ioapic_support_bit & (1 << 16)) {
+      config->ioapic_route = 16;
       continue;
     }
 
-    /// Attempt to map to irq 8
-    if (config->ioapic_support_bit & (1 << 8)) {
-      config->ioapic_route = 8;
+    /// Attempt to map to irq 17
+    if (config->ioapic_support_bit & (1 << 17)) {
+      config->ioapic_route = 17;
+      continue;
+    }
+
+    /// Attempt to map to irq 18
+    if (config->ioapic_support_bit & (1 << 18)) {
+      config->ioapic_route = 18;
       continue;
     }
 
@@ -96,6 +200,31 @@ size_t enable_hpet(void) {
   }
 
   clock_period = capabilities->clock_period;
+
+  register_interrupt_handler(hpet_int_handler, HPET_GENERAL_INT);
+
+  irq_t irq = get_irq();
+  irq.map_irq(HPET_GENERAL_INT, 2);
+  irq.map_irq(HPET_GENERAL_INT, 16);
+  irq.map_irq(HPET_GENERAL_INT, 17);
+  irq.map_irq(HPET_GENERAL_INT, 18);
+
+    /// The irqs are level triggered
+  irq.set_edge_triggered(false, 2);
+  irq.set_edge_triggered(false, 16);
+  irq.set_edge_triggered(false, 17);
+  irq.set_edge_triggered(false, 18);
+
+  irq.unmask_irq(2);
+  irq.unmask_irq(16);
+  irq.unmask_irq(17);
+  irq.unmask_irq(18);
+
+  bits64 = capabilities->count_size_cap;
+  create_clocks(timer_count);
+
+  // callbacks[0] = &test;
+  interrupt_in(2000, 0);
 
   return usable_timer_count;
 }
