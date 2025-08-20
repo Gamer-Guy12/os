@@ -6,7 +6,9 @@
 #include <interrupts.h>
 #include <irq.h>
 #include <libk/math.h>
+#include <libk/mem.h>
 #include <mem/memory.h>
+#include <mem/pimemory.h>
 #include <mem/vimemory.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -78,11 +80,16 @@ CREATE_HPET_CALLBACK(30)
 CREATE_HPET_CALLBACK(31)
 
 #define USE_HPET_CALLBACK(i)                                                   \
+  if (i >= full_timer_count)                                                   \
+    goto done;                                                                 \
+  if (usable_timers[i] == false)                                               \
+    goto done_##i;                                                             \
   hal_clk_t *clock_##i = gmalloc(sizeof(hal_clk_t));                           \
   clock_##i->interrupt_in = &interrupt_in_hpet_##i;                            \
-  hal_give_clock(clock_##i);
+  hal_give_clock(clock_##i);                                                   \
+  done_##i :;
 
-static void create_clocks(const size_t timer_count) {
+static void create_clocks(bool *usable_timers, size_t full_timer_count) {
   USE_HPET_CALLBACK(0)
   USE_HPET_CALLBACK(1)
   USE_HPET_CALLBACK(2)
@@ -115,6 +122,7 @@ static void create_clocks(const size_t timer_count) {
   USE_HPET_CALLBACK(29)
   USE_HPET_CALLBACK(30)
   USE_HPET_CALLBACK(31)
+done:;
 }
 
 void hpet_int_handler(idt_registers_t *registers) {
@@ -139,92 +147,99 @@ void hpet_int_handler(idt_registers_t *registers) {
 
 // static void test(void) { kio_printf("Done\n"); }
 
+/// Initialize the main up counter and all of the comparators
+///
+/// Set the clock_period and whether the registers are 64 bits or 32 bits
+///
+/// You will have to map the hpet into memory
 size_t enable_hpet(void) {
   const HPET_t *hpet = acpi_get_struct("HPET");
 
-  // Map hpet into addr space
-  const size_t addr = hpet->address.addr;
+  /// Map it into memory
   map_phys_page((void *)HPET_ADDR,
                 PT_PRESENT | PT_READ_WRITE | PT_PAGE_WRITE_THROUGH, 1,
-                (void *)addr);
+                (void *)hpet->address.addr);
 
-  HPET_gen_config_t *config =
-      (HPET_gen_config_t *)(HPET_ADDR + HPET_GEN_CONFIG_OFFSET);
-
-  config->legacy_mapping_enabled = 0;
-  config->enable_timer = 0;
-
-  HPET_gen_caps_t *capabilities =
+  const HPET_gen_caps_t *capabilities =
       (HPET_gen_caps_t *)(HPET_ADDR + HPET_GEN_CAPS_OFFSET);
 
-  size_t timer_count = capabilities->timer_count + 1;
-  size_t usable_timer_count = timer_count;
-
-    for (size_t i = 0; i < timer_count; i++) {
-    HPET_timer_config_caps_t *config =
-        (HPET_timer_config_caps_t *)(HPET_ADDR +
-                                     HPET_TIMER_CONFIG_CAP_OFFSET(i));
-
-    /// 1 is level triggered
-    config->trigger_type = 1;
-    config->periodic = 0;
-    config->fsb_int_mapping = 0;
-    config->int_enable = 0;
-
-    /// Attempt to map to irq 2
-    if (config->ioapic_support_bit & (1 << 2)) {
-      config->ioapic_route = 2;
-      continue;
-    }
-
-    /// Attempt to map to irq 16
-    if (config->ioapic_support_bit & (1 << 16)) {
-      config->ioapic_route = 16;
-      continue;
-    }
-
-    /// Attempt to map to irq 17
-    if (config->ioapic_support_bit & (1 << 17)) {
-      config->ioapic_route = 17;
-      continue;
-    }
-
-    /// Attempt to map to irq 18
-    if (config->ioapic_support_bit & (1 << 18)) {
-      config->ioapic_route = 18;
-      continue;
-    }
-
-    // This timer can't be used
-    usable_timer_count--;
+  if (capabilities->count_size_cap) {
+    bits64 = true;
   }
 
   clock_period = capabilities->clock_period;
 
+  const size_t timer_count = capabilities->timer_count + 1;
+  size_t usable_timer_count = timer_count;
+
+  HPET_gen_config_t *config =
+      (HPET_gen_config_t *)(HPET_ADDR + HPET_GEN_CONFIG_OFFSET);
+
+  config->legacy_mapping_enabled = false;
+  config->enable_timer = false;
+
+  bool usable_timers[timer_count];
+
+  memset(usable_timers, true, timer_count);
+
   register_interrupt_handler(hpet_int_handler, HPET_GENERAL_INT);
 
   irq_t irq = get_irq();
-  irq.map_irq(HPET_GENERAL_INT, 2);
+
+  kio_printf("%x \n", irq.get_pass_irq(2));
+  irq.map_irq(HPET_GENERAL_INT, irq.get_pass_irq(2));
   irq.map_irq(HPET_GENERAL_INT, 16);
   irq.map_irq(HPET_GENERAL_INT, 17);
   irq.map_irq(HPET_GENERAL_INT, 18);
 
-    /// The irqs are level triggered
-  irq.set_edge_triggered(false, 2);
+  irq.set_edge_triggered(false, irq.get_pass_irq(2));
   irq.set_edge_triggered(false, 16);
   irq.set_edge_triggered(false, 17);
   irq.set_edge_triggered(false, 18);
 
-  irq.unmask_irq(2);
+  irq.unmask_irq(irq.get_pass_irq(2));
   irq.unmask_irq(16);
   irq.unmask_irq(17);
   irq.unmask_irq(18);
 
-  bits64 = capabilities->count_size_cap;
-  create_clocks(timer_count);
+  while (1) {}
 
-  // callbacks[0] = &test;
-  interrupt_in(2000, 0);
+  for (size_t i = 0; i < timer_count; i++) {
+    HPET_timer_config_caps_t *timer_config_caps =
+        (HPET_timer_config_caps_t *)(HPET_ADDR +
+                                     HPET_TIMER_CONFIG_CAP_OFFSET(i));
+
+    timer_config_caps->int_enable = 0;
+    timer_config_caps->trigger_type = 1;
+    timer_config_caps->periodic = 0;
+    timer_config_caps->fsb_int_mapping = 0;
+
+    if (timer_config_caps->ioapic_support_bit & (1 << 2)) {
+      timer_config_caps->ioapic_route = 2;
+      continue;
+    }
+
+    if (timer_config_caps->ioapic_support_bit & (1 << 16)) {
+      timer_config_caps->ioapic_route = 16;
+      continue;
+    }
+
+    if (timer_config_caps->ioapic_support_bit & (1 << 17)) {
+      timer_config_caps->ioapic_route = 17;
+      continue;
+    }
+
+    if (timer_config_caps->ioapic_support_bit & (1 << 18)) {
+      timer_config_caps->ioapic_route = 18;
+      continue;
+    }
+
+    usable_timers[i] = false;
+    usable_timer_count--;
+  }
+
+  return usable_timer_count;
+  create_clocks(usable_timers, timer_count);
 
   return usable_timer_count;
 }

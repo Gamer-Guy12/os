@@ -34,6 +34,9 @@
 #undef WUNUSED
 #define WUNUSED __attribute__((warn_unused_result))
 
+typedef __uint128_t uint128_t;
+typedef __int128_t int128_t;
+
 #endif
 
 #endif

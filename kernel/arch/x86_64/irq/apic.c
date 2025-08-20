@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -69,6 +70,33 @@ uint32_t get_apic_irq_from_isa(uint8_t isa_irq) {
   return isa_irq;
 }
 
+uint8_t get_apic_wanted_irq(uint8_t irq) {
+  MADT_t *madt = acpi_get_struct("APIC");
+  size_t size_left = madt->header.length - sizeof(MADT_t);
+
+  while (size_left > 0) {
+    MADT_entry_header_t *header =
+        (MADT_entry_header_t *)((uint8_t *)madt +
+                                (madt->header.length - size_left));
+
+    if (header->entry_type == 2) {
+      MADT_entry_2_t *entry = (MADT_entry_2_t *)header;
+
+      if (entry->global_system_interrupt == irq) {
+        return entry->irq_source;
+      }
+    }
+
+    if (size_left < header->record_length) {
+      return irq;
+    }
+
+    size_left -= header->record_length;
+  }
+
+  return irq;
+}
+
 void write_io_apic_reg(uint32_t reg, uint32_t value) {
   uint32_t *ioapic = get_io_apic_addr();
 
@@ -84,6 +112,7 @@ uint32_t read_io_apic_reg(uint32_t reg) {
 }
 
 void apic_map_irq(uint8_t interrupt_number, uint8_t irq_number) {
+  kio_printf("%x actual: %x\n", get_apic_irq_from_isa(irq_number), irq_number);
   uint32_t actual_irq = get_apic_irq_from_isa(irq_number);
 
   uint32_t redirect_lobyte = 0;
@@ -164,6 +193,7 @@ irq_t init_apic(void) {
   ret.unmask_irq = apic_unmask_irq;
   ret.mask_all_irqs = apic_mask_all_irqs;
   ret.set_edge_triggered = apic_set_edge_triggered;
+  ret.get_pass_irq = get_apic_wanted_irq;
 
   apic_mask_all_irqs();
 

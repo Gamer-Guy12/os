@@ -1,4 +1,3 @@
-#include "libk/kio.h"
 #include <apic.h>
 #include <apic_timer.h>
 #include <asm.h>
@@ -119,6 +118,11 @@ void calculate_frequency(void) {
 
   // Get the current apic time count
   uint32_t cur_count = read_apic_register(TIMER_CUR_COUNT_REG);
+
+  // Quickly disable the PIT :)
+  // Out of place but idgaf
+  WRITE_PIT_COMMAND(PIT_MODE_5 | PIT_CHANNEL_0 | PIT_LOBYTE | PIT_16_BINARY);
+  io_wait();
 
   // We used a 16 divider so multiply by 16 and also make it into a number that
   // counted up We are using a uint32_t so its important that we set the same
