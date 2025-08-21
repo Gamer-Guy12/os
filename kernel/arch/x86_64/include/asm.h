@@ -52,18 +52,29 @@ static inline size_t WUNUSED coreid(void) {
   return coreid;
 }
 
+void __cli(void);
+void __sti(void);
+
 #define FS_MSR 0xC0000100
 
 #define MFENCE __asm__ volatile("mfence" ::: "memory")
-#define HLT __asm__ volatile("hlt");
+#define HLT __asm__ volatile("hlt")
 #define TCB ((TCB_t *)(rdmsr(FS_MSR)))
-#define CLI __asm__ volatile("cli");
-#define STI __asm__ volatile("sti")
-#define DIV0 __asm__ volatile("div %%rcx" ::"c"(0));
+#define CLI __cli()
+#define STI __sti()
+#define DIV0 __asm__ volatile("div %%rcx" ::"c"(0))
+#define ASM(code) __asm__ volatile(code)
 
 /// Returns original value
-#define ATOMIC_INC(ptr) __atomic_fetch_add(ptr, 1, __ATOMIC_RELEASE)
-#define ATOMIC_DEC(ptr) __atomic_fetch_sub(ptr, 1, __ATOMIC_RELEASE)
+#define ATOMIC_INC(num) __atomic_fetch_add(&num, 1, __ATOMIC_RELEASE)
+#define ATOMIC_DEC(num) __atomic_fetch_sub(&num, 1, __ATOMIC_RELEASE)
+
+/// Returns original value
+#define ATOMIC_FADD(num, val) __atomic_fetch_add(&num, val, __ATOMIC_RELEASE)
+#define ATOMIC_FSUB(num, val) __atomic_fetch_sub(&num, val, __ATOMIC_RELEASE)
+
+/// Returns if success
+#define CAS(num, old, new) __sync_bool_compare_and_swap(&num, old, new)
 
 /// @return 1 if sucess and 0 if failure
 ///

@@ -12,7 +12,7 @@ void semaphore_create(semaphore_t *semaphore, int64_t max_value) {
 
 /// Decrement Value
 void semaphore_wait(semaphore_t *semaphore) {
-  int64_t held_value = ATOMIC_DEC(&semaphore->current_count);
+  int64_t held_value = ATOMIC_DEC(semaphore->current_count);
 
   if (held_value > 0) {
     return;
@@ -28,7 +28,7 @@ void semaphore_wait(semaphore_t *semaphore) {
 
 /// Increment value
 void semaphore_signal(semaphore_t *semaphore) {
-  int64_t held_value = ATOMIC_INC(&semaphore->current_count);
+  int64_t held_value = ATOMIC_INC(semaphore->current_count);
 
   if (held_value < 0) {
     TCB_t *thread = pop_thread(&semaphore->queue);
