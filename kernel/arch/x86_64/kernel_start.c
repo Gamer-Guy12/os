@@ -561,8 +561,6 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
-void test(void) { kio_printf("test\n"); }
-
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -616,10 +614,6 @@ void kernel_secondary_start(void) {
   start_preemption();
   disable_preemption();
   kio_printf("Preemption Started\n");
-
-  hal_clk_t *clock = hal_get_clock();
-  kio_printf("Starting\n");
-  clock->interrupt_in(10000, test);
 
   kill_cur_thread();
 }

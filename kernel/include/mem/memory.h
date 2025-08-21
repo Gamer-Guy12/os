@@ -14,14 +14,7 @@ void WUNUSED *phys_alloc(void);
 void phys_free(void *addr);
 
 typedef struct gheap_entry_struct {
-  union {
-    size_t size;
-    struct {
-      uint64_t free : 1;
-      uint64_t reserved : 2;
-      uint64_t useless : 61;
-    };
-  };
+  size_t size;
   struct gheap_entry_struct *next;
   struct gheap_entry_struct *prev;
   size_t padding;
