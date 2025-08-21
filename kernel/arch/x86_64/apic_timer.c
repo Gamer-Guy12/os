@@ -91,7 +91,6 @@ void calculate_frequency(void) {
   // This means that the counter should be set to 1193182 / 40
   // which is 29830
   uint16_t count = 29830;
-  CLI;
   WRITE_PIT_COMMAND(PIT_16_BINARY | PIT_MODE_0 | PIT_LOHIBYTE | PIT_CHANNEL_0);
   io_wait();
   WRITE_PIT_DATA_0(count && 0xff);
@@ -119,11 +118,6 @@ void calculate_frequency(void) {
   // Get the current apic time count
   uint32_t cur_count = read_apic_register(TIMER_CUR_COUNT_REG);
 
-  // Quickly disable the PIT :)
-  // Out of place but idgaf
-  WRITE_PIT_COMMAND(PIT_MODE_5 | PIT_CHANNEL_0 | PIT_LOBYTE | PIT_16_BINARY);
-  io_wait();
-
   // We used a 16 divider so multiply by 16 and also make it into a number that
   // counted up We are using a uint32_t so its important that we set the same
   // bits
@@ -136,7 +130,6 @@ void calculate_frequency(void) {
   calculation_frequency *= 40;
   frequency = calculation_frequency;
 
-  STI;
   spinlock_release(&frequency_lock);
 }
 
@@ -166,7 +159,6 @@ void start_preemption(void) {
   // speed
   const size_t count_value = (frequency / targeted_frequency) / 16 / 10;
   write_apic_register(TIMER_INITIAL_COUNT_REG, count_value);
-
   STI;
 }
 

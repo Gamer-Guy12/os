@@ -26,18 +26,18 @@ extern uint32_t bspdone;
 
 void wait_ms(uint32_t ms) {
   for (size_t i = 0; i < ms; i++) {
-    outb(0x43, 0x30);
+    outb(0x43, 0xB0);
     io_wait();
-    outb(0x40, 0xA9);
+    outb(0x42, 0xA9);
     io_wait();
-    outb(0x40, 0x4);
+    outb(0x42, 0x4);
     io_wait();
 
     do {
-      outb(0x43, 0xE2);
+      outb(0x43, 0xE4);
       io_wait();
 
-      if (inb(0x40) & (1 << 7)) {
+      if (inb(0x42) & (1 << 7)) {
         break;
       }
 
@@ -48,21 +48,21 @@ void wait_ms(uint32_t ms) {
 }
 
 void wait_us(uint32_t us) {
-  outb(0x43, 0x30);
+  outb(0x43, 0xB0);
   io_wait();
 #define CLOCK_FREQUENCY 1193182
   uint16_t value = CLOCK_FREQUENCY / (1000000 / us);
 
-  outb(0x40, value & 0xff);
+  outb(0x42, value & 0xff);
   io_wait();
-  outb(0x40, value >> 8);
+  outb(0x42, value >> 8);
   io_wait();
 
   do {
-    outb(0x43, 0xE2);
+    outb(0x43, 0xE4);
     io_wait();
 
-    if (inb(0x40) & (1 << 7)) {
+    if (inb(0x42) & (1 << 7)) {
       break;
     }
     io_wait();

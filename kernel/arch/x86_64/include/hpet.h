@@ -8,7 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef const struct {
+typedef const volatile struct {
   uint8_t addr_space_id;
   uint8_t register_bit_width;
   uint8_t register_bit_offset;

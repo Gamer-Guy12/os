@@ -50,7 +50,7 @@ void common_interrupt_handler(idt_registers_t *registers) {
 
   if (handlers[registers->interrupt_number] == NULL) {
     kio_printf("No handler for interrupt %x!\n", registers->interrupt_number);
-    sys_panic(NO_INTERRUPT_HANDLER_ERR);
+    sys_panic(NO_INTERRUPT_HANDLER_ERR | registers->interrupt_number);
   }
 
   handlers[registers->interrupt_number](registers);

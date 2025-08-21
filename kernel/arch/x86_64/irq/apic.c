@@ -112,7 +112,6 @@ uint32_t read_io_apic_reg(uint32_t reg) {
 }
 
 void apic_map_irq(uint8_t interrupt_number, uint8_t irq_number) {
-  kio_printf("%x actual: %x\n", get_apic_irq_from_isa(irq_number), irq_number);
   uint32_t actual_irq = get_apic_irq_from_isa(irq_number);
 
   uint32_t redirect_lobyte = 0;
@@ -167,7 +166,7 @@ void apic_mask_all_irqs(void) {
   }
 }
 
-void apic_set_edge_triggered(bool edge, uint32_t irq) {
+void apic_set_trigger_mode(bool edge, bool active_low, uint32_t irq) {
   uint8_t actual_irq = get_apic_irq_from_isa(irq);
   uint32_t offset = 0x10 + actual_irq * 2;
 
@@ -177,6 +176,12 @@ void apic_set_edge_triggered(bool edge, uint32_t irq) {
     redirect_lobyte &= ~(1 << 15);
   } else {
     redirect_lobyte |= (1 << 15);
+  }
+
+  if (active_low) {
+    redirect_lobyte |= (1 << 13);
+  } else {
+    redirect_lobyte &= ~(1 << 13);
   }
 
   write_io_apic_reg(offset, redirect_lobyte);
@@ -192,7 +197,7 @@ irq_t init_apic(void) {
   ret.mask_irq = apic_mask_irq;
   ret.unmask_irq = apic_unmask_irq;
   ret.mask_all_irqs = apic_mask_all_irqs;
-  ret.set_edge_triggered = apic_set_edge_triggered;
+  ret.set_trigger_mode = apic_set_trigger_mode;
   ret.get_pass_irq = get_apic_wanted_irq;
 
   apic_mask_all_irqs();

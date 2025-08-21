@@ -2,8 +2,10 @@ Or this shit together to make cool errors!
 
 First 48 bits are for flags and the rest is just the error number
 
+Assume these unless specified:
 Bit 0: Too much space / KGFX wrong mode
 Bit 1: Missing Block
+Bit 2: Invalid Index
 
 first 48 bits for error 5:
 Bit 0: IRQ Handling error
@@ -13,6 +15,9 @@ first 48 bits for error 6:
 Bit 0: Thread Self Termination
 Bit 1: Process Self Termination
 
+first 48 bits for error 3:
+These are used to index which interrupt caused the error
+
 ERR 0: Memory Allocator Error
 ERR 1: Multiboot Error
 ERR 2: Memory Init Error
@@ -20,3 +25,4 @@ ERR 3: No interrupt handler
 ERR 4: KGFX Error
 ERR 5: HAL init error
 ERR 6: Self Termination error
+ERR 7: HPET Error

@@ -5,13 +5,18 @@
 #include <hpet.h>
 #include <interrupts.h>
 #include <irq.h>
+#include <libk/err.h>
 #include <libk/math.h>
 #include <libk/mem.h>
+#include <libk/spinlock.h>
+#include <libk/sys.h>
 #include <mem/memory.h>
 #include <mem/pimemory.h>
 #include <mem/vimemory.h>
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <threading.h>
 
 size_t clock_period = 0;
 
@@ -21,9 +26,15 @@ size_t clock_period = 0;
 typedef void (*clock_callback)(void);
 static volatile clock_callback callbacks[32] = {NULL};
 static bool bits64 = false;
+spinlock_t hpet_int_lock = ATOMIC_FLAG_INIT;
 
 static void interrupt_in(uint32_t ms, uint8_t hpet) {
   size_t cycles_to_wait = CYCLES_TO_WAIT(ms);
+  HPET_gen_config_t *gen_config =
+      (HPET_gen_config_t *)(HPET_ADDR + HPET_GEN_CONFIG_OFFSET);
+  HPET_gen_config_t save_gen = *gen_config;
+  save_gen.enable_timer = 0;
+  *gen_config = save_gen;
   size_t current_cycle_count =
       *(volatile size_t *)(HPET_ADDR + MAIN_COUNTER_VALUE_OFFSET);
   size_t store_value = current_cycle_count + cycles_to_wait;
@@ -31,10 +42,17 @@ static void interrupt_in(uint32_t ms, uint8_t hpet) {
   volatile size_t *comparator_register =
       (volatile size_t *)(HPET_ADDR + HPET_TIMER_COMPARATOR_VAL_OFFSET(hpet));
   *comparator_register = store_value;
+  save_gen = *gen_config;
+  save_gen.enable_timer = 1;
+  *gen_config = save_gen;
+
   HPET_timer_config_caps_t *config =
       (HPET_timer_config_caps_t *)(HPET_ADDR +
                                    HPET_TIMER_CONFIG_CAP_OFFSET(hpet));
-  config->int_enable = 1;
+
+  HPET_timer_config_caps_t save_conf = *config;
+  save_conf.int_enable = 1;
+  *config = save_conf;
 }
 
 #define CREATE_HPET_CALLBACK(x)                                                \
@@ -126,21 +144,41 @@ done:;
 }
 
 void hpet_int_handler(idt_registers_t *registers) {
-  size_t hpet_int_status_reg_val =
-      *(volatile size_t *)(HPET_ADDR + HPET_GEN_INT_STATUS_OFFSET);
   volatile size_t *hpet_int_status_reg =
       (volatile size_t *)(HPET_ADDR + HPET_GEN_INT_STATUS_OFFSET);
-  size_t hpet_num = math_log(hpet_int_status_reg_val, 2);
+  uint8_t hpet_num = 32;
+
+  spinlock_acquire(&hpet_int_lock);
+
+  for (size_t i = 0; i < 32; i++) {
+    if (*hpet_int_status_reg & (1 << i)) {
+      hpet_num = i;
+      break;
+    }
+  }
+
+  if (hpet_num == 32) {
+    sys_panic(HPET_ERR | INVALID_IDX);
+  }
+
+  spinlock_release(&hpet_int_lock);
 
   HPET_timer_config_caps_t *config =
       (HPET_timer_config_caps_t *)(HPET_ADDR +
                                    HPET_TIMER_CONFIG_CAP_OFFSET(hpet_num));
-  config->int_enable = 0;
+  HPET_timer_config_caps_t save_config = *config;
+
+  save_config.int_enable = 0;
+
+  *config = save_config;
 
   if (callbacks[hpet_num] != NULL)
     callbacks[hpet_num]();
 
-  *hpet_int_status_reg |= (1 << hpet_num);
+  size_t status_reg = *hpet_int_status_reg;
+  status_reg |= (1 << hpet_num);
+  *hpet_int_status_reg = status_reg;
+
   irq_t irq = get_irq();
   irq.eoi();
 }
@@ -174,63 +212,76 @@ size_t enable_hpet(void) {
 
   HPET_gen_config_t *config =
       (HPET_gen_config_t *)(HPET_ADDR + HPET_GEN_CONFIG_OFFSET);
+  HPET_gen_config_t save_config = *config;
 
-  config->legacy_mapping_enabled = false;
-  config->enable_timer = false;
+  save_config.legacy_mapping_enabled = false;
+  save_config.enable_timer = false;
+
+  *config = save_config;
 
   bool usable_timers[timer_count];
 
   memset(usable_timers, true, timer_count);
 
+  // Quickly disable the PIT :)
+  // This makes it so that the PIT is stuck in a low state and since the hpet is
+  // active high this should mean that it will never trigger an irq
+  outb(0x43, 0 | 0 | (1 << 4) | 0);
+  io_wait();
+
   register_interrupt_handler(hpet_int_handler, HPET_GENERAL_INT);
 
   irq_t irq = get_irq();
 
-  kio_printf("%x \n", irq.get_pass_irq(2));
   irq.map_irq(HPET_GENERAL_INT, irq.get_pass_irq(2));
-  irq.map_irq(HPET_GENERAL_INT, 16);
-  irq.map_irq(HPET_GENERAL_INT, 17);
-  irq.map_irq(HPET_GENERAL_INT, 18);
+  irq.map_irq(HPET_GENERAL_INT, irq.get_pass_irq(16));
+  irq.map_irq(HPET_GENERAL_INT, irq.get_pass_irq(17));
+  irq.map_irq(HPET_GENERAL_INT, irq.get_pass_irq(18));
 
-  irq.set_edge_triggered(false, irq.get_pass_irq(2));
-  irq.set_edge_triggered(false, 16);
-  irq.set_edge_triggered(false, 17);
-  irq.set_edge_triggered(false, 18);
+  /// Hpet is active high
+  irq.set_trigger_mode(false, false, irq.get_pass_irq(2));
+  irq.set_trigger_mode(false, false, irq.get_pass_irq(16));
+  irq.set_trigger_mode(false, false, irq.get_pass_irq(17));
+  irq.set_trigger_mode(false, false, irq.get_pass_irq(18));
 
   irq.unmask_irq(irq.get_pass_irq(2));
-  irq.unmask_irq(16);
-  irq.unmask_irq(17);
-  irq.unmask_irq(18);
-
-  while (1) {}
+  irq.unmask_irq(irq.get_pass_irq(16));
+  irq.unmask_irq(irq.get_pass_irq(17));
+  irq.unmask_irq(irq.get_pass_irq(18));
 
   for (size_t i = 0; i < timer_count; i++) {
     HPET_timer_config_caps_t *timer_config_caps =
         (HPET_timer_config_caps_t *)(HPET_ADDR +
                                      HPET_TIMER_CONFIG_CAP_OFFSET(i));
 
-    timer_config_caps->int_enable = 0;
-    timer_config_caps->trigger_type = 1;
-    timer_config_caps->periodic = 0;
-    timer_config_caps->fsb_int_mapping = 0;
+    HPET_timer_config_caps_t save_config = *timer_config_caps;
 
-    if (timer_config_caps->ioapic_support_bit & (1 << 2)) {
-      timer_config_caps->ioapic_route = 2;
+    save_config.int_enable = 0;
+    save_config.trigger_type = 1;
+    save_config.periodic = 0;
+    save_config.fsb_int_mapping = 0;
+
+    if (save_config.ioapic_support_bit & (1 << 2)) {
+      save_config.ioapic_route = 2;
+      *timer_config_caps = save_config;
       continue;
     }
 
     if (timer_config_caps->ioapic_support_bit & (1 << 16)) {
-      timer_config_caps->ioapic_route = 16;
+      save_config.ioapic_route = 16;
+      *timer_config_caps = save_config;
       continue;
     }
 
-    if (timer_config_caps->ioapic_support_bit & (1 << 17)) {
-      timer_config_caps->ioapic_route = 17;
+    if (timer_config_caps->ioapic_support_bit & (1 << 16)) {
+      save_config.ioapic_route = 16;
+      *timer_config_caps = save_config;
       continue;
     }
 
-    if (timer_config_caps->ioapic_support_bit & (1 << 18)) {
-      timer_config_caps->ioapic_route = 18;
+    if (timer_config_caps->ioapic_support_bit & (1 << 16)) {
+      save_config.ioapic_route = 16;
+      *timer_config_caps = save_config;
       continue;
     }
 
@@ -238,7 +289,7 @@ size_t enable_hpet(void) {
     usable_timer_count--;
   }
 
-  return usable_timer_count;
+  config->enable_timer = true;
   create_clocks(usable_timers, timer_count);
 
   return usable_timer_count;

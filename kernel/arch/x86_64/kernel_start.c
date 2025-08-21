@@ -1,3 +1,4 @@
+#include "hal/clk.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <apic_timer.h>
@@ -560,6 +561,8 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
+void test(void) { kio_printf("test\n"); }
+
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -576,14 +579,14 @@ void kernel_secondary_start(void) {
   init_irq();
   kio_printf("Initialized IRQs\n");
 
-  init_x86_64_hal();
-  kio_printf("Initialized HAL\n");
-
   init_threading();
   kio_printf("Initialized Threading\n");
 
   init_apic_timer();
   kio_printf("Initialized APIC Timer\n");
+
+  init_x86_64_hal();
+  kio_printf("Initialized HAL\n");
 
   start_cores();
   kio_printf("Started all cores\n");
@@ -611,8 +614,12 @@ void kernel_secondary_start(void) {
   test_rbtree();
 
   start_preemption();
-  enable_preemption();
+  disable_preemption();
   kio_printf("Preemption Started\n");
+
+  hal_clk_t *clock = hal_get_clock();
+  kio_printf("Starting\n");
+  clock->interrupt_in(10000, test);
 
   kill_cur_thread();
 }
