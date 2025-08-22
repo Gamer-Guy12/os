@@ -9,6 +9,11 @@
 #define ALIGN(to)
 #define WUNUSED
 
+#define MAX_8 0xFF
+#define MAX_16 0xFFFF
+#define MAX_32 0xFFFFFFFF
+#define MAX_64 0xFFFFFFFFFFFFFFFF
+
 #define LOOP while (1)
 
 #ifdef _x86_64_
@@ -33,9 +38,6 @@
 
 #undef WUNUSED
 #define WUNUSED __attribute__((warn_unused_result))
-
-typedef __uint128_t uint128_t;
-typedef __int128_t int128_t;
 
 #endif
 

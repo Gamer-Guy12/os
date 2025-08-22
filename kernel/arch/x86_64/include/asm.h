@@ -5,6 +5,7 @@
 #define X86_64_IO_H
 
 #include <decls.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -75,6 +76,23 @@ void __sti(void);
 
 /// Returns if success
 #define CAS(num, old, new) __sync_bool_compare_and_swap(&num, old, new)
+
+// 128 bit operations
+typedef struct {
+  uint64_t lower;
+  uint64_t upper;
+} uint128_t;
+
+uint128_t add_128(uint128_t lhs, uint128_t rhs);
+uint128_t sub_128(uint128_t lhs, uint128_t rhs);
+uint128_t mul_128(uint64_t lhs, uint64_t rhs);
+uint128_t div_128(uint128_t lhs, uint64_t rhs);
+bool equals_128(uint128_t lhs, uint128_t rhs);
+bool less_than_128(uint128_t lhs, uint128_t rhs);
+
+#define IS_ZERO_128(val) equals_128(val, (uint128_t){.lower = 0, .upper = 0})
+#define ZERO_128 (uint128_t){.lower = 0, .upper = 0}
+#define NUM_128(val) (uint128_t){.lower = val, .upper = 0}
 
 /// @return 1 if sucess and 0 if failure
 ///
