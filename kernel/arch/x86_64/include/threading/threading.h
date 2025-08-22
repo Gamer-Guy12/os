@@ -49,6 +49,7 @@ void queue_thread(TCB_t *tcb, thread_priority_t priority,
 TCB_t *WUNUSED pop_thread(thread_queue_t *queue);
 
 void init_threading(void);
+void init_sleep(void);
 
 /// This is the function that new threads should go to, it will set up the
 /// thread and then ret to it

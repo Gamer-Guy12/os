@@ -2,6 +2,7 @@
 #define MATH_H
 
 #include <decls.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -31,5 +32,22 @@ double WUNUSED CONST math_sqrtd(double input);
 
 #define ROUND_DOWN(num, to) (((num) / (to)) * (to))
 #define ROUND_UP(num, to) ((((num) + ((to) - 1)) / (to)) * (to))
+
+// 128 bit operations
+typedef struct {
+  uint64_t lower;
+  uint64_t upper;
+} uint128_t;
+
+uint128_t add_128(uint128_t lhs, uint128_t rhs);
+uint128_t sub_128(uint128_t lhs, uint128_t rhs);
+uint128_t mul_128(uint64_t lhs, uint64_t rhs);
+uint128_t div_128(uint128_t lhs, uint64_t rhs);
+bool equals_128(uint128_t lhs, uint128_t rhs);
+bool less_than_128(uint128_t lhs, uint128_t rhs);
+
+#define IS_ZERO_128(val) equals_128(val, (uint128_t){.lower = 0, .upper = 0})
+#define ZERO_128 (uint128_t){.lower = 0, .upper = 0}
+#define NUM_128(val) (uint128_t){.lower = val, .upper = 0}
 
 #endif

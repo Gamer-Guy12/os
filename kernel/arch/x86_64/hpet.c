@@ -24,8 +24,8 @@ size_t clock_period = 0;
 /// divide that by clock_period to get how many cycles to wait for a millisecond
 ///
 /// Imma just cast everything because im not sure which parts may have issues
-static inline uint128_t cycles_wait(uint32_t ms) {
-  uint128_t temp = mul_128(ms, 1000000000000); 
+static uint128_t cycles_wait(uint32_t ms) {
+  uint128_t temp = mul_128(ms, 1000000000000);
   return div_128(temp, clock_period);
 }
 
@@ -35,6 +35,13 @@ static bool bits64 = false;
 spinlock_t hpet_int_lock = ATOMIC_FLAG_INIT;
 
 uint128_t wait_times[32] = {0};
+
+static uint128_t get_progress(uint8_t hpet) {
+  size_t current_cycle_count =
+      *(volatile size_t *)(HPET_ADDR + MAIN_COUNTER_VALUE_OFFSET);
+
+  return add_128(wait_times[hpet], NUM_128(current_cycle_count));
+}
 
 static void interrupt_in_cycles(uint128_t cycles, uint8_t hpet) {
   size_t current_cycle_count =
@@ -51,7 +58,8 @@ static void interrupt_in_cycles(uint128_t cycles, uint8_t hpet) {
       wait_times[hpet] = ZERO_128;
     } else {
       current_cycle_wait = MAX_64 - 1;
-      wait_times[hpet] = sub_128(cycles, (uint128_t){.upper = 0, .lower = MAX_64 - 1});
+      wait_times[hpet] =
+          sub_128(cycles, (uint128_t){.upper = 0, .lower = MAX_64 - 1});
     }
   } else {
     if (less_than_128(cycles, (uint128_t){.lower = MAX_32, .upper = 0})) {
@@ -59,7 +67,8 @@ static void interrupt_in_cycles(uint128_t cycles, uint8_t hpet) {
       wait_times[hpet] = ZERO_128;
     } else {
       current_cycle_wait = MAX_32 - 1;
-      wait_times[hpet] = sub_128(cycles, (uint128_t){.upper = 0, .lower = MAX_32 - 1});
+      wait_times[hpet] =
+          sub_128(cycles, (uint128_t){.upper = 0, .lower = MAX_32 - 1});
     }
   }
 
@@ -92,7 +101,7 @@ static void interrupt_in(uint32_t ms, uint8_t hpet) {
   interrupt_in_cycles(cycles_to_wait, hpet);
 }
 
-#define CREATE_HPET_CALLBACK(x)                                                \
+#define CREATE_HPET_MS_CALLBACK(x)                                             \
   static void interrupt_in_hpet_##x(uint32_t ms, void (*callback)(void)) {     \
     size_t i = x;                                                              \
                                                                                \
@@ -101,38 +110,115 @@ static void interrupt_in(uint32_t ms, uint8_t hpet) {
     interrupt_in(ms, i);                                                       \
   }
 
-CREATE_HPET_CALLBACK(0)
-CREATE_HPET_CALLBACK(1)
-CREATE_HPET_CALLBACK(2)
-CREATE_HPET_CALLBACK(3)
-CREATE_HPET_CALLBACK(4)
-CREATE_HPET_CALLBACK(5)
-CREATE_HPET_CALLBACK(6)
-CREATE_HPET_CALLBACK(7)
-CREATE_HPET_CALLBACK(8)
-CREATE_HPET_CALLBACK(9)
-CREATE_HPET_CALLBACK(10)
-CREATE_HPET_CALLBACK(11)
-CREATE_HPET_CALLBACK(12)
-CREATE_HPET_CALLBACK(13)
-CREATE_HPET_CALLBACK(14)
-CREATE_HPET_CALLBACK(15)
-CREATE_HPET_CALLBACK(16)
-CREATE_HPET_CALLBACK(17)
-CREATE_HPET_CALLBACK(18)
-CREATE_HPET_CALLBACK(19)
-CREATE_HPET_CALLBACK(20)
-CREATE_HPET_CALLBACK(21)
-CREATE_HPET_CALLBACK(22)
-CREATE_HPET_CALLBACK(23)
-CREATE_HPET_CALLBACK(24)
-CREATE_HPET_CALLBACK(25)
-CREATE_HPET_CALLBACK(26)
-CREATE_HPET_CALLBACK(27)
-CREATE_HPET_CALLBACK(28)
-CREATE_HPET_CALLBACK(29)
-CREATE_HPET_CALLBACK(30)
-CREATE_HPET_CALLBACK(31)
+#define CREATE_HPET_CYCLES_CALLBACK(x)                                         \
+  static void interrupt_in_cycles_hpet_##x(uint128_t ticks,                    \
+                                           void (*callback)(void)) {           \
+    size_t i = x;                                                              \
+    callbacks[i] = callback;                                                   \
+    interrupt_in_cycles(ticks, i);                                             \
+  }
+
+#define CREATE_HPET_PROGRESS_CALLBACK(x)                                       \
+  static uint128_t hpet_progress_##x(void) { return get_progress(x); }
+
+CREATE_HPET_MS_CALLBACK(0)
+CREATE_HPET_MS_CALLBACK(1)
+CREATE_HPET_MS_CALLBACK(2)
+CREATE_HPET_MS_CALLBACK(3)
+CREATE_HPET_MS_CALLBACK(4)
+CREATE_HPET_MS_CALLBACK(5)
+CREATE_HPET_MS_CALLBACK(6)
+CREATE_HPET_MS_CALLBACK(7)
+CREATE_HPET_MS_CALLBACK(8)
+CREATE_HPET_MS_CALLBACK(9)
+CREATE_HPET_MS_CALLBACK(10)
+CREATE_HPET_MS_CALLBACK(11)
+CREATE_HPET_MS_CALLBACK(12)
+CREATE_HPET_MS_CALLBACK(13)
+CREATE_HPET_MS_CALLBACK(14)
+CREATE_HPET_MS_CALLBACK(15)
+CREATE_HPET_MS_CALLBACK(16)
+CREATE_HPET_MS_CALLBACK(17)
+CREATE_HPET_MS_CALLBACK(18)
+CREATE_HPET_MS_CALLBACK(19)
+CREATE_HPET_MS_CALLBACK(20)
+CREATE_HPET_MS_CALLBACK(21)
+CREATE_HPET_MS_CALLBACK(22)
+CREATE_HPET_MS_CALLBACK(23)
+CREATE_HPET_MS_CALLBACK(24)
+CREATE_HPET_MS_CALLBACK(25)
+CREATE_HPET_MS_CALLBACK(26)
+CREATE_HPET_MS_CALLBACK(27)
+CREATE_HPET_MS_CALLBACK(28)
+CREATE_HPET_MS_CALLBACK(29)
+CREATE_HPET_MS_CALLBACK(30)
+CREATE_HPET_MS_CALLBACK(31)
+
+CREATE_HPET_CYCLES_CALLBACK(0)
+CREATE_HPET_CYCLES_CALLBACK(1)
+CREATE_HPET_CYCLES_CALLBACK(2)
+CREATE_HPET_CYCLES_CALLBACK(3)
+CREATE_HPET_CYCLES_CALLBACK(4)
+CREATE_HPET_CYCLES_CALLBACK(5)
+CREATE_HPET_CYCLES_CALLBACK(6)
+CREATE_HPET_CYCLES_CALLBACK(7)
+CREATE_HPET_CYCLES_CALLBACK(8)
+CREATE_HPET_CYCLES_CALLBACK(9)
+CREATE_HPET_CYCLES_CALLBACK(10)
+CREATE_HPET_CYCLES_CALLBACK(11)
+CREATE_HPET_CYCLES_CALLBACK(12)
+CREATE_HPET_CYCLES_CALLBACK(13)
+CREATE_HPET_CYCLES_CALLBACK(14)
+CREATE_HPET_CYCLES_CALLBACK(15)
+CREATE_HPET_CYCLES_CALLBACK(16)
+CREATE_HPET_CYCLES_CALLBACK(17)
+CREATE_HPET_CYCLES_CALLBACK(18)
+CREATE_HPET_CYCLES_CALLBACK(19)
+CREATE_HPET_CYCLES_CALLBACK(20)
+CREATE_HPET_CYCLES_CALLBACK(21)
+CREATE_HPET_CYCLES_CALLBACK(22)
+CREATE_HPET_CYCLES_CALLBACK(23)
+CREATE_HPET_CYCLES_CALLBACK(24)
+CREATE_HPET_CYCLES_CALLBACK(25)
+CREATE_HPET_CYCLES_CALLBACK(26)
+CREATE_HPET_CYCLES_CALLBACK(27)
+CREATE_HPET_CYCLES_CALLBACK(28)
+CREATE_HPET_CYCLES_CALLBACK(29)
+CREATE_HPET_CYCLES_CALLBACK(30)
+CREATE_HPET_CYCLES_CALLBACK(31)
+
+CREATE_HPET_PROGRESS_CALLBACK(0)
+CREATE_HPET_PROGRESS_CALLBACK(1)
+CREATE_HPET_PROGRESS_CALLBACK(2)
+CREATE_HPET_PROGRESS_CALLBACK(3)
+CREATE_HPET_PROGRESS_CALLBACK(4)
+CREATE_HPET_PROGRESS_CALLBACK(5)
+CREATE_HPET_PROGRESS_CALLBACK(6)
+CREATE_HPET_PROGRESS_CALLBACK(7)
+CREATE_HPET_PROGRESS_CALLBACK(8)
+CREATE_HPET_PROGRESS_CALLBACK(9)
+CREATE_HPET_PROGRESS_CALLBACK(10)
+CREATE_HPET_PROGRESS_CALLBACK(11)
+CREATE_HPET_PROGRESS_CALLBACK(12)
+CREATE_HPET_PROGRESS_CALLBACK(13)
+CREATE_HPET_PROGRESS_CALLBACK(14)
+CREATE_HPET_PROGRESS_CALLBACK(15)
+CREATE_HPET_PROGRESS_CALLBACK(16)
+CREATE_HPET_PROGRESS_CALLBACK(17)
+CREATE_HPET_PROGRESS_CALLBACK(18)
+CREATE_HPET_PROGRESS_CALLBACK(19)
+CREATE_HPET_PROGRESS_CALLBACK(20)
+CREATE_HPET_PROGRESS_CALLBACK(21)
+CREATE_HPET_PROGRESS_CALLBACK(22)
+CREATE_HPET_PROGRESS_CALLBACK(23)
+CREATE_HPET_PROGRESS_CALLBACK(24)
+CREATE_HPET_PROGRESS_CALLBACK(25)
+CREATE_HPET_PROGRESS_CALLBACK(26)
+CREATE_HPET_PROGRESS_CALLBACK(27)
+CREATE_HPET_PROGRESS_CALLBACK(28)
+CREATE_HPET_PROGRESS_CALLBACK(29)
+CREATE_HPET_PROGRESS_CALLBACK(30)
+CREATE_HPET_PROGRESS_CALLBACK(31)
 
 #define USE_HPET_CALLBACK(i)                                                   \
   if (i >= full_timer_count)                                                   \
@@ -141,6 +227,9 @@ CREATE_HPET_CALLBACK(31)
     goto done_##i;                                                             \
   hal_clk_t *clock_##i = gmalloc(sizeof(hal_clk_t));                           \
   clock_##i->interrupt_in = &interrupt_in_hpet_##i;                            \
+  clock_##i->interrupt_in_ticks = &interrupt_in_cycles_hpet_##i;               \
+  clock_##i->ms_to_ticks = &cycles_wait;                                       \
+  clock_##i->get_current_progress = &hpet_progress_##i;                        \
   hal_give_clock(clock_##i);                                                   \
   done_##i :;
 

@@ -617,9 +617,5 @@ void kernel_secondary_start(void) {
   disable_preemption();
   kio_printf("Preemption Started\n");
 
-  hal_clk_t *clock = hal_get_clock();
-  kio_printf("Starting\n");
-  clock->interrupt_in(1000, test);
-
   kill_cur_thread();
 }

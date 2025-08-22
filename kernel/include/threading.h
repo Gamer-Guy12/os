@@ -35,4 +35,6 @@ void schedule_thread(TCB_t *tcb, thread_priority_t priority);
 
 void idle(void);
 
+void sleep_for(uint32_t ms);
+
 #endif
