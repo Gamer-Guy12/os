@@ -1,6 +1,6 @@
-#include "libk/kio.h"
 #include <acpi/acpi.h>
 #include <asm.h>
+#include <decls.h>
 #include <hal/clk.h>
 #include <hpet.h>
 #include <interrupts.h>
@@ -22,22 +22,54 @@ size_t clock_period = 0;
 
 /// There are 1000000000000 femtoseconds in a millisecond
 /// divide that by clock_period to get how many cycles to wait for a millisecond
-#define CYCLES_TO_WAIT(ms) ((ms * 1000000000000) / clock_period)
+///
+/// Imma just cast everything because im not sure which parts may have issues
+static inline uint128_t cycles_wait(uint32_t ms) {
+  uint128_t temp = mul_128(ms, 1000000000000); 
+  return div_128(temp, clock_period);
+}
+
 typedef void (*clock_callback)(void);
 static volatile clock_callback callbacks[32] = {NULL};
 static bool bits64 = false;
 spinlock_t hpet_int_lock = ATOMIC_FLAG_INIT;
 
-static void interrupt_in(uint32_t ms, uint8_t hpet) {
-  size_t cycles_to_wait = CYCLES_TO_WAIT(ms);
+uint128_t wait_times[32] = {0};
+
+static void interrupt_in_cycles(uint128_t cycles, uint8_t hpet) {
+  size_t current_cycle_count =
+      *(volatile size_t *)(HPET_ADDR + MAIN_COUNTER_VALUE_OFFSET);
+  size_t current_cycle_wait = 0;
+
+  /// U'll notice that im adding and subtracting 1, this is because if i were to
+  /// just do a full 64 bits or 32 bits the value would be the same as the
+  /// current count in the counter which would instantly trigger an interrupt
+  /// which would be bad
+  if (bits64) {
+    if (less_than_128(cycles, (uint128_t){.lower = MAX_64, .upper = 0})) {
+      current_cycle_wait = cycles.lower;
+      wait_times[hpet] = ZERO_128;
+    } else {
+      current_cycle_wait = MAX_64 - 1;
+      wait_times[hpet] = sub_128(cycles, (uint128_t){.upper = 0, .lower = MAX_64 - 1});
+    }
+  } else {
+    if (less_than_128(cycles, (uint128_t){.lower = MAX_32, .upper = 0})) {
+      current_cycle_wait = cycles.lower;
+      wait_times[hpet] = ZERO_128;
+    } else {
+      current_cycle_wait = MAX_32 - 1;
+      wait_times[hpet] = sub_128(cycles, (uint128_t){.upper = 0, .lower = MAX_32 - 1});
+    }
+  }
+
   HPET_gen_config_t *gen_config =
       (HPET_gen_config_t *)(HPET_ADDR + HPET_GEN_CONFIG_OFFSET);
   HPET_gen_config_t save_gen = *gen_config;
   save_gen.enable_timer = 0;
   *gen_config = save_gen;
-  size_t current_cycle_count =
-      *(volatile size_t *)(HPET_ADDR + MAIN_COUNTER_VALUE_OFFSET);
-  size_t store_value = current_cycle_count + cycles_to_wait;
+
+  size_t store_value = current_cycle_count + current_cycle_wait;
 
   volatile size_t *comparator_register =
       (volatile size_t *)(HPET_ADDR + HPET_TIMER_COMPARATOR_VAL_OFFSET(hpet));
@@ -53,6 +85,11 @@ static void interrupt_in(uint32_t ms, uint8_t hpet) {
   HPET_timer_config_caps_t save_conf = *config;
   save_conf.int_enable = 1;
   *config = save_conf;
+}
+
+static void interrupt_in(uint32_t ms, uint8_t hpet) {
+  uint128_t cycles_to_wait = cycles_wait(ms);
+  interrupt_in_cycles(cycles_to_wait, hpet);
 }
 
 #define CREATE_HPET_CALLBACK(x)                                                \
@@ -172,8 +209,15 @@ void hpet_int_handler(idt_registers_t *registers) {
 
   *config = save_config;
 
-  if (callbacks[hpet_num] != NULL)
-    callbacks[hpet_num]();
+  bool reenable = false;
+
+  if (IS_ZERO_128(wait_times[hpet_num])) {
+    if (callbacks[hpet_num] != NULL)
+      callbacks[hpet_num]();
+  } else {
+    interrupt_in_cycles(wait_times[hpet_num], hpet_num);
+    reenable = true;
+  }
 
   size_t status_reg = *hpet_int_status_reg;
   status_reg |= (1 << hpet_num);
@@ -181,6 +225,15 @@ void hpet_int_handler(idt_registers_t *registers) {
 
   irq_t irq = get_irq();
   irq.eoi();
+
+  if (!reenable)
+    return;
+
+  save_config = *config;
+
+  save_config.int_enable = 1;
+
+  *config = save_config;
 }
 
 // static void test(void) { kio_printf("Done\n"); }
