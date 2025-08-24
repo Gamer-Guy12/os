@@ -3,5 +3,4 @@
 
 void init_x86_64_hal(void) {
   hal_init_kbd();
-  init_x86_64_clocks();
 }

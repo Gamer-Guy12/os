@@ -3,6 +3,4 @@
 
 void init_x86_64_hal(void);
 
-void init_x86_64_clocks(void);
-
 #endif

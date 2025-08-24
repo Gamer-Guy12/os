@@ -11,7 +11,7 @@ void init_threading(void) {
   cls_t *cls = get_cls();
 
   thread_queue_create(&cls->thread_queue);
-  
+
   TCB_t *idle_task = create_thread(TCB->pcb, idle);
   idle_task->priority = TP_IDLE;
   schedule_thread(idle_task, idle_task->priority);
@@ -53,7 +53,7 @@ TCB_t *pop_thread(thread_queue_t *queue) {
     return (TCB_t *)((size_t)rb_node - offsetof(TCB_t, rb_node));
   }
 
-  if (cur_priority == TP_IO && cur_state != THREAD_TERMINATED) {
+  if (cur_priority == TP_IO && cur_state == THREAD_RUNNING) {
     return NULL;
   }
 
@@ -62,7 +62,7 @@ TCB_t *pop_thread(thread_queue_t *queue) {
     return (TCB_t *)((size_t)rb_node - offsetof(TCB_t, rb_node));
   }
 
-  if (cur_priority == TP_HIGH && cur_state != THREAD_TERMINATED) {
+  if (cur_priority == TP_HIGH && cur_state == THREAD_RUNNING) {
     return NULL;
   }
 
@@ -71,7 +71,7 @@ TCB_t *pop_thread(thread_queue_t *queue) {
     return (TCB_t *)((size_t)queue_node - offsetof(TCB_t, queue_node));
   }
 
-  if (cur_priority == TP_NORMAL && cur_state != THREAD_TERMINATED) {
+  if (cur_priority == TP_NORMAL && cur_state == THREAD_RUNNING) {
     return NULL;
   }
 

@@ -8,14 +8,19 @@
 typedef enum { TP_IDLE, TP_NORMAL, TP_HIGH, TP_IO } thread_priority_t;
 
 typedef struct semaphore_struct semaphore_t;
+typedef semaphore_t mutex_t;
 typedef struct TCB_struct TCB_t;
 typedef struct PCB_struct PCB_t;
 
-void semaphore_create(semaphore_t* semaphore, int64_t max);
+void semaphore_create(semaphore_t *semaphore, int64_t max);
 /// Decrement value
 void semaphore_wait(semaphore_t *semaphore);
 /// Increment value
-void semaphore_signal(semaphore_t* semaphore);
+void semaphore_signal(semaphore_t *semaphore);
+
+void mutex_create(mutex_t *mutex);
+void mutex_acquire(mutex_t *mutex);
+void mutex_release(mutex_t *mutex);
 
 /// In MS
 #define QUANTUM_LENGTH 10

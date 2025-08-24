@@ -3,6 +3,7 @@
 
 #include <acpi/acpi.h>
 #include <decls.h>
+#include <libk/math.h>
 #include <mem/pimemory.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -81,5 +82,15 @@ typedef volatile struct {
 bool WUNUSED check_for_hpet(void);
 size_t enable_hpet(void);
 bool WUNUSED get_int_status(uint8_t timer);
+
+uint128_t hpet_cycles_wait(uint32_t ms);
+uint128_t hpet_get_progress(uint8_t hpet);
+void hpet_interrupt_in_cycles(uint128_t cycles, uint8_t hpet);
+void hpet_interrupt_in(uint32_t ms, uint8_t hpet);
+uint8_t reserve_hpet(void);
+void return_hpet(uint8_t hpet);
+void bind_hpet_callback(void (*callback)(void), uint8_t hpet);
+
+#define NO_HPET 32
 
 #endif
