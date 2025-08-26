@@ -8,7 +8,7 @@
 typedef enum { TP_IDLE, TP_NORMAL, TP_HIGH, TP_IO } thread_priority_t;
 
 typedef struct semaphore_struct semaphore_t;
-typedef semaphore_t mutex_t;
+typedef struct semaphore_struct mutex_t;
 typedef struct TCB_struct TCB_t;
 typedef struct PCB_struct PCB_t;
 
@@ -40,6 +40,6 @@ void schedule_thread(TCB_t *tcb, thread_priority_t priority);
 
 void idle(void);
 
-void sleep_for(uint32_t ms);
+void sleep_for(uint64_t ms);
 
 #endif

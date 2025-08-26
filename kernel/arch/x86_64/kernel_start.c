@@ -602,8 +602,17 @@ void kernel_secondary_start(void) {
   if (!check_for_hpet())
     sys_panic(HPET_ERR);
 
-  kio_printf("Enabled HPET (%x Clocks)\n", enable_hpet());
+  enable_hpet();
+  // kio_printf("Enabled HPET (%x Clocks)\n", enable_hpet());
 
+  // init_sleep();
+  // kio_printf("Initialized Sleep\n");
+
+  // kio_printf("Starting\n");
+  sleep_for(3000);
+  // kio_printf("Ready\n");
+
+  while (1) {}
   start_preemption();
   enable_preemption();
   kio_printf("Preemption Started\n");

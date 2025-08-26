@@ -49,32 +49,37 @@ typedef volatile struct {
 } PACKED HPET_gen_config_t;
 
 typedef volatile struct {
-  uint16_t reserved_0 : 1;
-  /// 1 is level triggered
-  uint16_t trigger_type : 1;
-  uint16_t int_enable : 1;
-  uint16_t periodic : 1;
-  uint16_t supports_periodic : 1;
-  uint16_t supports_64bit : 1;
-  uint16_t direct_set_accumulator : 1;
-  uint16_t reserved_1 : 1;
-  uint16_t force32 : 1;
-  uint16_t ioapic_route : 5;
-  uint16_t fsb_int_mapping : 1;
-  uint16_t supports_fsb : 1;
-  uint16_t reserved_2;
-  /// If bit X is set then this can be routed to irq X
-  uint32_t ioapic_support_bit;
+  union {
+    struct {
+      uint16_t reserved_0 : 1;
+      /// 1 is level triggered
+      uint16_t trigger_type : 1;
+      uint16_t int_enable : 1;
+      uint16_t periodic : 1;
+      uint16_t supports_periodic : 1;
+      uint16_t supports_64bit : 1;
+      uint16_t direct_set_accumulator : 1;
+      uint16_t reserved_1 : 1;
+      uint16_t force32 : 1;
+      uint16_t ioapic_route : 5;
+      uint16_t fsb_int_mapping : 1;
+      uint16_t supports_fsb : 1;
+      uint16_t reserved_2;
+      /// If bit X is set then this can be routed to irq X
+      uint32_t ioapic_support_bit;
+    };
+    uint64_t value;
+  };
 } PACKED HPET_timer_config_caps_t;
 
-#define HPET_GEN_CAPS_OFFSET 0x0
-#define HPET_GEN_CONFIG_OFFSET 0x10
-#define HPET_GEN_INT_STATUS_OFFSET 0x20
-#define MAIN_COUNTER_VALUE_OFFSET 0xF0
+#define HPET_GEN_CAPS 0x0
+#define HPET_GEN_CONFIG 0x10
+#define HPET_GEN_INT_STATUS 0x20
+#define MAIN_COUNTER_VALUE 0xF0
 
-#define HPET_TIMER_CONFIG_CAP_OFFSET(timer) (0x100 + 0x20 * timer)
-#define HPET_TIMER_COMPARATOR_VAL_OFFSET(timer) (0x108 + 0x20 * timer)
-#define HPET_TIMER_FSB_ROUTE_OFFSET(timer) (0x110 + 0x20 * timer)
+#define HPET_TIMER_CONFIG_CAP(timer) (0x100 + 0x20 * timer)
+#define HPET_TIMER_COMPARATOR_VAL(timer) (0x108 + 0x20 * timer)
+#define HPET_TIMER_FSB_ROUTE(timer) (0x110 + 0x20 * timer)
 
 #define HPET_ADDR INDICES_TO_ADDR(0, 0, 255ull, 258ull)
 
@@ -83,10 +88,10 @@ bool WUNUSED check_for_hpet(void);
 size_t enable_hpet(void);
 bool WUNUSED get_int_status(uint8_t timer);
 
-uint128_t hpet_cycles_wait(uint32_t ms);
+uint128_t hpet_cycles_wait(uint64_t ms);
 uint128_t hpet_get_progress(uint8_t hpet);
 void hpet_interrupt_in_cycles(uint128_t cycles, uint8_t hpet);
-void hpet_interrupt_in(uint32_t ms, uint8_t hpet);
+void hpet_interrupt_in(uint64_t ms, uint8_t hpet);
 uint8_t reserve_hpet(void);
 void return_hpet(uint8_t hpet);
 void bind_hpet_callback(void (*callback)(void), uint8_t hpet);
