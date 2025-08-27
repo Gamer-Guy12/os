@@ -549,6 +549,13 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
+uint8_t hpet = NO_HPET;
+
+void test(void) {
+  kio_printf("Test\n");
+  // hpet_interrupt_in(1000, hpet);
+}
+
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -602,17 +609,18 @@ void kernel_secondary_start(void) {
   if (!check_for_hpet())
     sys_panic(HPET_ERR);
 
-  enable_hpet();
-  // kio_printf("Enabled HPET (%x Clocks)\n", enable_hpet());
+  kio_printf("Enabled HPET (%x Clocks)\n", enable_hpet());
 
-  // init_sleep();
-  // kio_printf("Initialized Sleep\n");
+  while (hpet == NO_HPET)
+    hpet = reserve_hpet();
+  bind_hpet_callback(test, hpet);
+  hpet_interrupt_in(3000, hpet);
 
-  // kio_printf("Starting\n");
-  sleep_for(3000);
-  // kio_printf("Ready\n");
+  while (1) {
+  }
+  init_sleep();
+  kio_printf("Initialized Sleep\n");
 
-  while (1) {}
   start_preemption();
   enable_preemption();
   kio_printf("Preemption Started\n");

@@ -76,7 +76,7 @@
 #define QWERTY_KEY_L_ALT ((5 << 5) | 0x2)
 #define QWERTY_KEY_SPACE ((5 << 5) | 0x3)
 #define QWERTY_KEY_R_ALT ((5 << 5) | 0x8)
-#define QWERTY_KEY_RN ((5 << 5) | 0xA)
+#define QWERTY_KEY_FN ((5 << 5) | 0xA)
 #define QWERTY_KEY_MENU ((5 << 5) | 0xB)
 #define QWERTY_KEY_R_CTRL ((5 << 5) | 0xC)
 

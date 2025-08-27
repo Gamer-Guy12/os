@@ -12,3 +12,6 @@ Section 3: Empty
 Section 4: Page tables
 Section 5: Empty
 Section 6: Memory Map
+
+I was fucking stupid back then
+
