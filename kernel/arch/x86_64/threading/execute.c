@@ -10,7 +10,7 @@
 #include <threading/threading.h>
 
 void run_next_thread(void) {
-  disable_preemption();
+  // disable_preemption();
 
   TCB_t *tcb = TCB;
   tcb->rb_node.value++;
@@ -20,7 +20,7 @@ void run_next_thread(void) {
   // If there is nothing continue on
   if (next == NULL) {
     STI;
-    enable_preemption();
+    // enable_preemption();
     return;
   }
 
@@ -35,7 +35,7 @@ void run_next_thread(void) {
     old = start_thread(next);
   } else {
     STI;
-    enable_preemption();
+    // enable_preemption();
     return;
   }
 
@@ -47,5 +47,5 @@ void run_next_thread(void) {
   }
 
   STI;
-  enable_preemption();
+  // enable_preemption();
 }

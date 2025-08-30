@@ -1,8 +1,8 @@
 #ifndef X86_64_THREADING_H
 #define X86_64_THREADING_H
 
-#include <libk/list.h>
 #include <interrupts.h>
+#include <libk/list.h>
 #include <libk/queue.h>
 #include <libk/rbtree.h>
 #include <stddef.h>
@@ -20,10 +20,10 @@ typedef struct {
 
 typedef struct semaphore_struct {
   thread_queue_t queue;
-  int64_t current_count; 
-} semaphore_t; 
+  int64_t current_count;
+} semaphore_t;
 
-static inline void thread_queue_create(thread_queue_t* queue) {
+static inline void thread_queue_create(thread_queue_t *queue) {
   queue_create(&queue->idle_queue);
   queue_create(&queue->normal_queue);
   rb_create(&queue->priority_queue);
@@ -54,5 +54,10 @@ void init_sleep(void);
 /// This is the function that new threads should go to, it will set up the
 /// thread and then ret to it
 void begin_thread(TCB_t *old);
+
+void schedule_event(uint64_t ms, void* data, void (*event)(void*));
+/// tid is the the thread that it is required to run on.
+void schedule_event_thread(uint64_t ms, void* data, void (*event)(void*), size_t tid);
+void init_events(void);
 
 #endif

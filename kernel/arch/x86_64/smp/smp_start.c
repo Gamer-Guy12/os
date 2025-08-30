@@ -73,8 +73,8 @@ void smp_start(size_t processor_id, size_t old_page, size_t feature_flags) {
   init_threading();
 
   init_apic_timer();
-  start_preemption();
-  enable_preemption();
+  // start_preemption();
+  // enable_preemption();
 
   kill_cur_thread();
 }

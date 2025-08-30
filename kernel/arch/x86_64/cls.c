@@ -30,6 +30,8 @@ void init_cls(size_t feature_flags) {
   spinlock_release(&lock);
 
   cls->feature_flags = feature_flags;
+  cls->apic_timer_callback = NULL;
+  spinlock_release(&cls->apic_timer_lock);
 
   // queue_create(&cls->idle_queue);
   // queue_create(&cls->normal_queue);

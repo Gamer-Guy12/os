@@ -53,6 +53,13 @@ static inline size_t WUNUSED coreid(void) {
   return coreid;
 }
 
+static inline size_t WUNUSED rdtsc(void) {
+  size_t a = 0, d = 0;
+  __asm__ volatile("rdtsc" : "=a"(a), "=d"(d));
+
+  return a | (d << 32);
+}
+
 void __cli(void);
 void __sti(void);
 

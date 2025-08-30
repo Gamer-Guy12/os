@@ -2,7 +2,6 @@
 #include <asm.h>
 #include <cls.h>
 #include <hal/hal.h>
-#include <hpet.h>
 #include <irq.h>
 #include <libk/err.h>
 #include <libk/kgfx.h>
@@ -10,7 +9,9 @@
 #include <libk/queue.h>
 #include <libk/rbtree.h>
 #include <libk/sys.h>
+#include <mem/pimemory.h>
 #include <pic.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <threading.h>
 #include <threading/pcb.h>
@@ -549,13 +550,6 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
-uint8_t hpet = NO_HPET;
-
-void test(void) {
-  kio_printf("Test\n");
-  // hpet_interrupt_in(1000, hpet);
-}
-
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -577,6 +571,9 @@ void kernel_secondary_start(void) {
 
   init_apic_timer();
   kio_printf("Initialized APIC Timer\n");
+
+  init_events();
+  kio_printf("Initialized Event System\n");
 
   init_x86_64_hal();
   kio_printf("Initialized HAL\n");
@@ -606,23 +603,9 @@ void kernel_secondary_start(void) {
   test_queue();
   test_rbtree();
 
-  if (!check_for_hpet())
-    sys_panic(HPET_ERR);
-
-  kio_printf("Enabled HPET (%x Clocks)\n", enable_hpet());
-
-  while (hpet == NO_HPET)
-    hpet = reserve_hpet();
-  bind_hpet_callback(test, hpet);
-  hpet_interrupt_in(3000, hpet);
-
-  while (1) {
-  }
   init_sleep();
   kio_printf("Initialized Sleep\n");
 
-  start_preemption();
-  enable_preemption();
   kio_printf("Preemption Started\n");
 
   kill_cur_thread();

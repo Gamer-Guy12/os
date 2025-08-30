@@ -3,6 +3,7 @@
 #ifndef X86_64_CLS
 #define X86_64_CLS
 
+#include <libk/spinlock.h>
 #include <decls.h>
 #include <gdt.h>
 #include <hal/kbd.h>
@@ -28,6 +29,8 @@ typedef struct {
   thread_queue_t thread_queue;
   list_node_t node;
   size_t feature_flags;
+  void (*apic_timer_callback)(void);
+  spinlock_t apic_timer_lock;
 } cls_t;
 
 void init_cls(size_t feature_flags);
