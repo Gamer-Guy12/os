@@ -60,4 +60,8 @@ void schedule_event(uint64_t ms, void* data, void (*event)(void*));
 void schedule_event_thread(uint64_t ms, void* data, void (*event)(void*), size_t tid);
 void init_events(void);
 
+void run_preemption(void);
+void enable_preemption(void);
+void disable_preemption(void);
+
 #endif

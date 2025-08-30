@@ -51,7 +51,7 @@ void kernel_secondary_start(void);
 
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
-  TCB_t *tcb = create_thread(pcb, NULL);
+  TCB_t *tcb = create_thread(pcb, NULL, TP_NORMAL);
   tcb->priority = TP_NORMAL;
 
   tcb->state = THREAD_RUNNING;
@@ -550,6 +550,11 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
+void test(void) {
+  while (1) {
+  }
+}
+
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -603,6 +608,11 @@ void kernel_secondary_start(void) {
   test_queue();
   test_rbtree();
 
+  STI;
+  schedule_thread(create_thread(TCB->pcb, test, TP_NORMAL), TP_NORMAL);
+
+  run_preemption();
+  enable_preemption();
   kio_printf("Preemption Started\n");
 
   kill_cur_thread();

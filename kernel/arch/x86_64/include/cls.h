@@ -31,6 +31,7 @@ typedef struct {
   size_t feature_flags;
   void (*apic_timer_callback)(void);
   spinlock_t apic_timer_lock;
+  bool preemption_enabled;
 } cls_t;
 
 void init_cls(size_t feature_flags);

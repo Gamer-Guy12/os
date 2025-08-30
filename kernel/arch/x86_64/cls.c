@@ -29,6 +29,8 @@ void init_cls(size_t feature_flags) {
   core_count_global++;
   spinlock_release(&lock);
 
+  cls->preemption_enabled = false;
+
   cls->feature_flags = feature_flags;
   cls->apic_timer_callback = NULL;
   spinlock_release(&cls->apic_timer_lock);

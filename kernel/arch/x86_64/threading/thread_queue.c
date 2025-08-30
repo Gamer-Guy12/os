@@ -1,3 +1,4 @@
+#include <threading.h>
 #include <asm.h>
 #include <cls.h>
 #include <libk/queue.h>
@@ -12,7 +13,7 @@ void init_threading(void) {
 
   thread_queue_create(&cls->thread_queue);
 
-  TCB_t *idle_task = create_thread(TCB->pcb, idle);
+  TCB_t *idle_task = create_thread(TCB->pcb, idle, TP_IDLE);
   idle_task->priority = TP_IDLE;
   schedule_thread(idle_task, idle_task->priority);
 }

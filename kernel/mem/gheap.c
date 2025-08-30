@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <libk/math.h>
 #include <libk/mem.h>
 #include <libk/spinlock.h>
@@ -95,7 +96,7 @@ gheap_entry_t *create_entry(size_t size) {
     free_list = extra_ptr;
     extra_ptr->prev = NULL;
 
-    extra_ptr = (void*)((size_t)extra_ptr + sizeof(gheap_entry_t) + size);
+    extra_ptr = (void *)((size_t)extra_ptr + sizeof(gheap_entry_t) + size);
   }
 
   return ptr;
