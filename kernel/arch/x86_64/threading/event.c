@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <apic_timer.h>
 #include <asm.h>
 #include <decls.h>
@@ -30,12 +31,19 @@ static void handler(void) {
   rb_delete(&tree, &current_event->node);
   void (*event)(void *) = current_event->event;
   void *data = current_event->data;
-  bool run = current_event->tid = TCB->tid;
+  bool run = current_event->tid == TCB->tid || current_event->tid == MAX_64;
+  gfree(current_event);
 
   rbnode_t *node = rb_find_min(&tree, tree.root);
+  if (node == NULL) {
+    goto done;
+  }
+
   event_t *event_to_run = (event_t *)((size_t)node - offsetof(event_t, node));
   current_event = event_to_run;
+  apic_interrupt_at(event_to_run->node.value, handler);
 
+done:
   spinlock_release(&lock);
 
   if (run)

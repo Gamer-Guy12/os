@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <apic.h>
 #include <apic_timer.h>
 #include <asm.h>

@@ -603,9 +603,6 @@ void kernel_secondary_start(void) {
   test_queue();
   test_rbtree();
 
-  init_sleep();
-  kio_printf("Initialized Sleep\n");
-
   kio_printf("Preemption Started\n");
 
   kill_cur_thread();
