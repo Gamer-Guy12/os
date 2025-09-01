@@ -16,6 +16,7 @@ void begin_thread(TCB_t *old) {
 
   STI;
   enable_preemption();
+  run_preemption();
 
   __asm__ volatile("jmp *%0" ::"r"(tcb->entry_point));
 }

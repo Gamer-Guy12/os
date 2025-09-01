@@ -115,7 +115,7 @@ void calculate_frequency(void) {
   const size_t time_passed = end_tsc - start_tsc;
 
   /// The timer ran at 40 hz which means we need to divide time passed by 40
-  tsc_frequency = time_passed / 40;
+  tsc_frequency = time_passed / 40 * 16;
 
   write_apic_register(TIMER_DIV_CONFIG_REG, TIMER_DIV_2);
   write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | TIMER_ONE_SHOT);
@@ -149,7 +149,7 @@ void calculate_frequency(void) {
   // But this was done over the course of 25 ms aka 40 hz so multiply this by 40
   // to get how many times it would have gone in a second. This is because this
   // ran for 1/40th of a second
-  apic_frequency = difference * 2 * 40;
+  apic_frequency = difference * 40 * 2;
 
   spinlock_release(&frequency_lock);
 }
@@ -198,7 +198,7 @@ void apic_interrupt_at_oneshot(uint64_t tsc_deadline, void (*callback)(void)) {
   spinlock_acquire(&cls->apic_timer_lock);
 
   /// Convert TSC Deadline back into ms and then into apic ticks
-  const size_t ms = (tsc_deadline * 1000 / tsc_frequency) - rdtsc();
+  const size_t ms = ((tsc_deadline - rdtsc()) * 1000 / tsc_frequency);
   const size_t ticks = (ms * apic_frequency) / 1000;
 
   cls->apic_timer_callback = callback;

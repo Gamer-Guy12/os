@@ -55,9 +55,9 @@ void init_sleep(void);
 /// thread and then ret to it
 void begin_thread(TCB_t *old);
 
-void schedule_event(uint64_t ms, void* data, void (*event)(void*));
-/// tid is the the thread that it is required to run on.
-void schedule_event_thread(uint64_t ms, void* data, void (*event)(void*), size_t tid);
+/// Returns the event handle
+size_t schedule_event(uint64_t ms, void *data, void (*handler)(void *));
+void cancel_event(size_t handle);
 void init_events(void);
 
 void run_preemption(void);

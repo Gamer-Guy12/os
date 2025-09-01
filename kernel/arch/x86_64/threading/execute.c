@@ -10,10 +10,8 @@
 #include <threading/threading.h>
 
 void run_next_thread(void) {
-  if (TCB->tid > 7)
-    kio_printf("RUN %x\n", TCB->tid);
   disable_preemption();
-  
+
   TCB_t *tcb = TCB;
   tcb->rb_node.value++;
 
@@ -23,6 +21,7 @@ void run_next_thread(void) {
   if (next == NULL) {
     STI;
     enable_preemption();
+    run_preemption();
     return;
   }
 
@@ -50,4 +49,5 @@ void run_next_thread(void) {
 
   STI;
   enable_preemption();
+  run_preemption();
 }

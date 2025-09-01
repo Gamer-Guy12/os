@@ -3,7 +3,6 @@
 #ifndef X86_64_CLS
 #define X86_64_CLS
 
-#include <libk/spinlock.h>
 #include <decls.h>
 #include <gdt.h>
 #include <hal/kbd.h>
@@ -12,6 +11,7 @@
 #include <libk/list.h>
 #include <libk/queue.h>
 #include <libk/rbtree.h>
+#include <libk/spinlock.h>
 #include <stddef.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
@@ -32,6 +32,12 @@ typedef struct {
   void (*apic_timer_callback)(void);
   spinlock_t apic_timer_lock;
   bool preemption_enabled;
+  size_t preemption_handle;
+  int64_t interrupt_flag_uses;
+  rbtree_t event_deadline_tree;
+  rbtree_t event_handle_tree;
+  spinlock_t event_lock;
+  void* current_event; 
 } cls_t;
 
 void init_cls(size_t feature_flags);

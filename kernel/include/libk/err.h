@@ -19,6 +19,7 @@
 #define HAL_INIT_ERR (5ull << 48ull)
 #define SELF_TERM_ERR (6ull << 48ull)
 #define HPET_ERR (7ull << 48ull)
+#define NULL_ERR (8ull << 48ull)
 
 #define GET_CODE(full_err) (((full_err) >> 48) & 0xFFFF)
 

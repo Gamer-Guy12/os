@@ -74,15 +74,19 @@ void __sti(void);
 #define ASM(code) __asm__ volatile(code)
 
 /// Returns original value
-#define ATOMIC_INC(num) __atomic_fetch_add(&num, 1, __ATOMIC_RELEASE)
-#define ATOMIC_DEC(num) __atomic_fetch_sub(&num, 1, __ATOMIC_RELEASE)
+#define ATOMIC_INC(num) __atomic_fetch_add(&num, 1, __ATOMIC_SEQ_CST)
+#define ATOMIC_DEC(num) __atomic_fetch_sub(&num, 1, __ATOMIC_SEQ_CST)
 
 /// Returns original value
-#define ATOMIC_FADD(num, val) __atomic_fetch_add(&num, val, __ATOMIC_RELEASE)
-#define ATOMIC_FSUB(num, val) __atomic_fetch_sub(&num, val, __ATOMIC_RELEASE)
+#define ATOMIC_FADD(num, val) __atomic_fetch_add(&num, val, __ATOMIC_SEQ_CST)
+#define ATOMIC_FSUB(num, val) __atomic_fetch_sub(&num, val, __ATOMIC_SEQ_CST)
 
 /// Returns if success
-#define CAS(num, old, new) __sync_bool_compare_and_swap(&num, old, new)
+#define CAS(num, old, new)                                                     \
+  __atomic_compare_exchange_n(&num, &old, new, false, __ATOMIC_SEQ_CST,        \
+                              __ATOMIC_SEQ_CST)
+
+#define ATOMIC_LOAD(ptr) __atomic_load_n(ptr, __ATOMIC_SEQ_CST)
 
 /// @return 1 if sucess and 0 if failure
 ///

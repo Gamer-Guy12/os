@@ -1,23 +1,35 @@
 #include <asm.h>
+#include <cls.h>
 #include <stddef.h>
 #include <stdint.h>
 
-static int64_t uses = 0;
-
 void __cli(void) {
+  cls_t *cls = get_cls();
+
+  if (cls == NULL) {
+    ASM("cli");
+    return;
+  }
+
   ASM("cli");
-  ATOMIC_INC(uses);
+  ATOMIC_INC(cls->interrupt_flag_uses);
 }
 
 void __sti(void) {
-  /// This is the value that is currently in uses
-  int64_t val = ATOMIC_DEC(uses) - 1;
-
-  if (val <= 0) {
+  cls_t *cls = get_cls();
+  if (cls == NULL) {
     ASM("sti");
+    return;
   }
 
-  if (val < 0) {
-    CAS(uses, val, 0);
-  }
+  int64_t val = 0;
+
+  do {
+    val = ATOMIC_LOAD(&cls->interrupt_flag_uses);
+    if (val == 0) {
+      return;
+    }
+  } while (!CAS(cls->interrupt_flag_uses, val, val - 1));
+
+  ASM("sti");
 }

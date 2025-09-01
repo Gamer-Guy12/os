@@ -23,6 +23,8 @@ void init_cls(size_t feature_flags) {
   }
 
   cls->true_addr = (void *)ptr;
+  cls->preemption_enabled = 0;
+  cls->interrupt_flag_uses = 0;
 
   list_insert(&list, NULL, &cls->node);
   spinlock_acquire(&lock);
@@ -34,6 +36,11 @@ void init_cls(size_t feature_flags) {
   cls->feature_flags = feature_flags;
   cls->apic_timer_callback = NULL;
   spinlock_release(&cls->apic_timer_lock);
+
+  rb_create(&cls->event_deadline_tree);
+  rb_create(&cls->event_handle_tree);
+  spinlock_release(&cls->event_lock);
+  cls->current_event = NULL;
 
   // queue_create(&cls->idle_queue);
   // queue_create(&cls->normal_queue);

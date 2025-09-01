@@ -25,4 +25,5 @@ ERR 3: No interrupt handler
 ERR 4: KGFX Error
 ERR 5: HAL init error
 ERR 6: Self Termination error
-ERR 7: HPET Error
+ERR 7: Timer Error
+ERR 8: NULL Error
