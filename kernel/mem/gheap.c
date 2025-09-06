@@ -12,7 +12,7 @@ gheap_entry_t *free_list = NULL;
 static spinlock_t lock = ATOMIC_FLAG_INIT;
 
 /// The maximum number of free poitners it can search before it gives up
-#define GMALLOC_MAX_SEARCH 32
+#define GMALLOC_MAX_SEARCH 64
 /// if the size of the entry / GMALLOC_MAX_MULTIPLE is greater than the
 /// requested size it is too big
 ///

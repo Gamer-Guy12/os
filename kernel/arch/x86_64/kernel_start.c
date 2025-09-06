@@ -551,6 +551,24 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
+void test(void) {
+  while (1) {
+  }
+}
+
+void test2(void) {
+  kio_printf("Start\n");
+  sleep_for(1000);
+  kio_printf("Done\n");
+  while (1) {
+  }
+}
+
+void test3(void *data) {
+  size_t num = (size_t)data;
+  kio_printf("%x done\n", num);
+}
+
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -607,6 +625,10 @@ void kernel_secondary_start(void) {
   enable_preemption();
   run_preemption();
   kio_printf("Preemption Started\n");
+
+  schedule_thread(create_thread(get_cur_pcb(), test, TP_NORMAL), TP_NORMAL);
+  schedule_thread(create_thread(get_cur_pcb(), test, TP_NORMAL), TP_NORMAL);
+  schedule_thread(create_thread(get_cur_pcb(), test2, TP_NORMAL), TP_NORMAL);
 
   kill_cur_thread();
 }

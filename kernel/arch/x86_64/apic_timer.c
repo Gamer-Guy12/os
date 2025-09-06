@@ -1,4 +1,3 @@
-#include "libk/kio.h"
 #include <apic.h>
 #include <apic_timer.h>
 #include <asm.h>
@@ -89,7 +88,7 @@ void calculate_frequency(void) {
   // The clock should be in 1 shot mode at a speed of 40 hz
   // This means that the counter should be set to 1193182 / 40
   // which is 29830
-  uint16_t count = 29830;
+  const uint16_t count = 29830;
   WRITE_PIT_COMMAND(PIT_16_BINARY | PIT_MODE_0 | PIT_LOHIBYTE | PIT_CHANNEL_0);
   io_wait();
   WRITE_PIT_DATA_0(count && 0xff);
@@ -115,7 +114,7 @@ void calculate_frequency(void) {
   const size_t time_passed = end_tsc - start_tsc;
 
   /// The timer ran at 40 hz which means we need to divide time passed by 40
-  tsc_frequency = time_passed / 40 * 16;
+  tsc_frequency = time_passed * 40 * 16;
 
   write_apic_register(TIMER_DIV_CONFIG_REG, TIMER_DIV_2);
   write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | TIMER_ONE_SHOT);
@@ -149,7 +148,7 @@ void calculate_frequency(void) {
   // But this was done over the course of 25 ms aka 40 hz so multiply this by 40
   // to get how many times it would have gone in a second. This is because this
   // ran for 1/40th of a second
-  apic_frequency = difference * 40 * 2;
+  apic_frequency = difference * 40;
 
   spinlock_release(&frequency_lock);
 }
@@ -241,3 +240,5 @@ size_t ms_to_deadline(size_t ms) {
 
   return rdtsc() + cycles;
 }
+
+void pause_apic_timer(void) { write_apic_register(LVT_TIMER_REG, LVT_MASK); }
