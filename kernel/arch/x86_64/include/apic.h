@@ -42,7 +42,7 @@
 
 #define IA32_APIC_BASE 0x1B
 
-uint32_t read_apic_register(size_t reg);
+uint32_t WUNUSED read_apic_register(size_t reg);
 void write_apic_register(size_t reg, uint32_t value);
 
 #endif

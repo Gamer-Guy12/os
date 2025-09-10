@@ -1,19 +1,14 @@
 #ifndef X86_64_TCB_H
 #define X86_64_TCB_H
 
-#include <libk/rbtree.h>
 #include <gdt.h>
 #include <interrupts.h>
+#include <libk/list.h>
 #include <libk/queue.h>
+#include <libk/rbtree.h>
 #include <stddef.h>
+#include <threading.h>
 #include <threading/pcb.h>
-
-typedef enum {
-  TP_IDLE,
-  TP_NORMAL,
-  TP_HIGH,
-  TP_IO
-} thread_priority_t;
 
 typedef enum {
   THREAD_RUNNING = 1,
@@ -42,7 +37,7 @@ typedef struct TCB_struct {
   struct TCB_struct *next;
   struct TCB_struct *prev;
   queue_node_t queue_node;
-  void* xsave_page;
+  void *xsave_page;
   rbnode_t rb_node;
   thread_priority_t priority;
 } TCB_t;

@@ -58,23 +58,23 @@ setup_ret_t setup_memory(void) {
   return ret;
 }
 
-void smp_start(size_t processor_id, size_t old_page) {
+void smp_start(size_t processor_id, size_t old_page, size_t feature_flags) {
 
-  __asm__ volatile("cli");
+  CLI;
 
   phys_free((void *)old_page);
 
-  init_cls();
+  init_cls(feature_flags);
 
   create_gdt();
 
   init_interrupts();
 
-  init_apic_timer();
-  start_preemption();
+  init_threading();
 
-  TCB_t *idle_task = create_thread(TCB->pcb, idle);
-  idle_task->priority = TP_IDLE;
-  queue_thread(idle_task, idle_task->priority);
+  init_apic_timer();
+  run_preemption();
+  enable_preemption();
+
   kill_cur_thread();
 }

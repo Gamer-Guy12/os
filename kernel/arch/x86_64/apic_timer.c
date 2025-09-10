@@ -1,14 +1,19 @@
-#include "libk/kio.h"
 #include <apic.h>
 #include <apic_timer.h>
 #include <asm.h>
+#include <cls.h>
+#include <decls.h>
 #include <interrupts.h>
 #include <irq.h>
+#include <libk/err.h>
 #include <libk/spinlock.h>
+#include <libk/sys.h>
 #include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <threading.h>
+
+#define IA32_TSC_DEADLINE_MSR 0x6E0
 
 #define PIT_16_BINARY 0
 #define PIT_4_BCD 1
@@ -54,26 +59,23 @@
 
 #define PIT_FREQUENCY 1193182
 
-size_t frequency = 0;
+size_t tsc_frequency = 0;
+size_t apic_frequency = 0;
 spinlock_t frequency_lock = ATOMIC_FLAG_INIT;
-
-void on_preempt(idt_registers_t *regs) {
-  // __asm__ volatile ("mov $0x38, %rax; mov $0x0, %rbx; div %rbx");
-  irq_t irq = get_irq();
-  irq.eoi();
-  run_next_thread();
-}
 
 static void dummy_irq(idt_registers_t *regs) {
   irq_t irq = get_irq();
   irq.eoi();
 }
 
+void (*interrupt_callback)(uint64_t tsc_deadline,
+                           void (*callback)(void)) = NULL;
+
 /// The APIC should have masked everything so this shouldn't make an interrupt
 void calculate_frequency(void) {
   spinlock_acquire(&frequency_lock);
 
-  if (frequency != 0) {
+  if (tsc_frequency != 0) {
     spinlock_release(&frequency_lock);
     return;
   }
@@ -82,24 +84,18 @@ void calculate_frequency(void) {
 
   register_interrupt_handler(dummy_irq, 0x60);
 
-  write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | TIMER_ONE_SHOT);
-
-  /// The apic will count down from max int
-  uint32_t apic_count = -1;
-
   // This will run for 25 ms or 1/40 of a second
   // The clock should be in 1 shot mode at a speed of 40 hz
   // This means that the counter should be set to 1193182 / 40
   // which is 29830
-  uint16_t count = 29830;
-  CLI;
+  const uint16_t count = 29830;
   WRITE_PIT_COMMAND(PIT_16_BINARY | PIT_MODE_0 | PIT_LOHIBYTE | PIT_CHANNEL_0);
   io_wait();
   WRITE_PIT_DATA_0(count && 0xff);
   io_wait();
   WRITE_PIT_DATA_0((count && 0xff00) >> 8);
 
-  write_apic_register(TIMER_INITIAL_COUNT_REG, apic_count);
+  const size_t start_tsc = rdtsc();
 
   // wait for pit to finish
 
@@ -114,64 +110,135 @@ void calculate_frequency(void) {
     }
   }
 
-  // Stop the timer
-  write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | LVT_MASK);
+  const size_t end_tsc = rdtsc();
+  const size_t time_passed = end_tsc - start_tsc;
 
-  // Get the current apic time count
-  uint32_t cur_count = read_apic_register(TIMER_CUR_COUNT_REG);
+  /// The timer ran at 40 hz which means we need to divide time passed by 40
+  tsc_frequency = time_passed * 40 * 16;
 
-  // We used a 16 divider so multiply by 16 and also make it into a number that
-  // counted up We are using a uint32_t so its important that we set the same
-  // bits
-  uint32_t bits_set = -1;
-  size_t calculation_frequency = bits_set;
-  calculation_frequency -= cur_count;
-  calculation_frequency *= 16;
+  write_apic_register(TIMER_DIV_CONFIG_REG, TIMER_DIV_2);
+  write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | TIMER_ONE_SHOT);
 
-  // We ran the pit in oneshot a ta frequency of 40 hz
-  calculation_frequency *= 40;
-  frequency = calculation_frequency;
+  WRITE_PIT_COMMAND(PIT_16_BINARY | PIT_MODE_0 | PIT_LOHIBYTE | PIT_CHANNEL_0);
+  io_wait();
+  WRITE_PIT_DATA_0(count && 0xff);
+  io_wait();
+  WRITE_PIT_DATA_0((count && 0xff00) >> 8);
 
-  STI;
+  write_apic_register(TIMER_INITIAL_COUNT_REG, -1);
+
+  while (true) {
+    WRITE_PIT_COMMAND(PIT_LATCH_COUNT_VAL | PIT_CHANNEL_0);
+    io_wait();
+    uint16_t value = inb(PIT_DATA_0);
+    value |= inb(PIT_DATA_0) << 8;
+
+    if (value == 0) {
+      break;
+    }
+  }
+
+  write_apic_register(LVT_TIMER_REG, LVT_MASK);
+
+  size_t current_value = read_apic_register(TIMER_CUR_COUNT_REG);
+  size_t difference = MAX_32 - current_value;
+  write_apic_register(TIMER_INITIAL_COUNT_REG, 0);
+
+  // This was done at half speed so the apic in reality runs 2 times as fast
+  // But this was done over the course of 25 ms aka 40 hz so multiply this by 40
+  // to get how many times it would have gone in a second. This is because this
+  // ran for 1/40th of a second
+  apic_frequency = difference * 40;
+
   spinlock_release(&frequency_lock);
 }
 
-void init_apic_timer(void) { calculate_frequency(); }
+static void handler(idt_registers_t *registers) {
+  cls_t *cls = get_cls();
+  irq_t irq = get_irq();
+  irq.eoi();
 
-void start_preemption(void) {
-  // Assumptions: This CPU supports cpuid leaf 0x15, This CPU is using an
-  // integrated LAPIC and not discrete This means that I can use the core
-  // crystal frequency from ecx in leaf 0x15 to find the frequency of the APIC
-  // Timer
+  wrmsr(IA32_TSC_DEADLINE_MSR, 0);
+  write_apic_register(LVT_TIMER_REG, LVT_MASK);
 
-  // Divide by 16 should be used
-  // This is because on the wiki it says bochs cant handle 1
-  // so we must be nice
-  write_apic_register(TIMER_DIV_CONFIG_REG, TIMER_DIV_16);
+  if (cls->apic_timer_callback == NULL) {
+    return;
+  } else {
+    void (*callback)(void) = cls->apic_timer_callback;
+    cls->apic_timer_callback = NULL;
 
-  // The preemption vector is 0x60
-  register_interrupt_handler(on_preempt, 0x60);
+    callback();
+  }
+}
 
-  // Set up LVT register
-  write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | TIMER_PERIODIC);
+void apic_interrupt_at(size_t tsc_deadline, void (*callback)(void)) {
+  interrupt_callback(tsc_deadline, callback);
+}
 
-  // This is in hertz
-  const size_t targeted_frequency = 1000 / QUANTUM_LENGTH;
-  // The timer runs at half the speed of the clock this means that we want to
-  // wait for half as many ticks Above is wrong it runs at a sixteenth of a
-  // speed
-  const size_t count_value = (frequency / targeted_frequency) / 16 / 10;
-  write_apic_register(TIMER_INITIAL_COUNT_REG, count_value);
+void apic_interrupt_at_tsc(size_t tsc_deadline, void (*callback)(void)) {
+  cls_t *cls = get_cls();
+  spinlock_acquire(&cls->apic_timer_lock);
+
+  cls->apic_timer_callback = callback;
+
+  /// Idk if this matters but imma set it anyways
+  write_apic_register(TIMER_DIV_CONFIG_REG, TIMER_DIV_1);
+
+  register_interrupt_handler(handler, 0x60);
+  write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | TIMER_TSC);
+
+  wrmsr(IA32_TSC_DEADLINE_MSR, tsc_deadline);
+
+  spinlock_release(&cls->apic_timer_lock);
+}
+
+void apic_interrupt_at_oneshot(uint64_t tsc_deadline, void (*callback)(void)) {
+  cls_t *cls = get_cls();
+  spinlock_acquire(&cls->apic_timer_lock);
+
+  /// Convert TSC Deadline back into ms and then into apic ticks
+  const size_t ms = ((tsc_deadline - rdtsc()) * 1000 / tsc_frequency);
+  const size_t ticks = (ms * apic_frequency) / 1000;
+
+  cls->apic_timer_callback = callback;
+
+  register_interrupt_handler(handler, 0x60);
+
+  write_apic_register(TIMER_DIV_CONFIG_REG, TIMER_DIV_2);
+  write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | TIMER_ONE_SHOT);
+  /// Because the timer runs at half speed, we must divide by 2 to get the
+  /// accurate amount;
+  write_apic_register(TIMER_INITIAL_COUNT_REG, ticks / 2);
+
+  spinlock_release(&cls->apic_timer_lock);
+}
+
+void init_apic_timer(void) {
+  /// Check for tsc deadline
+  uint32_t a = 0;
+  uint32_t b = 0;
+  uint32_t c = 0;
+  uint32_t d = 0;
+
+  register_interrupt_handler(handler, 0x60);
+  cpuid(0x1, &a, &d, &c, &b);
+  if ((c & (1 << 24))) {
+    interrupt_callback = apic_interrupt_at_tsc;
+  } else {
+    interrupt_callback = apic_interrupt_at_oneshot;
+  }
+
+  calculate_frequency();
+  write_apic_register(LVT_TIMER_REG, LVT_MASK);
 
   STI;
+  ASM("sti");
 }
 
-void enable_preemption(void) {
-  write_apic_register(LVT_TIMER_REG, LVT_VECTOR(0x60) | TIMER_PERIODIC);
-  STI;
+size_t ms_to_deadline(size_t ms) {
+  size_t cycles = (ms * tsc_frequency) / 1000;
+
+  return rdtsc() + cycles;
 }
 
-void disable_preemption(void) {
-  write_apic_register(LVT_TIMER_REG,
-                      LVT_VECTOR(0x60) | TIMER_PERIODIC | LVT_MASK);
-}
+void pause_apic_timer(void) { write_apic_register(LVT_TIMER_REG, LVT_MASK); }

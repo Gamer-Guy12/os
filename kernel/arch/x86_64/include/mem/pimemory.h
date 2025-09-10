@@ -173,7 +173,7 @@ typedef struct block_descriptor_struct {
 
 /// Mem lock is required to use kernel_gp for writes
 /// Dont care about reads
-spinlock_t *get_mem_lock(void);
+spinlock_t *WUNUSED get_mem_lock(void);
 
 void init_memory_manager(void);
 
@@ -191,10 +191,10 @@ static inline size_t virt_to_phys(size_t addr) {
   return entry.full_entry & PAGE_TABLE_ENTRY_ADDR_MASK;
 }
 
-const block_descriptor_t *get_block_descriptor_ptr(void);
+const block_descriptor_t *WUNUSED get_block_descriptor_ptr(void);
 void set_block_descriptor_ptr(const block_descriptor_t *new_ptr);
 
-size_t get_block_count(void);
+size_t WUNUSED get_block_count(void);
 void set_block_count(size_t count);
 
 void *map_virt_to_phys(void *virt, void *phys, bool not_executable,
@@ -205,6 +205,6 @@ void *unmap_virt(void *virt);
 // I code so it is honor system
 // Returns where u should start using
 size_t reserve_258_pdt_page(size_t count);
-size_t get_used_258_pdt_page_count(void);
+size_t WUNUSED get_used_258_pdt_page_count(void);
 
 #endif

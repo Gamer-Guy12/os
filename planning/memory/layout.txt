@@ -4,6 +4,8 @@ PDPT Entries:
 257 - Physical Memory Identity Mapping (If wanted later)
 258 - Misc Data: PDT structure
     - Multiboot Info
+    - PDT 255 should contain the hpet info
+      - Only the first page is needed so anything after can be used if needed
     - PDT 256 and onwards contains vga memory
 259 - 509 - Global Heap & Stacks
 510 - Recursive Mapping

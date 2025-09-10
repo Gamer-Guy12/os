@@ -41,6 +41,8 @@ typedef struct {
 
 typedef void (*interrupt_handler_t)(idt_registers_t *registers);
 
+#define HPET_GENERAL_INT 0xA0
+
 void set_descriptor_offset(idt_gate_descriptor_t *descriptor, uint64_t offset);
 
 /// Common Interrupt Handler

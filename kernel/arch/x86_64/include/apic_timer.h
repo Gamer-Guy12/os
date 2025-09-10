@@ -3,11 +3,12 @@
 #ifndef X86_64_APIC_TIMER_H
 #define X86_64_APIC_TIMER_H
 
-void init_apic_timer(void);
-void start_preemption(void);
+#include <stddef.h>
 
-void enable_preemption(void);
-void disable_preemption(void);
+void init_apic_timer(void);
+void apic_interrupt_at(size_t tsc_deadline, void (*callback)(void));
+size_t ms_to_deadline(size_t ms);
+void pause_apic_timer(void);
 
 #endif
 

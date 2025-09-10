@@ -4,6 +4,8 @@
 #ifndef X86_64_IO_H
 #define X86_64_IO_H
 
+#include <decls.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -27,7 +29,7 @@ static inline void wrmsr(uint64_t msr, uint64_t value) {
   __asm__ volatile("wrmsr" : : "c"(msr), "a"(low), "d"(high));
 }
 
-static inline uint64_t rdmsr(uint64_t msr) {
+static inline uint64_t WUNUSED rdmsr(uint64_t msr) {
   uint32_t low, high;
   __asm__ volatile("rdmsr" : "=a"(low), "=d"(high) : "c"(msr));
   return ((uint64_t)high << 32) | low;
@@ -35,28 +37,56 @@ static inline uint64_t rdmsr(uint64_t msr) {
 
 static inline void cpuid(int code, uint32_t *a, uint32_t *d, uint32_t *c,
                          uint32_t *b) {
-  __asm__ volatile("cpuid" : "=a"(*a), "=d"(*d), "=c"(*c), "=b"(*b) : "0"(code));
+  __asm__ volatile("cpuid"
+                   : "=a"(*a), "=d"(*d), "=c"(*c), "=b"(*b)
+                   : "0"(code));
 }
 
 static inline void interrupt(uint8_t interrupt) {
   __asm__ volatile("int %0" ::"i"(interrupt) :);
 }
 
-static inline size_t coreid(void) {
+static inline size_t WUNUSED coreid(void) {
   size_t coreid = 0;
   __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;"
                    : "=b"(coreid)::"rax");
   return coreid;
 }
 
+static inline size_t WUNUSED rdtsc(void) {
+  size_t a = 0, d = 0;
+  __asm__ volatile("rdtsc" : "=a"(a), "=d"(d));
+
+  return a | (d << 32);
+}
+
+void __cli(void);
+void __sti(void);
+
 #define FS_MSR 0xC0000100
 
 #define MFENCE __asm__ volatile("mfence" ::: "memory")
-#define HLT __asm__ volatile("hlt");
+#define HLT __asm__ volatile("hlt")
 #define TCB ((TCB_t *)(rdmsr(FS_MSR)))
-#define CLI __asm__ volatile("cli");
-#define STI __asm__ volatile("sti")
-#define DIV0 __asm__ volatile("div %%rcx" :: "c"(0));
+#define CLI __cli()
+#define STI __sti()
+#define DIV0 __asm__ volatile("div %%rcx" ::"c"(0))
+#define ASM(code) __asm__ volatile(code)
+
+/// Returns original value
+#define ATOMIC_INC(num) __atomic_fetch_add(&num, 1, __ATOMIC_SEQ_CST)
+#define ATOMIC_DEC(num) __atomic_fetch_sub(&num, 1, __ATOMIC_SEQ_CST)
+
+/// Returns original value
+#define ATOMIC_FADD(num, val) __atomic_fetch_add(&num, val, __ATOMIC_SEQ_CST)
+#define ATOMIC_FSUB(num, val) __atomic_fetch_sub(&num, val, __ATOMIC_SEQ_CST)
+
+/// Returns if success
+#define CAS(num, old, new)                                                     \
+  __atomic_compare_exchange_n(&num, &old, new, false, __ATOMIC_SEQ_CST,        \
+                              __ATOMIC_SEQ_CST)
+
+#define ATOMIC_LOAD(ptr) __atomic_load_n(ptr, __ATOMIC_SEQ_CST)
 
 /// @return 1 if sucess and 0 if failure
 ///

@@ -15,12 +15,13 @@ void run_next_thread(void) {
   TCB_t *tcb = TCB;
   tcb->rb_node.value++;
 
-  TCB_t *next = pop_thread();
+  TCB_t *next = pop_thread(&get_cls()->thread_queue);
 
   // If there is nothing continue on
   if (next == NULL) {
     STI;
     enable_preemption();
+    run_preemption();
     return;
   }
 
@@ -29,18 +30,24 @@ void run_next_thread(void) {
   // just preempted can be queued
   TCB_t *old = NULL;
 
-  if (next->state == THREAD_STARTING) {
-    old = start_thread(next);
-  } else if (next->state == THREAD_RUNNING) {
+  if (next->state == THREAD_RUNNING) {
     old = switch_threads(next);
+  } else if (next->state == THREAD_STARTING) {
+    old = start_thread(next);
+  } else {
+    STI;
+    enable_preemption();
+    return;
   }
 
+  /// If the old thread is waiting dont queue it anywhere
   if (old->state == THREAD_RUNNING) {
-    queue_thread(old, old->priority);
+    queue_thread(old, old->priority, &get_cls()->thread_queue);
   } else if (old->state == THREAD_TERMINATED) {
     delete_thread(old);
   }
 
   STI;
   enable_preemption();
+  run_preemption();
 }

@@ -5,31 +5,45 @@
 
 #include <decls.h>
 #include <gdt.h>
-#include <irq.h>
 #include <hal/kbd.h>
 #include <interrupts.h>
+#include <irq.h>
 #include <libk/list.h>
 #include <libk/queue.h>
 #include <libk/rbtree.h>
+#include <libk/spinlock.h>
 #include <stddef.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
+#include <threading/threading.h>
 
 typedef struct {
+  /// IMPORTANT: This should only be used to save the current tcb when it is
+  /// necessary not for common use
+  /// user fs is saved when in kernel space which makes it even more important
+  /// not to mess with this
+  TCB_t *cur_tcb;
   ALIGN(0x10) gdt_descriptor_t gdt[DESCRIPTOR_COUNT];
   tss_t *tss;
-  void* true_addr;
-  // queue_t idle_queue;
-  // queue_t normal_queue;
-  // rbtree_t priority_queue;
-  // rbtree_t io_queue;
+  void *true_addr;
+  thread_queue_t thread_queue;
   list_node_t node;
+  size_t feature_flags;
+  void (*apic_timer_callback)(void);
+  spinlock_t apic_timer_lock;
+  bool preemption_enabled;
+  size_t preemption_handle;
+  int64_t interrupt_flag_uses;
+  rbtree_t event_deadline_tree;
+  rbtree_t event_handle_tree;
+  spinlock_t event_lock;
+  void* current_event; 
 } cls_t;
 
-void init_cls(void);
-cls_t *get_cls(void);
-list_t *get_cls_list(void);
-cls_t *get_cls_at(size_t index);
-size_t get_core_count(void);
+void init_cls(size_t feature_flags);
+cls_t *WUNUSED get_cls(void);
+list_t *WUNUSED get_cls_list(void);
+cls_t *WUNUSED get_cls_at(size_t index);
+size_t WUNUSED get_core_count(void);
 
 #endif

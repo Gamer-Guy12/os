@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-inline uint8_t find_zero8(uint8_t num) {
+inline uint8_t WUNUSED find_zero8(uint8_t num) {
   for (size_t i = 0; i < sizeof(uint8_t) * 8; i++) {
     if (!(num & (1 << i))) {
       return i;
@@ -16,7 +16,7 @@ inline uint8_t find_zero8(uint8_t num) {
   return 0xFF;
 }
 
-inline bool CONST check_bit(uint8_t num, uint8_t pos) {
+inline bool WUNUSED CONST check_bit(uint8_t num, uint8_t pos) {
   return (num & 1 << pos) > 0;
 }
 

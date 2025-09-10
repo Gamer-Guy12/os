@@ -95,30 +95,30 @@
 | 0x86 | |
 | 0x87 | |
 | 0x88 | |
-| 0x89 | |
-| 0x8a | |
-| 0x8b | |
-| 0x8c | |
-| 0x8d | |
-| 0x8e | |
-| 0x8f | |
-| 0x90 | |
-| 0x91 | |
-| 0x92 | |
-| 0x93 | |
-| 0x94 | |
-| 0x95 | |
-| 0x96 | |
-| 0x97 | |
-| 0x98 | |
-| 0x99 | |
-| 0x9a | |
-| 0x9b | |
-| 0x9c | |
-| 0x9d | |
-| 0x9e | |
-| 0x9f | |
-| 0xa0 | |
+| 0x89 |  |
+| 0x8a |  |
+| 0x8b |  |
+| 0x8c |  |
+| 0x8d |  |
+| 0x8e |  |
+| 0x8f |  |
+| 0x90 |  |
+| 0x91 |  |
+| 0x92 |  |
+| 0x93 |  |
+| 0x94 |  |
+| 0x95 |  |
+| 0x96 |  |
+| 0x97 |  |
+| 0x98 |  |
+| 0x99 |  |
+| 0x9a |  |
+| 0x9b |  |
+| 0x9c |  |
+| 0x9d |  |
+| 0x9e |  |
+| 0x9f |  |
+| 0xa0 | HPET General Interrupt |
 | 0xa1 | |
 | 0xa2 | |
 | 0xa3 | |
@@ -212,3 +212,33 @@
 | 0xfd | |
 | 0xfe | |
 | 0xff | Spurious interrupt |
+
+# IRQS
+
+| IRQ | Usage |
+| --- | ----- |
+| 0 | Free |
+| 1 | Keyboard |
+| 2 | HPET |
+| 3 | Free |
+| 4 | Free |
+| 5 | PCI/Audio |
+| 6 | Free |
+| 7 | Free |
+| 8 | Free |
+| 9 | Free |
+| 10 | PCI |
+| 11 | PCI |
+| 12 | Free |
+| 13 | Free |
+| 14 | Free |
+| 15 | Free |
+| 16 | HPET |
+| 17 | HPET |
+| 18 | HPET |
+| 19 | Free |
+| 20 | Free |
+| 21 | Free |
+| 22 | Free |
+| 23 | Free |
+

@@ -1,3 +1,4 @@
+#include "libk/kio.h"
 #include <acpi/acpi.h>
 #include <apic.h>
 #include <asm.h>
@@ -69,6 +70,33 @@ uint32_t get_apic_irq_from_isa(uint8_t isa_irq) {
   return isa_irq;
 }
 
+uint8_t get_apic_wanted_irq(uint8_t irq) {
+  MADT_t *madt = acpi_get_struct("APIC");
+  size_t size_left = madt->header.length - sizeof(MADT_t);
+
+  while (size_left > 0) {
+    MADT_entry_header_t *header =
+        (MADT_entry_header_t *)((uint8_t *)madt +
+                                (madt->header.length - size_left));
+
+    if (header->entry_type == 2) {
+      MADT_entry_2_t *entry = (MADT_entry_2_t *)header;
+
+      if (entry->global_system_interrupt == irq) {
+        return entry->irq_source;
+      }
+    }
+
+    if (size_left < header->record_length) {
+      return irq;
+    }
+
+    size_left -= header->record_length;
+  }
+
+  return irq;
+}
+
 void write_io_apic_reg(uint32_t reg, uint32_t value) {
   uint32_t *ioapic = get_io_apic_addr();
 
@@ -138,7 +166,7 @@ void apic_mask_all_irqs(void) {
   }
 }
 
-void apic_set_edge_triggered(bool edge, uint32_t irq) {
+void apic_set_trigger_mode(bool edge, bool active_low, uint32_t irq) {
   uint8_t actual_irq = get_apic_irq_from_isa(irq);
   uint32_t offset = 0x10 + actual_irq * 2;
 
@@ -148,6 +176,12 @@ void apic_set_edge_triggered(bool edge, uint32_t irq) {
     redirect_lobyte &= ~(1 << 15);
   } else {
     redirect_lobyte |= (1 << 15);
+  }
+
+  if (active_low) {
+    redirect_lobyte |= (1 << 13);
+  } else {
+    redirect_lobyte &= ~(1 << 13);
   }
 
   write_io_apic_reg(offset, redirect_lobyte);
@@ -163,7 +197,8 @@ irq_t init_apic(void) {
   ret.mask_irq = apic_mask_irq;
   ret.unmask_irq = apic_unmask_irq;
   ret.mask_all_irqs = apic_mask_all_irqs;
-  ret.set_edge_triggered = apic_set_edge_triggered;
+  ret.set_trigger_mode = apic_set_trigger_mode;
+  ret.get_pass_irq = get_apic_wanted_irq;
 
   apic_mask_all_irqs();
 

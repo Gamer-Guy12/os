@@ -107,6 +107,10 @@ stop:
 
 section .startup
 kernel_early_start:
+    mov rax, 0
+    mov rdx, 0
+    mov rcx, 0xC0000101
+    wrmsr
 
     mov rsp, stack_top
     mov rbp, rsp

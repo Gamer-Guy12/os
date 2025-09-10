@@ -1,31 +1,23 @@
-#include <acpi/acpi.h>
-#include <apic.h>
 #include <apic_timer.h>
 #include <asm.h>
 #include <cls.h>
-#include <decls.h>
-#include <gdt.h>
 #include <hal/hal.h>
-#include <interrupts.h>
 #include <irq.h>
+#include <libk/err.h>
 #include <libk/kgfx.h>
 #include <libk/kio.h>
-#include <libk/macros.h>
 #include <libk/queue.h>
 #include <libk/rbtree.h>
-#include <libk/vga_kgfx.h>
-#include <mem/memory.h>
+#include <libk/sys.h>
 #include <mem/pimemory.h>
-#include <mem/vimemory.h>
-#include <multiboot.h>
 #include <pic.h>
+#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <threading.h>
 #include <threading/pcb.h>
 #include <threading/tcb.h>
 #include <threading/threading.h>
-#include <threading/userspace.h>
 #include <x86_64.h>
 
 extern void kernel_main(void);
@@ -60,7 +52,7 @@ void kernel_secondary_start(void);
 
 void create_local_proccess(void) {
   PCB_t *pcb = create_process();
-  TCB_t *tcb = create_thread(pcb, NULL);
+  TCB_t *tcb = create_thread(pcb, NULL, TP_NORMAL);
   tcb->priority = TP_NORMAL;
 
   tcb->state = THREAD_RUNNING;
@@ -69,6 +61,8 @@ void create_local_proccess(void) {
 
   wrmsr(FS_MSR, (size_t)tcb);
 }
+
+extern size_t feature_flags;
 
 void kernel_start(uint8_t *multiboot) {
 
@@ -86,7 +80,7 @@ void kernel_start(uint8_t *multiboot) {
   init_global_brk();
   kio_printf("Initialized Global Heap (brk)\n");
 
-  init_cls();
+  init_cls(feature_flags);
   kio_printf("Initialized CLS (Core Local Storage)\n");
 
   create_gdt();
@@ -217,6 +211,11 @@ void test_queue(void) {
 bool failed = false;
 
 size_t verify_rbnode(rbtree_t *tree, rbnode_t *node) {
+  if ((node->left == NULL || node->right == NULL) && node != &tree->nil) {
+    failed = true;
+    return 0;
+  }
+
   if (node->color == RB_RED) {
     if (node->left->color == RB_RED || node->right->color == RB_RED) {
       failed = true;
@@ -552,6 +551,40 @@ void test_rbtree(void) {
   kio_printf("\n");
 }
 
+void test(void) {
+  // while (1) {
+  //   rbnode_t *node = rb_search(&get_cls()->event_handle_tree,
+  //                              get_cls()->event_handle_tree.root, 2);
+  //   if (node == NULL) {
+  //     kio_printf("Done\n");
+  //     break;
+  //   }
+  //   kio_printf("%x Handle, %x Deadline, %x Timestamp\n", node->value,
+  //              (node - 1)->value - rdtsc(), rdtsc());
+
+  //   volatile int i = 0;
+  //   while (i < 100000000) {
+  //     i++;
+  //   }
+  // }
+
+  while (1) {
+  }
+}
+
+void test2(void) {
+  kio_printf("Start\n");
+  sleep_for(1000);
+  kio_printf("Done\n");
+  while (1) {
+  }
+}
+
+void test3(void *data) {
+  size_t num = (size_t)data;
+  kio_printf("%x done\n", num);
+}
+
 void kernel_secondary_start(void) {
 
   // Uncomment to make the kernel fault to show that moving the break backwards
@@ -568,14 +601,17 @@ void kernel_secondary_start(void) {
   init_irq();
   kio_printf("Initialized IRQs\n");
 
-  init_x86_64_hal();
-  kio_printf("Initialized HAL\n");
-
   init_threading();
   kio_printf("Initialized Threading\n");
 
   init_apic_timer();
   kio_printf("Initialized APIC Timer\n");
+
+  init_events();
+  kio_printf("Initialized Event System\n");
+
+  init_x86_64_hal();
+  kio_printf("Initialized HAL\n");
 
   start_cores();
   kio_printf("Started all cores\n");
@@ -602,13 +638,16 @@ void kernel_secondary_start(void) {
   test_queue();
   test_rbtree();
 
-  start_preemption();
   enable_preemption();
+  run_preemption();
   kio_printf("Preemption Started\n");
 
-  TCB_t *idle_task = create_thread(TCB->pcb, idle);
-  idle_task->priority = TP_IDLE;
-  queue_thread(idle_task, idle_task->priority);
+  schedule_thread(create_thread(get_cur_pcb(), test, TP_NORMAL), TP_NORMAL);
+  schedule_thread(create_thread(get_cur_pcb(), test, TP_NORMAL), TP_NORMAL);
+  // schedule_thread(create_thread(get_cur_pcb(), test2, TP_NORMAL), TP_NORMAL);
+
+  kio_printf("Starting\n");
+  kio_printf("%x Handle\n", schedule_event(1000, NULL, test3));
 
   kill_cur_thread();
 }

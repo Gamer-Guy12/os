@@ -2,6 +2,111 @@ extern common_interrupt_handler
 extern phys_alloc
 extern phys_free
 
+save_fs_gs:
+  push rax
+  push rcx
+  push rdx
+  push r12
+  push r8
+
+  ; CS is stored at offset 152
+  ; We also pushed 40 more bytes so that also needs to be accounted for and also call pushes another 8 bytes
+  ; This adds to 200
+  mov rax, [rsp + 200]
+  cmp rax, 0x8
+  je .return
+
+  ; GS now contains the correct value
+  ; From here we can load the value of the tcb into fs
+  swapgs
+
+  ; Read gs
+  ; Rax now contains gs base
+  mov rcx, 0xC0000101
+  rdmsr
+  shl rdx, 32
+  or rax, rdx
+
+  mov r12, rax
+  ; R8 contains the tcb pointer
+  mov r8, [r12]
+
+  ; Get the value of fs currently to save it
+  mov rcx, 0xC0000100
+  rdmsr
+  shl rdx, 32
+  or rax, rdx
+
+  mov [r12], rax
+
+  ; Save the tcb into fs
+  mov rax, r8
+  mov rdx, r8
+  shr rdx, 32
+  ; RCX alr contains the correct value
+  wrmsr
+
+.return:
+  pop r8
+  pop r12
+  pop rdx
+  pop rcx
+  pop rax
+
+  ret
+
+load_fs_gs:
+  push rax
+  push rcx
+  push rdx
+  push r12
+  push r8
+
+  ; CS is stored at offset 152
+  ; We also pushed 40 more bytes so that also needs to be accounted for and also call pushes another 8 bytes
+  ; This adds to 200
+  mov rax, [rsp + 200]
+  cmp rax, 0x8
+  je .return
+
+  ; Save the current fs value
+
+  ; R12 now contains the pointer to the cls
+  mov rcx, 0xC0000101
+  rdmsr
+  shl rdx, 32
+  or rax, rdx
+  mov r12, rax
+
+  ; R8 now contains the tcb pointer
+  mov rcx, 0xC0000100
+  rdmsr
+  shl rdx, 32
+  or rax, rdx
+  mov r8, rax
+
+  ; RAX now contains the user fs value
+  mov rax, [r12]
+
+  ; Do the save
+  mov rdx, rax
+  shr rdx, 32
+  wrmsr
+
+  ; Save the old fs value
+  mov [r12], r8
+
+  swapgs
+
+.return:
+  pop r8
+  pop r12
+  pop rdx
+  pop rcx
+  pop rax
+
+  ret
+
 save_xsave:
 
   push rax
@@ -95,10 +200,14 @@ idt_handler_%1:
    mov ds, ax
    mov es, ax
 
+   call save_fs_gs
+
    ; Pass in pointer to the registers
    mov rdi, rsp
 
    call common_interrupt_handler
+
+   call load_fs_gs
 
    ; Change data segment back
    pop rax
@@ -174,9 +283,13 @@ idt_handler_%1:
    mov ds, ax
    mov es, ax
 
+   call save_fs_gs
+
    ; Pass in pointer to the registers
    mov rdi, rsp
    call common_interrupt_handler
+
+   call load_fs_gs
 
    ; Change data segment back
    pop rax

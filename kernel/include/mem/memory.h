@@ -1,31 +1,26 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include <decls.h>
 #include <libk/spinlock.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 /// Allocate a physical page
-void *phys_alloc(void);
+void WUNUSED *phys_alloc(void);
 
 /// Free a physical page
 void phys_free(void *addr);
 
 typedef struct gheap_entry_struct {
-  union {
-    size_t size;
-    struct {
-      uint64_t free : 1;
-      uint64_t reserved : 2;
-      uint64_t useless : 61;
-    };
-  };
+  size_t size;
   struct gheap_entry_struct *next;
   struct gheap_entry_struct *prev;
+  size_t padding;
 } gheap_entry_t;
 
-void *gmalloc(size_t size);
+void WUNUSED *gmalloc(size_t size);
 void gfree(void *ptr);
 
 void *increment_global_brk(size_t amount);

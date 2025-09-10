@@ -1,3 +1,4 @@
+#include <asm.h>
 #include <libk/rbtree.h>
 #include <libk/spinlock.h>
 #include <stdbool.h>
@@ -95,6 +96,8 @@ void rb_insert(rbtree_t *tree, rbnode_t *node) {
   if (tree->root == NULL) {
     insert(tree, node);
     spinlock_release(&tree->tree_lock);
+    MFENCE;
+    __atomic_fetch_add(&tree->count, 1, __ATOMIC_RELEASE);
     return;
   }
 
@@ -104,5 +107,6 @@ void rb_insert(rbtree_t *tree, rbnode_t *node) {
 
   spinlock_release(&tree->tree_lock);
 
+  MFENCE;
   __atomic_fetch_add(&tree->count, 1, __ATOMIC_RELEASE);
 }

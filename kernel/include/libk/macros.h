@@ -1,9 +1,7 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#define container_of(ptr, type, member) ({                      \
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)((char *)__mptr - offsetof(type,member));})
+#define container_of(ptr, type, element)                                       \
+  (type *)((size_t)(ptr) - offsetof(type, element))
 
 #endif
-

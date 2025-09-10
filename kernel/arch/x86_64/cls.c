@@ -12,7 +12,7 @@ list_t list = {.head = NULL, .lock = ATOMIC_FLAG_INIT};
 static spinlock_t lock = ATOMIC_FLAG_INIT;
 size_t core_count_global = 0;
 
-void init_cls(void) {
+void init_cls(size_t feature_flags) {
   size_t ptr = (size_t)gmalloc(sizeof(cls_t) + 8);
   cls_t *cls = NULL;
 
@@ -23,11 +23,24 @@ void init_cls(void) {
   }
 
   cls->true_addr = (void *)ptr;
+  cls->preemption_enabled = 0;
+  cls->interrupt_flag_uses = 0;
 
   list_insert(&list, NULL, &cls->node);
   spinlock_acquire(&lock);
   core_count_global++;
   spinlock_release(&lock);
+
+  cls->preemption_enabled = false;
+
+  cls->feature_flags = feature_flags;
+  cls->apic_timer_callback = NULL;
+  spinlock_release(&cls->apic_timer_lock);
+
+  rb_create(&cls->event_deadline_tree);
+  rb_create(&cls->event_handle_tree);
+  spinlock_release(&cls->event_lock);
+  cls->current_event = NULL;
 
   // queue_create(&cls->idle_queue);
   // queue_create(&cls->normal_queue);

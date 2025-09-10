@@ -1,3 +1,5 @@
+#include "threading.h"
+#include <libk/list.h>
 #include <gdt.h>
 #include <libk/spinlock.h>
 #include <mem/memory.h>
@@ -52,8 +54,9 @@ bool check_in(void *addr, void *pml4) {
 static size_t tid_cur = 0;
 static spinlock_t tid_lock = ATOMIC_FLAG_INIT;
 
-TCB_t *create_thread(PCB_t *process, void (*entry_point)(void)) {
+TCB_t *create_thread(PCB_t *process, void (*entry_point)(void), thread_priority_t priority) {
   TCB_t *tcb = gmalloc(sizeof(TCB_t));
+  tcb->priority = priority;
 
   spinlock_acquire(&tid_lock);
   tcb->tid = tid_cur;

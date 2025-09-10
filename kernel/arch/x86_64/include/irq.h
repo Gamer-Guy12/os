@@ -1,6 +1,7 @@
 #ifndef X86_64_HAL_IRQ_H
 #define X86_64_HAL_IRQ_H
 
+#include <decls.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -11,11 +12,15 @@ typedef struct {
   void (*mask_irq)(uint32_t irq);
   void (*unmask_irq)(uint32_t irq);
   void (*mask_all_irqs)(void);
-  void (*set_edge_triggered)(bool edge, uint32_t irq);
+  void (*set_trigger_mode)(bool edge, bool active_low, uint32_t irq);
+  /// This is mostly for the apic
+  /// it gives an irq value that can be used to get the irq u want because they
+  /// are usually mapped through isa thingy stuff ig
+  uint8_t (*get_pass_irq)(uint8_t wanted_irq);
 } irq_t;
 
 void init_irq(void);
-irq_t get_irq(void);
+irq_t WUNUSED get_irq(void);
 
 /// List of check functions
 bool check_apic(void);
