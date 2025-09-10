@@ -552,6 +552,22 @@ void test_rbtree(void) {
 }
 
 void test(void) {
+  // while (1) {
+  //   rbnode_t *node = rb_search(&get_cls()->event_handle_tree,
+  //                              get_cls()->event_handle_tree.root, 2);
+  //   if (node == NULL) {
+  //     kio_printf("Done\n");
+  //     break;
+  //   }
+  //   kio_printf("%x Handle, %x Deadline, %x Timestamp\n", node->value,
+  //              (node - 1)->value - rdtsc(), rdtsc());
+
+  //   volatile int i = 0;
+  //   while (i < 100000000) {
+  //     i++;
+  //   }
+  // }
+
   while (1) {
   }
 }
@@ -628,7 +644,10 @@ void kernel_secondary_start(void) {
 
   schedule_thread(create_thread(get_cur_pcb(), test, TP_NORMAL), TP_NORMAL);
   schedule_thread(create_thread(get_cur_pcb(), test, TP_NORMAL), TP_NORMAL);
-  schedule_thread(create_thread(get_cur_pcb(), test2, TP_NORMAL), TP_NORMAL);
+  // schedule_thread(create_thread(get_cur_pcb(), test2, TP_NORMAL), TP_NORMAL);
+
+  kio_printf("Starting\n");
+  kio_printf("%x Handle\n", schedule_event(1000, NULL, test3));
 
   kill_cur_thread();
 }

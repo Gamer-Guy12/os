@@ -29,26 +29,21 @@ static void event_handler(void) {
   CLI;
   spinlock_acquire(&cls->event_lock);
   event_t *event = cls->current_event;
-
-  /// If no event is currently running then no event will be run in the future
-  if (event == NULL) {
-    STI;
-    return;
-  }
-
-  rb_delete(&cls->event_deadline_tree, &event->deadline_node);
-  rb_delete(&cls->event_handle_tree, &event->handle_node);
-
-  void (*handler)(void *) = event->handler;
   void *data = event->data;
+  void (*handler)(void *) = event->handler;
 
+  rb_delete(&cls->event_handle_tree, &event->handle_node);
+  rb_delete(&cls->event_deadline_tree, &event->deadline_node);
+
+  cls->current_event = NULL;
   gfree(event);
 
   run_next_event(cls);
   spinlock_release(&cls->event_lock);
   STI;
 
-  handler(data);
+  if (handler != NULL)
+    handler(data);
 }
 
 inline static void run_next_event(cls_t *cls) {
@@ -64,7 +59,7 @@ inline static void run_next_event(cls_t *cls) {
     }
 
     event_t *event_to_run = container_of(node_to_run, event_t, deadline_node);
-    if (event_to_run->deadline_node.value < rdtsc()) {
+    if (event_to_run->deadline_node.value <= rdtsc()) {
       void (*handler)(void *) = event_to_run->handler;
       void *data = event_to_run->data;
 

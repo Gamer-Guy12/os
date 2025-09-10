@@ -1,4 +1,3 @@
-#include "libk/kio.h"
 #include <asm.h>
 #include <stdint.h>
 #include <threading.h>
@@ -13,12 +12,10 @@ static void handler(void *data) {
 }
 
 void sleep_for(uint64_t ms) {
-  CLI;
   disable_preemption();
-  kio_printf("Handle %x\n", schedule_event(ms, TCB, handler));
+  schedule_event(ms, TCB, handler);
 
   TCB->state = THREAD_WAITING;
   enable_preemption();
-  STI;
   run_next_thread();
 }
