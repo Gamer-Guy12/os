@@ -1,4 +1,5 @@
 build/
+tools/
 **/obj/
 compile_commands.json
 .*
