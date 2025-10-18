@@ -4,7 +4,8 @@ INCLUDE=include
 
 CC:=$(ARCH)-elf-gcc
 # General flags for compiling non-architecture-specific code 
-CFLAGS=-Werror -Wall -Wpedantic -ffreestanding -nostdlib -nostartfiles -no-pie -mno-red-zone -fno-pie -mcmodel=kernel -I $(INCLUDE) -D _$(ARCH)_
+# Assumes that the rule name is the rule for outputting the object file
+CFLAGS=-Werror -Wall -Wpedantic -ffreestanding -nostdlib -nostartfiles -no-pie -mno-red-zone -fno-pie -mcmodel=kernel -I $(INCLUDE) -D _$(ARCH)_ -MP -MMD
 
 LD:=$(ARCH)-elf-ld
 # Flags for making the final binary, for make object files just use -r and a linker script if necessary
@@ -31,11 +32,19 @@ include targets/$(ARCH)/tools.make
 # Contains the image target which is called after either build or debug which is used to make the final image (os.img)
 include targets/$(ARCH)/image.make
 
+-include $(shell find -name "*.d")
+
 .PHONY: clean
 clean:
 	@rm -rf build
 	@mkdir -p build/obj build/bin build/deps
 	@echo "Cleaned Build"
+
+build/obj/%.o: %.c
+	@mkdir -p $(dir $@)
+	@mkdir -p $(patsubst build/obj/%,build/deps/%,$(dir $@))
+	# I'll figure out a better way of including limine.h later
+	$(CC) $(CFLAGS) -c -o $@ $< -MF $(patsubst build/obj/%.o,build/deps/%.d,$@) -I tools/limine
 
 .PHONY: clean-tools
 clean-tools:

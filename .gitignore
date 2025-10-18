@@ -7,3 +7,4 @@ compile_commands.json
 *.img
 *.EFI
 kernel/deps/
+*.fd

@@ -14,4 +14,10 @@ SECTIONS {
   .init.bss : {
     *(.bss)
   }
+
+  .limine_requests : {
+    KEEP(*(.limine_requests_start))
+    KEEP(*(.limine_requests))
+    KEEP(*(.limine_requests_end))
+  }
 }

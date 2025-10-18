@@ -6,13 +6,17 @@ SECTIONS {
 
   _start_kernel = .;
 
+  .limine_requests : {
+    KEEP(*(.limine_requests))
+  } 
+
   .init.text ALIGN(4k) : {
     _start_init_text = .;
 
     *(.init.text)
 
     _end_init_text = .;
-  }
+  } 
 
   .init.rodata ALIGN(4k) : {
     _start_init_rodata = .;
@@ -20,7 +24,7 @@ SECTIONS {
     *(.init.rodata)
 
     _end_init_rodata = .;
-  }
+  } 
 
   .init.data ALIGN(4k) : {
     _start_init_data = .;
@@ -28,7 +32,7 @@ SECTIONS {
     *(.init.data)
 
     _end_init_data = .;
-  }
+  } 
 
   .init.bss ALIGN(4k) : {
     _start_init_bss = .;
@@ -36,7 +40,7 @@ SECTIONS {
     *(.init.bss)
 
     _end_init_bss = .;
-  }
+  } 
 
   .text ALIGN(4k) : {
     _start_text = .;
