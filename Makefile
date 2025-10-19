@@ -5,13 +5,13 @@ INCLUDE=include
 CC:=$(ARCH)-elf-gcc
 # General flags for compiling non-architecture-specific code 
 # Assumes that the rule name is the rule for outputting the object file
-CFLAGS=-Werror -Wall -Wpedantic -ffreestanding -nostdlib -nostartfiles -no-pie -mno-red-zone -fno-pie -mcmodel=kernel -I $(INCLUDE) -D _$(ARCH)_ -MP -MMD
+CFLAGS=-Werror -Wall -Wpedantic -ffreestanding -nostdlib -nostartfiles -no-pie -mno-red-zone -fno-pie -mcmodel=kernel -I $(INCLUDE) -D _$(ARCH)_ -MP -MD
 
 LD:=$(ARCH)-elf-ld
 # Flags for making the final binary, for make object files just use -r and a linker script if necessary
 LDFLAGS=-T targets/$(ARCH)/linker.ld -z noexecstack -L . -no-pie 
 
-kernel-objs=
+kernel-mods=
 
 .PHONY: build
 build: CFLAGS += -s -pipe -O3 -D _BUILD_
@@ -23,8 +23,8 @@ debug: build/bin/kernel.bin
 
 include $(wildcard **/Makefile)
 
-build/bin/kernel.bin: $(kernel-objs)
-	$(LD) $(LDFLAGS) $(kernel-objs) -o $@
+build/bin/kernel.bin: $(kernel-mods)
+	$(LD) $(LDFLAGS) $(kernel-mods) -o $@
 	@echo "Kernel Build Complete!"
 
 # Useful for making tools that are used
@@ -37,7 +37,7 @@ include targets/$(ARCH)/image.make
 .PHONY: clean
 clean:
 	@rm -rf build
-	@mkdir -p build/obj build/bin build/deps
+	@mkdir -p build/obj build/bin build/deps build/mods
 	@echo "Cleaned Build"
 
 build/obj/%.o: %.c
