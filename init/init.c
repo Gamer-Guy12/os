@@ -1,7 +1,8 @@
+#include "lib/io.h"
+#include "util.h"
 #include <limine.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "util.h"
 
 #define LIMINE_SECTION(name) __attribute__((used, section(name)))
 
@@ -18,7 +19,9 @@ static volatile LIMINE_REQUESTS_START_MARKER
 LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKER
     // clang-format on
 
+    // clang-format off
 void kinit(void) {
+  // clang-format on
   if (LIMINE_BASE_REVISION_SUPPORTED == false) {
     HLT;
   }

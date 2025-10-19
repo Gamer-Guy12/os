@@ -9,7 +9,7 @@ int atomic_sub(atomic_t* atomic, int num) {
 }
 
 int atomic_load(atomic_t* atomic) {
-  return __atomic_load_n(&atomic->num, __ATOMIC_RELEASE);
+  return __atomic_load_n(&atomic->num, __ATOMIC_ACQUIRE);
 }
 
 void atomic_store(atomic_t* atomic, int num) {
