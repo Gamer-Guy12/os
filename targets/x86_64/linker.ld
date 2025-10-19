@@ -1,6 +1,10 @@
 ENTRY(kinit)
 OUTPUT_FORMAT(elf64-x86-64)
 
+/*PHDRS {
+  limine PT_LOAD FLAGS(RW);
+}*/
+
 SECTIONS {
   . = 0xFFFFFFFF80000000;
 
@@ -8,7 +12,7 @@ SECTIONS {
 
   .limine_requests : {
     KEEP(*(.limine_requests))
-  } 
+  }
 
   .init.text ALIGN(4k) : {
     _start_init_text = .;

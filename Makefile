@@ -43,7 +43,7 @@ clean:
 build/obj/%.o: %.c
 	@mkdir -p $(dir $@)
 	@mkdir -p $(patsubst build/obj/%,build/deps/%,$(dir $@))
-	# I'll figure out a better way of including limine.h later
+	@# I'll figure out a better way of including limine.h later
 	$(CC) $(CFLAGS) -c -o $@ $< -MF $(patsubst build/obj/%.o,build/deps/%.d,$@) -I tools/limine
 
 .PHONY: clean-tools

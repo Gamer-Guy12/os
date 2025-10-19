@@ -63,10 +63,11 @@ void print_decimal(char *buf, size_t n, size_t *size, uint64_t num) {
   index = 0;
   while (index < 20 && str[index] != '\0') {
     add_char(buf, n, size, str[index]);
+    index++;
   }
 }
 
-void print_int(char *buf, size_t n, size_t *size, int64_t num) {
+void print_int(char *buf, size_t n, size_t *size, int num) {
   uint64_t val = num;
 
   if (num < 0) {
@@ -79,7 +80,7 @@ void print_int(char *buf, size_t n, size_t *size, int64_t num) {
 }
 
 // Supported format specifiers: %x - unsigned hex (64 bit), %u - unsigned
-// decimal (64 bit), %c - char, %d - signed decimal (64 bit)
+// decimal (64 bit), %c - char, %d - signed decimal (32 bit)
 int vsnprintf(char *buf, size_t n, const char *format, va_list args) {
   size_t size = 0;
   size_t char_index = 0;
@@ -108,7 +109,7 @@ int vsnprintf(char *buf, size_t n, const char *format, va_list args) {
       add_char(buf, n, &size, c);
     } break;
     case 'd': {
-      int64_t d = va_arg(args, int64_t);
+      int d = va_arg(args, int);
       print_int(buf, n, &size, d);
     } break;
     default:
@@ -117,6 +118,11 @@ int vsnprintf(char *buf, size_t n, const char *format, va_list args) {
 
     // Skip the format specifier
     char_index++;
+  }
+
+  if (n > size + 1) {
+    buf[size] = '\0';
+    size++;
   }
 
   return size;
