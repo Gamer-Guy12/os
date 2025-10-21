@@ -21,7 +21,7 @@ build: build/bin/kernel.bin
 debug: CFLAGS += -g3 -Og -ggdb -D _DEBUG_
 debug: build/bin/kernel.bin
 
-include $(wildcard **/Makefile)
+include $(filter-out arch/%, $(wildcard **/Makefile))
 
 build/bin/kernel.bin: $(kernel-mods)
 	$(LD) $(LDFLAGS) $(kernel-mods) -o $@
