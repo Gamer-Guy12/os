@@ -23,7 +23,7 @@ debug: build/bin/kernel.bin
 
 include $(filter-out arch/%, $(wildcard **/Makefile))
 
-build/bin/kernel.bin: $(kernel-mods)
+build/bin/kernel.bin: tools/limine/limine $(kernel-mods)
 	$(LD) $(LDFLAGS) $(kernel-mods) -o $@
 	@echo "Kernel Build Complete!"
 
