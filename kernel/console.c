@@ -36,11 +36,7 @@ static void console_put_pixel(uint64_t x, uint64_t y) {
 
   // Read the framebuffer so that i can change the according bits
   uint64_t byte_offset = pitch * y + bpp * x / 8;
-  uint64_t bit_offset = bpp % 8;
-  uint64_t write_mask = ((1 << bpp) - 1) << bit_offset;
-  uint64_t *fb_data =
-      (uint64_t *)((uintptr_t)framebuffer->address + byte_offset);
-  *fb_data |= (data << bit_offset) & write_mask;
+  *(uint32_t*)((uintptr_t)framebuffer->address + byte_offset) = data;
 }
 
 void console_init(void) {

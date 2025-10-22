@@ -1,4 +1,4 @@
-kernel-mods += 
+kernel-mods += build/mods/kernel.o
 
 kernel-src = kernel/console.c
 kernel-obj = $(addprefix build/obj/, $(patsubst %.c,%.o,$(kernel-src)))
