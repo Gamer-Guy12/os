@@ -1,9 +1,9 @@
 IMAGE_NAME:=build/os.img
 
 .PHONY: image 
-image: tools/limine/limine $(IMAGE_NAME) 
+image: tools/limine/limine $(IMAGE_NAME)
 
-$(IMAGE_NAME):
+$(IMAGE_NAME): build/bin/kernel.bin
 	dd if=/dev/zero of=$(IMAGE_NAME) bs=1M count=64
 	# Thank you limine source
 	PATH=$$PATH:/usr/sbin:/sbin sgdisk $(IMAGE_NAME) -n 1:2048 -t 1:ef00 -m 1

@@ -1,4 +1,5 @@
 #include "kernel/console.h"
+#include "kernel/kprintf.h"
 #include "util.h"
 #include <limine.h>
 #include <stdbool.h>
@@ -13,13 +14,14 @@ LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKE
     // clang-format on
 
     // clang-format off
-void kinit(void) {
+NORETURN void kinit(void) {
   // clang-format on
   if (LIMINE_BASE_REVISION_SUPPORTED == false) {
-    HLT;
+    panic();
   }
 
   console_init(); 
+  kprintf("Hello Kernel World!\n");
 
-  HLT;
+  while (1) {}
 }

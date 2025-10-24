@@ -15,7 +15,7 @@ SECTIONS {
 
   _start_kernel = .;
 
-  .limine_requests : {
+  .limine_requests ALIGN(4k) : {
     KEEP(*(.limine_requests_start))
     KEEP(*(.limine_requests))
     KEEP(*(.limine_requests_end))
@@ -60,6 +60,7 @@ SECTIONS {
 
     _end_text = .;
   } :text
+  . = ALIGN(4k);
 
   .rodata ALIGN(4k) : {
     _start_rodata = .;

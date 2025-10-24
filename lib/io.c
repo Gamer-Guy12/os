@@ -37,6 +37,10 @@ void print_hex(char *buf, size_t n, size_t *size, uint64_t num) {
 
     add_char(buf, n, size, c);
   }
+
+  if (cur_leading_zeros) {
+    add_char(buf, n, size, '0');
+  }
 }
 
 // Not preferred, would recommned printing hex when possible
@@ -112,6 +116,12 @@ int vsnprintf(char *buf, size_t n, const char *format, va_list args) {
       int d = va_arg(args, int);
       print_int(buf, n, &size, d);
     } break;
+    case 'p': {
+      uint64_t p = va_arg(args, uint64_t);
+      add_char(buf, n, &size, '0');
+      add_char(buf, n, &size, 'x');
+      print_hex(buf, n, &size, p);
+    } break;
     default:
       return -1;
     }
@@ -120,8 +130,11 @@ int vsnprintf(char *buf, size_t n, const char *format, va_list args) {
     char_index++;
   }
 
-  if (n > size + 1) {
+  if (n >= size + 1) {
     buf[size] = '\0';
+    size++;
+  } else if (size > n) {
+    // Include Null termintaotr
     size++;
   }
 
