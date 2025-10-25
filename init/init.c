@@ -1,5 +1,6 @@
 #include "kernel/console.h"
 #include "kernel/kprintf.h"
+#include "kernel/mem.h"
 #include "util.h"
 #include <limine.h>
 #include <stdbool.h>
@@ -21,6 +22,7 @@ NORETURN void kinit(void) {
   }
 
   console_init(); 
+  init_mem();
   kprintf("Hello Kernel World!\n");
 
   while (1) {}

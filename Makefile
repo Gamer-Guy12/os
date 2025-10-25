@@ -5,11 +5,15 @@ INCLUDE=include
 CC:=$(ARCH)-elf-gcc
 # General flags for compiling non-architecture-specific code 
 # Assumes that the rule name is the rule for outputting the object file
-CFLAGS=-Werror -Wall -Wpedantic -ffreestanding -nostdlib -nostartfiles -no-pie -mno-red-zone -fno-pie -mcmodel=kernel -I $(INCLUDE) -D _$(ARCH)_ -MP -MD -mno-sse -mno-avx -mno-mmx
+CFLAGS=-Werror -Wall -Wpedantic -ffreestanding -nostdlib -nostartfiles -no-pie -fno-pie -mcmodel=kernel -I $(INCLUDE) -D _$(ARCH)_ -MP -MD
 
 LD:=$(ARCH)-elf-ld
 # Flags for making the final binary, for make object files just use -r and a linker script if necessary
 LDFLAGS=-T targets/$(ARCH)/linker.ld -z noexecstack -L . -no-pie 
+
+ifeq ($(ARCH), x86_64) 
+CFLAGS += -mno-red-zone -mno-avx -mno-sse -mno-mmx
+endif
 
 kernel-mods=
 
@@ -21,7 +25,7 @@ build: build/bin/kernel.bin
 debug: CFLAGS += -g3 -Og -ggdb -D _DEBUG_
 debug: build/bin/kernel.bin
 
-include $(filter-out arch/%, $(wildcard **/Makefile))
+include $(wildcard **/Makefile)
 
 build/bin/kernel.bin: tools/limine/limine $(kernel-mods)
 	$(LD) $(LDFLAGS) $(kernel-mods) -o $@
