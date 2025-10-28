@@ -2,14 +2,14 @@
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "util.h"
-#include <limine.h>
+#include "limine.h"
 #include <stdbool.h>
 #include <stddef.h>
 
 #define LIMINE_SECTION(name) __attribute__((used, section(name)))
 
 // clang-format off
-LIMINE_SECTION(".limine_requests") static volatile LIMINE_BASE_REVISION(3)
+LIMINE_SECTION(".limine_requests") static volatile LIMINE_BASE_REVISION(4)
 
 LIMINE_SECTION(".limine_requests_start") static volatile LIMINE_REQUESTS_START_MARKER
 
@@ -25,9 +25,11 @@ NORETURN void kinit(void) {
 
   console_init();
   kprintf("[INIT] Initialized Console\n");
+
   kprintf("[INIT] Starting Memory Initialization\n");
   init_mem();
   kprintf("[INIT] Initialized Memory\n");
+
   kprintf("Hello Kernel World!\n");
 
   while (1) {

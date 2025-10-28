@@ -16,6 +16,7 @@
 
 #define LIMINE_REQUEST __attribute__((used, section(".limine_requests")))
 #define INIT __attribute__((section(".init.text")))
+#define INIT_DATA __attribute__((section(".init.data")))
 
 #ifdef _x86_64_
 

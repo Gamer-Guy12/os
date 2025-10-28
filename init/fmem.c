@@ -1,3 +1,4 @@
+#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -11,7 +12,10 @@ uintptr_t hhdm_offset = 0;
 
 struct fmem_node *freelist = NULL;
 
-void init_fmem(uintptr_t direct_offset) { hhdm_offset = direct_offset; }
+void init_fmem(uintptr_t direct_offset) {
+  hhdm_offset = direct_offset;
+  kprintf("\t[MEM] Initialized FMem\n");
+}
 
 void *fmem_palloc(void) {
   if (freelist == NULL) {
@@ -67,8 +71,9 @@ void fmem_pfree_range(void *start, void *end) {
   start_ptr = ((start_ptr - 1) / PAGE_SIZE + 1) * PAGE_SIZE;
   end_ptr = (end_ptr & ~(PAGE_SIZE - 1));
   if (start_ptr >= end_ptr) {
-    // Start is > End when they are both in the same page (or someone made an error)
-    // Start is == End when they are in consecutive pages but don't fill either of them up
+    // Start is > End when they are both in the same page (or someone made an
+    // error) Start is == End when they are in consecutive pages but don't fill
+    // either of them up
     return;
   }
 
