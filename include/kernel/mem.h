@@ -62,4 +62,15 @@ void init_mem(void);
 void *alloc_page(uint32_t order, uint32_t flags);
 void free_page(void *addr, uint32_t order);
 
+// Only for early on
+void init_fmem(uintptr_t direct_offset);
+
+void *fmem_palloc(void);
+void fmem_pfree(void *addr);
+
+void *fmem_valloc(void);
+void fmem_vfree(void *addr);
+
+void fmem_pfree_range(void *start, void *end);
+
 #endif

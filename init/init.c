@@ -11,6 +11,8 @@
 // clang-format off
 LIMINE_SECTION(".limine_requests") static volatile LIMINE_BASE_REVISION(3)
 
+LIMINE_SECTION(".limine_requests_start") static volatile LIMINE_REQUESTS_START_MARKER
+
 LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKER
     // clang-format on
 
@@ -21,9 +23,13 @@ NORETURN void kinit(void) {
     panic();
   }
 
-  console_init(); 
+  console_init();
+  kprintf("[INIT] Initialized Console\n");
+  kprintf("[INIT] Starting Memory Initialization\n");
   init_mem();
+  kprintf("[INIT] Initialized Memory\n");
   kprintf("Hello Kernel World!\n");
 
-  while (1) {}
+  while (1) {
+  }
 }
