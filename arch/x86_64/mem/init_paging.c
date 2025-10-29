@@ -197,9 +197,9 @@ static INIT uintptr_t clone_table(uintptr_t table, uint8_t level) {
   struct paging_entry *new_entries = (void *)(new_table + IDENTITY_MAP_OFFSET);
 
   for (int i = 0; i < 512; i++) {
-    if (entries[i].flags & PAGE_HUGE || level == 0) {
+    if ((entries[i].flags & PAGE_HUGE || level == 0) && (entries[i].flags & PAGE_PRESENT)) {
       new_entries[i] = entries[i];
-    } else {
+    } else if (entries[i].flags & PAGE_PRESENT) {
       new_entries[i].addr = clone_table(entries[i].addr & ADDR_MASK, level - 1);
       new_entries[i].flags = entries[i].flags;
       new_entries[i].nx = entries[i].nx;
@@ -216,6 +216,19 @@ static INIT void clone_kernel_mappings(void) {
 
   pml4[511].addr = clone_table(old_cr3, 2);
   pml4[511].flags = PAGE_GLOBAL | PAGE_PRESENT;
+}
+
+static void print_tables(uintptr_t phys_addr, uint8_t level) {
+  struct paging_entry *entries = (void *)phys_to_virt((void *)phys_addr);
+
+  for (int i = 0; i < 512; i++) {
+    if ((entries[i].flags & PAGE_HUGE || level == 0) && (entries[i].flags & PAGE_PRESENT)) {
+      kprintf("%u: 0x%x %u\n", level, entries[i].addr, i);
+    } else if (entries[i].flags & PAGE_PRESENT) {
+      kprintf("%u: 0x%x %u\n", level, entries[i].addr, i);
+      print_tables(entries[i].addr & ADDR_MASK, level - 1);
+    }
+  }
 }
 
 // Tasks to initialize paging
@@ -252,6 +265,9 @@ INIT void init_paging(uint64_t map_entry_count,
     }
   }
 
+  struct paging_entry *pml4 = (void*)((uintptr_t)cr3 + IDENTITY_MAP_OFFSET);
+  print_tables(pml4[511].addr & ADDR_MASK, 2);
+  while (1) {}
   __asm__ volatile("mov %0, %%cr3" ::"r"((uint64_t)cr3));
 
   kprintf("\t[MEM] Initialized Paging\n");
