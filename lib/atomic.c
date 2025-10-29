@@ -1,11 +1,11 @@
 #include "lib/atomic.h"
 
 int atomic_add(atomic_t *atomic, int num) {
-  return __atomic_add_fetch(&atomic->num, num, __ATOMIC_RELEASE);
+  return __atomic_add_fetch(&atomic->num, num, __ATOMIC_ACQ_REL);
 }
 
 int atomic_sub(atomic_t* atomic, int num) {
-  return __atomic_sub_fetch(&atomic->num, num, __ATOMIC_RELEASE);
+  return __atomic_sub_fetch(&atomic->num, num, __ATOMIC_ACQ_REL);
 }
 
 int atomic_load(atomic_t* atomic) {
