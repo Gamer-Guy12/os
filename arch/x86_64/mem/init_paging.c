@@ -197,9 +197,12 @@ static INIT uintptr_t clone_table(uintptr_t table, uint8_t level) {
   struct paging_entry *new_entries = (void *)(new_table + IDENTITY_MAP_OFFSET);
 
   for (int i = 0; i < 512; i++) {
-    if ((entries[i].flags & PAGE_HUGE || level == 0) && (entries[i].flags & PAGE_PRESENT)) {
-      new_entries[i] = entries[i];
+    if ((entries[i].flags & PAGE_HUGE || level == 0) &&
+        (entries[i].flags & PAGE_PRESENT)) {
+      new_entries[i].addr = entries[i].addr;
+      kprintf("Here 0x%x %u\n", entries[i].addr, level);
     } else if (entries[i].flags & PAGE_PRESENT) {
+      kprintf("Here %x %u %u\n", entries[i].addr, i, level);
       new_entries[i].addr = clone_table(entries[i].addr & ADDR_MASK, level - 1);
       new_entries[i].flags = entries[i].flags;
       new_entries[i].nx = entries[i].nx;
@@ -213,16 +216,20 @@ static INIT void clone_kernel_mappings(void) {
   struct paging_entry *pml4 = (void *)((uintptr_t)cr3 + IDENTITY_MAP_OFFSET);
   uintptr_t old_cr3 = 0;
   __asm__ volatile("mov %%cr3, %0" : "=r"(old_cr3));
+  struct paging_entry *old_pml4 =
+      (void *)((uintptr_t)old_cr3 + IDENTITY_MAP_OFFSET);
+  kprintf("Old Addr 0x%x\n", old_pml4[511].addr & ADDR_MASK);
 
-  pml4[511].addr = clone_table(old_cr3, 2);
-  pml4[511].flags = PAGE_GLOBAL | PAGE_PRESENT;
+  pml4[511].addr = clone_table(old_pml4[511].addr & ADDR_MASK, 2);
+  pml4[511].flags = PAGE_GLOBAL | PAGE_PRESENT | PAGE_RW;
 }
 
-static void print_tables(uintptr_t phys_addr, uint8_t level) {
+void print_tables(uintptr_t phys_addr, uint8_t level) {
   struct paging_entry *entries = (void *)phys_to_virt((void *)phys_addr);
 
   for (int i = 0; i < 512; i++) {
-    if ((entries[i].flags & PAGE_HUGE || level == 0) && (entries[i].flags & PAGE_PRESENT)) {
+    if ((entries[i].flags & PAGE_HUGE || level == 0) &&
+        (entries[i].flags & PAGE_PRESENT)) {
       kprintf("%u: 0x%x %u\n", level, entries[i].addr, i);
     } else if (entries[i].flags & PAGE_PRESENT) {
       kprintf("%u: 0x%x %u\n", level, entries[i].addr, i);
@@ -240,7 +247,7 @@ static void print_tables(uintptr_t phys_addr, uint8_t level) {
 //
 // x86_64 Memory Map:
 //
-// 0x0 - 0x7FFFFFFFFFFF -> Userspace (128 TB)
+// 0x0000000000000000 - 0x00007FFFFFFFFFFF -> Userspace (128 TB)
 // 0xFFFF800000000000 - 0xFFFFBFFFFFFFFFFF -> Identity Mapped Pages (64 TB)
 // 0xFFFFC00000000000 - 0xFFFFC07FFFFFFFFF -> Page Structures (512 GB)
 // 0xFFFFC08000000000 - 0xFFFFFF7FFFFFFFFF -> Unused (63 TB)
@@ -265,9 +272,24 @@ INIT void init_paging(uint64_t map_entry_count,
     }
   }
 
-  struct paging_entry *pml4 = (void*)((uintptr_t)cr3 + IDENTITY_MAP_OFFSET);
-  print_tables(pml4[511].addr & ADDR_MASK, 2);
-  while (1) {}
+  struct paging_entry *pml4 = (void *)((uintptr_t)cr3 + IDENTITY_MAP_OFFSET);
+  // print_tables(pml4[511].addr & ADDR_MASK, 2);
+  // 0xbde74fa8
+  struct paging_entry *pdpt =
+      (void *)((pml4[PML4_INDEX(0xffff8000bde84fa8)].addr & ADDR_MASK) +
+               IDENTITY_MAP_OFFSET);
+  struct paging_entry *pdt =
+      (void *)((pdpt[PDPT_INDEX(0xffff8000bde84fa8)].addr & ADDR_MASK) +
+               IDENTITY_MAP_OFFSET);
+  struct paging_entry *pt =
+      (void *)((pdt[PDT_INDEX(0xffff8000bde84fa8)].addr & ADDR_MASK) +
+               IDENTITY_MAP_OFFSET);
+  kprintf("%x\n", pml4[511].addr);
+
+  kprintf("%x %x %x %x\n", pml4[PML4_INDEX(0xffff8000bde84fa8)].addr,
+          pdpt[PDPT_INDEX(0xffff8000bde84fa8)].addr,
+          pdt[PDT_INDEX(0xffff8000bde84fa8)].addr,
+          pt[PT_INDEX(0xffff8000bde84fa8)].addr);
   __asm__ volatile("mov %0, %%cr3" ::"r"((uint64_t)cr3));
 
   kprintf("\t[MEM] Initialized Paging\n");

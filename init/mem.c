@@ -3,6 +3,7 @@
 #include "limine.h"
 #include "util.h"
 #include <stddef.h>
+#include <stdint.h>
 
 LIMINE_REQUEST static volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST, .revision = 0};
@@ -20,6 +21,7 @@ static void free_regions(void) {
   uint64_t usable_region_count = 0;
 
   for (uint64_t i = 0; i < memmap_entry_count; i++) {
+      kprintf("0x%x 0x%x %u\n", memmap_entries[i]->base, memmap_entries[i]->length, memmap_entries[i]->type);
     if (memmap_entries[i]->type == LIMINE_MEMMAP_USABLE) {
       fmem_pfree_range(
           (void *)memmap_entries[i]->base,
