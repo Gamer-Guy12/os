@@ -28,146 +28,106 @@ static INIT uintptr_t phys_to_virt(void *phys) {
 #define PT_INDEX(addr) (((uintptr_t)(addr) >> 12) & 0x1ff)
 #define ADDR_MASK 0x0007FFFFFFFFF000ull
 
-static INIT void map_region(uintptr_t start, size_t size, void *map_addr,
-                            uint16_t flags, bool nx) {
-  size_t page_count = size / PAGE_SIZE;
+// Size of 0 means 4kb page
+// Size of 1 means 2mb page
+// Size of 2 means 1gb page
+static INIT void map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
+                          bool nx, uint8_t size) {
+  struct paging_entry *pml4 = (void *)((uintptr_t)cr3 + IDENTITY_MAP_OFFSET);
+  const size_t pml4_index = PML4_INDEX(map_addr);
 
-  /// How many 1 gb pages
-  size_t massive_page_count = page_count / (1 << 18);
-  page_count -= massive_page_count * (1 << 18);
-  /// How many 2 mb pages
-  size_t huge_page_count = page_count / 512;
-  page_count -= huge_page_count * 512;
-  size_t normal_page_count = page_count;
+  struct paging_entry *pdpt = NULL;
+  const size_t pdpt_index = PDPT_INDEX(map_addr);
 
-  for (size_t i = 0; i < massive_page_count; i++) {
-    uintptr_t base_addr = start + i * GB;
+  if (pml4[pml4_index].flags & PAGE_PRESENT) {
+    const size_t phys_addr = pml4[pml4_index].addr & ADDR_MASK;
+    const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
+    pdpt = (void *)virt_addr;
+  } else {
+    uintptr_t phys_addr = (uintptr_t)fmem_palloc();
+    pdpt = (void *)phys_to_virt((void *)phys_addr);
+    pml4[pml4_index].addr = phys_addr;
+    pml4[pml4_index].flags = flags;
+    pml4[pml4_index].nx = nx;
+  }
 
-    size_t pml4_index = PML4_INDEX(map_addr);
-    struct paging_entry *pml4 = (struct paging_entry *)(phys_to_virt(cr3));
+  if (size == 2) {
+    goto map_gb_page;
+  }
 
-    struct paging_entry *pdpt = NULL;
+  struct paging_entry *pdt = NULL;
+  const size_t pdt_index = PDT_INDEX(map_addr);
 
-    if (pml4[pml4_index].flags & PAGE_PRESENT) {
-      uintptr_t phys_addr = pml4[pml4_index].addr & ADDR_MASK;
-      uintptr_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
-      pdpt = (struct paging_entry *)(virt_addr);
-    } else {
-      void *phys_addr = fmem_palloc();
-      pdpt = (void *)phys_to_virt(phys_addr);
-      pml4[pml4_index].addr = (uintptr_t)phys_addr;
-      pml4[pml4_index].flags = flags;
-      pml4[pml4_index].nx = nx;
-    }
-
-    // Each index represents 1 GB
-    size_t pdpt_index = PDPT_INDEX(map_addr);
-    pdpt[pdpt_index].addr = base_addr;
-    pdpt[pdpt_index].flags = flags | PAGE_HUGE;
+  if (pdpt[pdpt_index].flags & PAGE_PRESENT) {
+    const size_t phys_addr = pdpt[pdpt_index].addr & ADDR_MASK;
+    const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
+    pdt = (void *)virt_addr;
+  } else {
+    uintptr_t phys_addr = (uintptr_t)fmem_palloc();
+    pdt = (void *)(phys_to_virt((void *)phys_addr));
+    pdpt[pdpt_index].addr = phys_addr;
+    pdpt[pdpt_index].flags = flags;
     pdpt[pdpt_index].nx = nx;
   }
 
-  for (size_t i = 0; i < huge_page_count; i++) {
-    uintptr_t base_addr = start + massive_page_count * GB + i * 2 * MB;
+  if (size == 1) {
+    goto map_mb_page;
+  }
 
-    size_t pml4_index = PML4_INDEX(map_addr);
-    struct paging_entry *pml4 = (struct paging_entry *)(phys_to_virt(cr3));
+  struct paging_entry *pt = NULL;
+  const size_t pt_index = PT_INDEX(map_addr);
 
-    struct paging_entry *pdpt = NULL;
-
-    if (pml4[pml4_index].flags & PAGE_PRESENT) {
-      uintptr_t phys_addr = pml4[pml4_index].addr & ADDR_MASK;
-      uintptr_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
-      pdpt = (struct paging_entry *)(virt_addr);
-    } else {
-      void *phys_addr = fmem_palloc();
-      pdpt = (void *)phys_to_virt(phys_addr);
-      pml4[pml4_index].addr = (uintptr_t)phys_addr;
-      pml4[pml4_index].flags = flags;
-      pml4[pml4_index].nx = nx;
-    }
-
-    size_t pdpt_index = PDPT_INDEX(map_addr);
-
-    struct paging_entry *pdt = NULL;
-
-    if (pdpt[pdpt_index].flags & PAGE_PRESENT) {
-      uintptr_t phys_addr = pdpt[pdpt_index].addr & ADDR_MASK;
-      uintptr_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
-      pdt = (struct paging_entry *)(virt_addr);
-    } else {
-      void *phys_addr = fmem_palloc();
-      pdt = (void *)phys_to_virt(phys_addr);
-      pdpt[pdpt_index].addr = (uintptr_t)phys_addr;
-      pdpt[pdpt_index].flags = flags;
-      pdpt[pdpt_index].nx = nx;
-    }
-
-    // Each Index represents 2 mb
-    size_t pdt_index = PDT_INDEX(map_addr);
-    pdt[pdt_index].addr = base_addr;
-    pdt[pdt_index].flags = flags | PAGE_HUGE;
+  if (pdt[pdt_index].flags & PAGE_PRESENT) {
+    const size_t phys_addr = pdt[pdt_index].addr & ADDR_MASK;
+    const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
+    pt = (void *)virt_addr;
+  } else {
+    uintptr_t phys_addr = (uintptr_t)fmem_palloc();
+    pt = (void *)(phys_to_virt((void *)phys_addr));
+    pdt[pdt_index].addr = phys_addr;
+    pdt[pdt_index].flags = flags;
     pdt[pdt_index].nx = nx;
   }
 
-  for (size_t i = 0; i < normal_page_count; i++) {
-    uintptr_t base_addr = start + massive_page_count * GB +
-                          huge_page_count * MB * 2 + i * PAGE_SIZE;
+  pt[pt_index].addr = phys_addr;
+  pt[pt_index].flags = flags;
+  pt[pt_index].nx = nx;
+  return;
 
-    size_t pml4_index = PML4_INDEX(map_addr);
-    struct paging_entry *pml4 = (struct paging_entry *)(phys_to_virt(cr3));
+map_gb_page:
+  flags |= PAGE_HUGE;
+  pdpt[pdpt_index].addr = phys_addr;
+  pdpt[pdpt_index].flags = flags;
+  pdpt[pdpt_index].nx = nx;
+  return;
 
-    struct paging_entry *pdpt = NULL;
+map_mb_page:
+  flags |= PAGE_HUGE;
+  pdt[pdt_index].addr = phys_addr;
+  pdt[pdt_index].flags = flags;
+  pdt[pdt_index].nx = nx;
+}
 
-    if (pml4[pml4_index].flags & PAGE_PRESENT) {
-      uintptr_t phys_addr = pml4[pml4_index].addr & ADDR_MASK;
-      uintptr_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
-      pdpt = (struct paging_entry *)(virt_addr);
+static INIT void map_region(uintptr_t start, size_t size, void *map_addr,
+                            uint16_t flags, bool nx) {
+  const size_t page_count = size / PAGE_SIZE;
+  size_t pages_left = page_count;
+
+  while (pages_left > 0) {
+    uintptr_t cur_addr = start + (page_count - pages_left) * PAGE_SIZE;
+    uintptr_t new_map_addr =
+        (uintptr_t)map_addr + (page_count - pages_left) * PAGE_SIZE;
+
+    if (cur_addr % GB == 0 && pages_left >= (1 << 18)) {
+      map_page(cur_addr, (void *)new_map_addr, flags, nx, 2);
+      pages_left -= (1 << 18);
+    } else if (cur_addr % (MB * 2) == 0 && pages_left >= 512) {
+      map_page(cur_addr, (void *)new_map_addr, flags, nx, 1);
+      pages_left -= 512;
     } else {
-      void *phys_addr = fmem_palloc();
-      pdpt = (void *)phys_to_virt(phys_addr);
-      pml4[pml4_index].addr = (uintptr_t)phys_addr;
-      pml4[pml4_index].flags = flags;
-      pml4[pml4_index].nx = nx;
+      map_page(cur_addr, (void *)new_map_addr, flags, nx, 0);
+      pages_left--;
     }
-
-    size_t pdpt_index = PDPT_INDEX(map_addr);
-
-    struct paging_entry *pdt = NULL;
-
-    if (pdpt[pdpt_index].flags & PAGE_PRESENT) {
-      uintptr_t phys_addr = pdpt[pdpt_index].addr & ADDR_MASK;
-      uintptr_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
-      pdt = (struct paging_entry *)(virt_addr);
-    } else {
-      void *phys_addr = fmem_palloc();
-      pdt = (void *)phys_to_virt(phys_addr);
-      pdpt[pdpt_index].addr = (uintptr_t)phys_addr;
-      pdpt[pdpt_index].flags = flags;
-      pdpt[pdpt_index].nx = nx;
-    }
-
-    size_t pdt_index = PDT_INDEX(map_addr);
-
-    struct paging_entry *pt = NULL;
-
-    if (pdt[pdt_index].flags & PAGE_PRESENT) {
-      uintptr_t phys_addr = pdt[pdt_index].addr & ADDR_MASK;
-      uintptr_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
-      pt = (struct paging_entry *)(virt_addr);
-    } else {
-      void *phys_addr = fmem_palloc();
-      pt = (void *)phys_to_virt(phys_addr);
-      pdt[pdt_index].addr = (uintptr_t)phys_addr;
-      pdt[pdt_index].flags = flags;
-      pdt[pdt_index].nx = nx;
-    }
-
-    // Each Index represents 2 mb
-    size_t pt_index = PT_INDEX(map_addr);
-    pt[pt_index].addr = base_addr;
-    pt[pt_index].flags = flags;
-    pt[pt_index].nx = nx;
   }
 }
 
@@ -200,9 +160,7 @@ static INIT uintptr_t clone_table(uintptr_t table, uint8_t level) {
     if ((entries[i].flags & PAGE_HUGE || level == 0) &&
         (entries[i].flags & PAGE_PRESENT)) {
       new_entries[i].addr = entries[i].addr;
-      kprintf("Here 0x%x %u\n", entries[i].addr, level);
     } else if (entries[i].flags & PAGE_PRESENT) {
-      kprintf("Here %x %u %u\n", entries[i].addr, i, level);
       new_entries[i].addr = clone_table(entries[i].addr & ADDR_MASK, level - 1);
       new_entries[i].flags = entries[i].flags;
       new_entries[i].nx = entries[i].nx;
@@ -218,24 +176,9 @@ static INIT void clone_kernel_mappings(void) {
   __asm__ volatile("mov %%cr3, %0" : "=r"(old_cr3));
   struct paging_entry *old_pml4 =
       (void *)((uintptr_t)old_cr3 + IDENTITY_MAP_OFFSET);
-  kprintf("Old Addr 0x%x\n", old_pml4[511].addr & ADDR_MASK);
 
   pml4[511].addr = clone_table(old_pml4[511].addr & ADDR_MASK, 2);
   pml4[511].flags = PAGE_GLOBAL | PAGE_PRESENT | PAGE_RW;
-}
-
-void print_tables(uintptr_t phys_addr, uint8_t level) {
-  struct paging_entry *entries = (void *)phys_to_virt((void *)phys_addr);
-
-  for (int i = 0; i < 512; i++) {
-    if ((entries[i].flags & PAGE_HUGE || level == 0) &&
-        (entries[i].flags & PAGE_PRESENT)) {
-      kprintf("%u: 0x%x %u\n", level, entries[i].addr, i);
-    } else if (entries[i].flags & PAGE_PRESENT) {
-      kprintf("%u: 0x%x %u\n", level, entries[i].addr, i);
-      print_tables(entries[i].addr & ADDR_MASK, level - 1);
-    }
-  }
 }
 
 // Tasks to initialize paging
@@ -272,24 +215,6 @@ INIT void init_paging(uint64_t map_entry_count,
     }
   }
 
-  struct paging_entry *pml4 = (void *)((uintptr_t)cr3 + IDENTITY_MAP_OFFSET);
-  // print_tables(pml4[511].addr & ADDR_MASK, 2);
-  // 0xbde74fa8
-  struct paging_entry *pdpt =
-      (void *)((pml4[PML4_INDEX(0xffff8000bde84fa8)].addr & ADDR_MASK) +
-               IDENTITY_MAP_OFFSET);
-  struct paging_entry *pdt =
-      (void *)((pdpt[PDPT_INDEX(0xffff8000bde84fa8)].addr & ADDR_MASK) +
-               IDENTITY_MAP_OFFSET);
-  struct paging_entry *pt =
-      (void *)((pdt[PDT_INDEX(0xffff8000bde84fa8)].addr & ADDR_MASK) +
-               IDENTITY_MAP_OFFSET);
-  kprintf("%x\n", pml4[511].addr);
-
-  kprintf("%x %x %x %x\n", pml4[PML4_INDEX(0xffff8000bde84fa8)].addr,
-          pdpt[PDPT_INDEX(0xffff8000bde84fa8)].addr,
-          pdt[PDT_INDEX(0xffff8000bde84fa8)].addr,
-          pt[PT_INDEX(0xffff8000bde84fa8)].addr);
   __asm__ volatile("mov %0, %%cr3" ::"r"((uint64_t)cr3));
 
   kprintf("\t[MEM] Initialized Paging\n");
