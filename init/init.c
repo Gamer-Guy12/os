@@ -1,8 +1,8 @@
 #include "kernel/console.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
-#include "util.h"
 #include "limine.h"
+#include "util.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -17,7 +17,7 @@ LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKE
     // clang-format on
 
     // clang-format off
-NORETURN void kinit(void) {
+NORETURN INIT void kinit(void) {
   // clang-format on
   if (LIMINE_BASE_REVISION_SUPPORTED == false) {
     panic();

@@ -14,7 +14,7 @@ LIMINE_REQUEST static volatile struct limine_memmap_request memmap_request = {
 static uint64_t memmap_entry_count = 0;
 static struct limine_memmap_entry **memmap_entries = NULL;
 
-static void free_regions(void) {
+static INIT void free_regions(void) {
   memmap_entry_count = memmap_request.response->entry_count;
   memmap_entries = memmap_request.response->entries;
   kprintf("\t[MEM] Map Entry Count: %u\n", memmap_entry_count);
@@ -31,8 +31,23 @@ static void free_regions(void) {
   kprintf("\t[MEM] Freed Usable Regions: %u\n", usable_region_count);
 }
 
+static INIT void add_to_buddy(void) {
+  uint64_t count = 0;
+
+  void *ptr = fmem_palloc();
+  while (ptr != NULL) {
+    free_page(ptr, 0);
+    count++;
+    ptr = fmem_palloc();
+  }
+
+  kprintf("\t[MEM] Freed 0x%x Pages for Buddy\n", count);
+}
+
 void init_mem(void) {
   init_fmem(hhdm_request.response->offset);
   free_regions();
   init_paging(memmap_entry_count, memmap_entries);
+  init_buddy();
+  add_to_buddy();
 }

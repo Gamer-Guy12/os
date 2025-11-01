@@ -181,6 +181,55 @@ static INIT void clone_kernel_mappings(void) {
   pml4[511].flags = PAGE_GLOBAL | PAGE_PRESENT | PAGE_RW;
 }
 
+uintptr_t max_addr = 0;
+
+static INIT void
+reserve_page_struct_space(size_t entry_count,
+                          struct limine_memmap_entry **entries) {
+  for (size_t i = 0; i < entry_count; i++) {
+    if (entries[i]->type == LIMINE_MEMMAP_USABLE ||
+        entries[i]->type == LIMINE_MEMMAP_EXECUTABLE_AND_MODULES ||
+        entries[i]->type == LIMINE_MEMMAP_FRAMEBUFFER ||
+        entries[i]->type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE ||
+        entries[i]->type == LIMINE_MEMMAP_ACPI_RECLAIMABLE) {
+      max_addr = entries[i]->base + entries[i]->length;
+    }
+  }
+
+  const size_t page_count = max_addr / PAGE_SIZE;
+  const size_t pages_needed =
+      ((page_count * sizeof(struct page) - 1) / PAGE_SIZE + 1);
+
+  for (size_t i = 0; i < pages_needed; i++) {
+    const uintptr_t addr = PAGE_STRUCT_ADDR + i * PAGE_SIZE;
+    map_page((uintptr_t)fmem_palloc(), (void *)addr,
+             PAGE_PRESENT | PAGE_RW | PAGE_GLOBAL, true, 0);
+  }
+
+  memset(pages, 0, pages_needed * PAGE_SIZE);
+
+  kprintf("\t[MEM] Reserved %u Pages for Page Structs\n", pages_needed);
+}
+
+static INIT void reserve_buddy_space(size_t entry_count,
+                                     struct limine_memmap_entry **entries) {
+  const size_t page_count = max_addr / PAGE_SIZE;
+  const size_t bytes_needed = page_count / 16 * 2;
+  const size_t pages_needed = ((bytes_needed - 1) / PAGE_SIZE) + 1;
+
+  for (size_t i = 0; i < pages_needed; i++) {
+    const uintptr_t addr = BUDDY_DATA_ADDR + i * PAGE_SIZE;
+    map_page((uintptr_t)fmem_palloc(), (void *)addr,
+             PAGE_PRESENT | PAGE_RW | PAGE_GLOBAL, true, 0);
+  }
+
+  memset((void *)BUDDY_DATA_ADDR, 0, pages_needed * PAGE_SIZE);
+
+  kprintf("\t[MEM] Reserved %u Pages for Buddy Data\n", pages_needed);
+}
+
+uintptr_t get_max_addr(void) { return max_addr; }
+
 // Tasks to initialize paging
 // Copy over the mapping for the last 512 gb
 // Identity Map the pages necessary
@@ -193,7 +242,8 @@ static INIT void clone_kernel_mappings(void) {
 // 0x0000000000000000 - 0x00007FFFFFFFFFFF -> Userspace (128 TB)
 // 0xFFFF800000000000 - 0xFFFFBFFFFFFFFFFF -> Identity Mapped Pages (64 TB)
 // 0xFFFFC00000000000 - 0xFFFFC07FFFFFFFFF -> Page Structures (512 GB)
-// 0xFFFFC08000000000 - 0xFFFFFF7FFFFFFFFF -> Unused (63 TB)
+// 0xFFFFC08000000000 - 0xFFFFC0FFFFFFFFFF -> Buddy Data (512 GB)
+// 0xFFFFC10000000000 - 0xFFFFFF7FFFFFFFFF -> Unused (62.5 TB)
 // 0xFFFFFF8000000000 - 0xFFFFFFFF7FFFFFFF -> Unused (510 GB)
 // 0xFFFFFFFF80000000 - 0xFFFFFFFFFFFFFFFF -> Kernel (2 GB)
 INIT void init_paging(uint64_t map_entry_count,
@@ -216,6 +266,9 @@ INIT void init_paging(uint64_t map_entry_count,
   }
 
   __asm__ volatile("mov %0, %%cr3" ::"r"((uint64_t)cr3));
+
+  reserve_page_struct_space(map_entry_count, map_entries);
+  reserve_buddy_space(map_entry_count, map_entries);
 
   kprintf("\t[MEM] Initialized Paging\n");
 }
