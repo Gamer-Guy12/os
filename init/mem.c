@@ -40,7 +40,6 @@ static INIT void add_to_buddy(void) {
     count++;
     ptr = fmem_palloc();
   }
-
   kprintf("\t[MEM] Freed 0x%x Pages for Buddy\n", count);
 }
 

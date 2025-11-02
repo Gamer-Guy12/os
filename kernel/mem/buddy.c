@@ -68,18 +68,14 @@ static inline uint64_t zone_to_page_index(uint64_t zone_index, int zone) {
   return addr / PAGE_SIZE;
 }
 
-int index = 0;
 static void __free_page(int zone, uint64_t page_index, uint32_t order) {
   size_t bit_index = page_to_zone_index(page_index, zone) >> (order + 1);
-  kprintf("%p %x\n", zones[zone].freelists[order].buddy_data, bit_index);
-  if (index > 1) while (1) {}
   flip_bit_in_ptr(zones[zone].freelists[order].buddy_data, bit_index);
   if (check_bit_in_ptr(zones[zone].freelists[order].buddy_data, bit_index)) {
     pages[page_index].next = zones[zone].freelists[order].freelist;
     if (pages[page_index].next != PAGE_NULL)
       pages[zones[zone].freelists[order].freelist].prev = page_index;
     zones[zone].freelists[order].freelist = page_index;
-    index++;
     return;
   }
 
@@ -94,7 +90,7 @@ static void __free_page(int zone, uint64_t page_index, uint32_t order) {
             ? partner_index
             : page_index;
     page_index = low_index;
-    uint64_t bit_index = (low_index >> (i + 1));
+    uint64_t bit_index = (page_to_zone_index(low_index, zone) >> (i + 1));
 
     if (pages[partner_index].next != PAGE_NULL)
       pages[pages[partner_index].next].prev = pages[partner_index].prev;
@@ -112,11 +108,9 @@ static void __free_page(int zone, uint64_t page_index, uint32_t order) {
 
     flip_bit_in_ptr(zones[zone].freelists[i].buddy_data, bit_index);
     if (check_bit_in_ptr(zones[zone].freelists[i].buddy_data, bit_index)) {
-      index++;
       return;
     }
   }
-  index++;
 }
 
 void free_page(void *addr, uint32_t order) {
@@ -124,6 +118,9 @@ void free_page(void *addr, uint32_t order) {
   for (int i = zone; i >= 0; i--) {
     if ((uintptr_t)addr < (uintptr_t)zones[i].end)
       zone = i;
+  }
+
+  if (zone == ZONE_DMA) {
   }
 
   uint64_t page_index = (uintptr_t)addr / PAGE_SIZE;
@@ -154,7 +151,7 @@ uint64_t __alloc_page(int zone, uint32_t order) {
     page_index = alloc_from_freelist(zone, i);
 
     if (page_index != PAGE_NULL) {
-      page_index = i;
+      page_order = i;
       break;
     }
   }
@@ -179,7 +176,7 @@ void *alloc_page(uint32_t order, uint32_t flags) {
         break;
     }
   } else {
-    page_index = __alloc_page(flags & 0x5, order);
+    page_index = __alloc_page(flags & 0x7, order);
   }
 
   if (page_index == PAGE_NULL)

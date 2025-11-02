@@ -7,4 +7,6 @@ qemu-system-x86_64 -drive file=build/os.img,format=raw \
   -no-reboot \
   -M accel=tcg,smm=off \
   -smp cores=4,threads=1,sockets=1 \
-  -cpu qemu64,+pdpe1gb
+  -cpu qemu64,+pdpe1gb \
+#  -s -S 
+

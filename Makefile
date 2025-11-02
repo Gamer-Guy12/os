@@ -18,10 +18,14 @@ kernel-mods=
 .PHONY: build
 build: CFLAGS += -s -pipe -O3 -D _BUILD_
 build: build/bin/kernel.bin
+	strip --strip-unneeded build/bin/kernel.bin
+	@echo "Stripped Kernel"
 
 .PHONY: debug
 debug: CFLAGS += -g3 -Og -ggdb -D _DEBUG_
 debug: build/bin/kernel.bin
+	objcopy --only-keep-debug build/bin/kernel.bin build/bin/kernel.sym
+	@echo "Extracted debug info"
 
 include $(filter-out arch/%, $(wildcard **/Makefile))
 include $(wildcard arch/$(ARCH)/**/Makefile)
