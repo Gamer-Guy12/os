@@ -1,6 +1,7 @@
 #ifndef _KERNEL_MEM_H_
 #define _KERNEL_MEM_H_
 
+#include "lib/spinlock.h"
 #include "limine.h"
 #include "util.h"
 #include <stdint.h>
@@ -13,7 +14,8 @@
 #define BUDDY_DATA_ADDR 0xFFFFC08000000000
 #define KERNEL_ADDR 0xFFFFFFFF80000000
 
-__attribute__((unused)) static struct page *pages = (struct page *)PAGE_STRUCT_ADDR;
+__attribute__((unused)) static struct page *pages =
+    (struct page *)PAGE_STRUCT_ADDR;
 #else
 #error "Cannot define identity map offset"
 #endif
@@ -53,10 +55,11 @@ struct buddy_data {
 // Everything for a zone
 // A zone is a region of memory
 struct zone {
+  struct buddy_data freelists[10];
   uint64_t max_order;
   void *start;
   void *end;
-  struct buddy_data freelists[10];
+  spinlock_t lock;
 };
 
 enum alloc_flags {

@@ -120,12 +120,11 @@ void free_page(void *addr, uint32_t order) {
       zone = i;
   }
 
-  if (zone == ZONE_DMA) {
-  }
-
   uint64_t page_index = (uintptr_t)addr / PAGE_SIZE;
 
+  spinlock_acquire(&zones[zone].lock);
   __free_page(zone, page_index, order);
+  spinlock_release(&zones[zone].lock);
 }
 
 uint64_t alloc_from_freelist(int zone, uint32_t order) {
@@ -171,12 +170,16 @@ void *alloc_page(uint32_t order, uint32_t flags) {
   uint64_t page_index = PAGE_NULL;
   if (flags & ALLOC_ZONE_ANY) {
     for (int i = ZONE_COUNT - 1; i >= 0; i--) {
+      spinlock_acquire(&zones[i].lock);
       page_index = __alloc_page(i, order);
+      spinlock_release(&zones[i].lock);
       if (page_index != PAGE_NULL)
         break;
     }
   } else {
+    spinlock_acquire(&zones[flags & 0x7].lock);
     page_index = __alloc_page(flags & 0x7, order);
+    spinlock_release(&zones[flags & 0x7].lock);
   }
 
   if (page_index == PAGE_NULL)
