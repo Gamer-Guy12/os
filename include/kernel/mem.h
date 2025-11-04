@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #define PAGE_NULL 0xFFFFFFFFFFFFFFFF
+#define ZONE_NULL 0xFFFFFFFF
 
 typedef uint64_t page_ptr_t;
 
@@ -15,32 +16,13 @@ typedef uint64_t page_ptr_t;
 #define PAGE_STRUCT_ADDR 0xFFFFC00000000000
 #define BUDDY_DATA_ADDR 0xFFFFC08000000000
 #define KERNEL_ADDR 0xFFFFFFFF80000000
+#define PAGE_SIZE 0x1000ull
 
 __attribute__((unused)) static struct page *pages =
     (struct page *)PAGE_STRUCT_ADDR;
 #else
 #error "Cannot define identity map offset"
 #endif
-
-// Lower bound: 3 * zone
-// Upper bound: 3 * zone + 1
-// Format: lower bound, upper bound, max order (capped at 10)
-__attribute__((unused)) static INIT_DATA void *zone_info[] = {
-#ifdef _x86_64_
-#define PAGE_SIZE 0x1000ull
-
-#define ZONE_DMA 0
-#define ZONE_LOW 1
-#define ZONE_HIGH 2
-
-    (void *)0,         (void *)(MB * 16 - 1), (void *)5,  // ZONE_DMA
-    (void *)(MB * 16), (void *)(GB * 4 - 1),  (void *)10, // ZONE_LOW
-    (void *)(4 * GB),  (void *)(MAX_64),      (void *)10  // ZONE_HIGH
-
-#else
-#error "Cannot find architecture, memory management cannot be done"
-#endif
-};
 
 // Page data
 struct page {
@@ -59,18 +41,41 @@ struct buddy_data {
 // A zone is a region of memory
 struct zone {
   struct buddy_data freelists[10];
-  uint64_t max_order;
-  void *start;
-  void *end;
+  uintptr_t start;
+  uintptr_t end;
+  uint32_t max_order;
   spinlock_t lock;
 };
 
-enum alloc_flags {
-  ALLOC_ZONE_ANY = (1 << 3)
+enum zones {
+  ZONE_DMA,
+  ZONE_LOW,
+  ZONE_HIGH,
+  ZONE_COUNT,
 };
 
-// Math
-#define ZONE_COUNT (sizeof(zone_info) / 3 / (sizeof(void *)))
+// How it should be allocated
+enum alloc_methods {
+  AMETHOD_NOBLOCK,
+  AMETHOD_BLOCKING,
+};
+
+// The flags a page should have for allocation
+// Currently not implemented
+enum page_flags {
+  PF_USER = (1 << 0),
+  PF_MOVABLE = (1 << 1)
+};
+
+enum alloc_flags {
+  ALLOC_DMA = AMETHOD_NOBLOCK | ZONE_DMA,
+  ALLOC_KERNEL = AMETHOD_BLOCKING | ZONE_HIGH,
+  ALLOC_CRITICAL = AMETHOD_NOBLOCK | ZONE_HIGH,
+  ALLOC_USER = AMETHOD_BLOCKING | ZONE_HIGH | PF_USER | PF_MOVABLE
+};
+
+#define ZONE_ANY ZONE_HIGH
+#define ZONE_NULL 0xFFFFFFFF
 
 void init_mem(void);
 
@@ -85,13 +90,20 @@ void init_paging(
     struct limine_memmap_entry **map_entries); // Architecture Dependent
 void init_buddy(void);
 
-void *alloc_page(uint32_t order, uint32_t flags);
-void free_page(void *addr, uint32_t order);
+void *__alloc_page(uint32_t order, uint32_t zone);
+void __free_page(void *addr, uint32_t order);
 
 // Returns Max addr + 1
 uintptr_t get_max_addr(void);
 
-struct page* get_page(page_ptr_t ptr);
+struct page *get_page(page_ptr_t ptr);
+
+/// Converts an architecture independent zone to a dependent one (all other zone
+/// functions require architecture dependent zones)
+uint32_t get_zone(uint32_t zone);
+uint32_t get_zone_fallback(uint32_t zone);
+void get_zone_info(uint32_t zone, uintptr_t *start, uintptr_t *end,
+                   uint32_t *max_order);
 
 // Only for early on
 void *fmem_palloc(void);

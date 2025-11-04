@@ -36,7 +36,7 @@ static INIT void add_to_buddy(void) {
 
   void *ptr = fmem_palloc();
   while (ptr != NULL) {
-    free_page(ptr, 0);
+    __free_page(ptr, 0);
     count++;
     ptr = fmem_palloc();
   }

@@ -42,9 +42,8 @@ static INIT void init_buddy_data(void) {
 
 INIT void init_buddy(void) {
   for (int i = 0; i < ZONE_COUNT; i++) {
-    zones[i].start = zone_info[i * 3];
-    zones[i].end = zone_info[i * 3 + 1];
-    zones[i].max_order = (uint64_t)zone_info[i * 3 + 2];
+    get_zone_info(get_zone(i), &zones[i].start, &zones[i].end,
+                  &zones[i].max_order);
 
     for (int j = 0; j < zones[i].max_order; j++) {
       zones[i].freelists[j].buddy_data = NULL;
@@ -68,7 +67,7 @@ static inline uint64_t zone_to_page_index(uint64_t zone_index, int zone) {
   return addr / PAGE_SIZE;
 }
 
-static void __free_page(int zone, uint64_t page_index, uint32_t order) {
+static void __free_page_index(int zone, uint64_t page_index, uint32_t order) {
   size_t bit_index = page_to_zone_index(page_index, zone) >> (order + 1);
   flip_bit_in_ptr(zones[zone].freelists[order].buddy_data, bit_index);
   if (check_bit_in_ptr(zones[zone].freelists[order].buddy_data, bit_index)) {
@@ -113,7 +112,7 @@ static void __free_page(int zone, uint64_t page_index, uint32_t order) {
   }
 }
 
-void free_page(void *addr, uint32_t order) {
+void __free_page(void *addr, uint32_t order) {
   int zone = ZONE_COUNT - 1;
   for (int i = zone; i >= 0; i--) {
     if ((uintptr_t)addr < (uintptr_t)zones[i].end)
@@ -123,7 +122,7 @@ void free_page(void *addr, uint32_t order) {
   uint64_t page_index = (uintptr_t)addr / PAGE_SIZE;
 
   spinlock_acquire(&zones[zone].lock);
-  __free_page(zone, page_index, order);
+  __free_page_index(zone, page_index, order);
   spinlock_release(&zones[zone].lock);
 }
 
@@ -142,7 +141,7 @@ uint64_t alloc_from_freelist(int zone, uint32_t order) {
   return page_index;
 }
 
-uint64_t __alloc_page(int zone, uint32_t order) {
+uint64_t __alloc_page_index(int zone, uint32_t order) {
   uint64_t page_index = PAGE_NULL;
   uint32_t page_order = 0;
 
@@ -160,27 +159,18 @@ uint64_t __alloc_page(int zone, uint32_t order) {
 
   for (int i = page_order; i > order; i--) {
     uint64_t partner_index = page_index ^ (1 << i);
-    __free_page(zone, partner_index, i);
+    __free_page_index(zone, partner_index, i);
   }
 
   return page_index;
 }
 
-void *alloc_page(uint32_t order, uint32_t flags) {
+void *__alloc_page(uint32_t order, uint32_t zone) {
   uint64_t page_index = PAGE_NULL;
-  if (flags & ALLOC_ZONE_ANY) {
-    for (int i = ZONE_COUNT - 1; i >= 0; i--) {
-      spinlock_acquire(&zones[i].lock);
-      page_index = __alloc_page(i, order);
-      spinlock_release(&zones[i].lock);
-      if (page_index != PAGE_NULL)
-        break;
-    }
-  } else {
-    spinlock_acquire(&zones[flags & 0x7].lock);
-    page_index = __alloc_page(flags & 0x7, order);
-    spinlock_release(&zones[flags & 0x7].lock);
-  }
+
+  spinlock_acquire(&zones[zone].lock);
+  page_index = __alloc_page_index(zone, order);
+  spinlock_release(&zones[zone].lock);
 
   if (page_index == PAGE_NULL)
     return NULL;
