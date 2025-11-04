@@ -8,6 +8,8 @@
 
 #define PAGE_NULL 0xFFFFFFFFFFFFFFFF
 
+typedef uint64_t page_ptr_t;
+
 #ifdef _x86_64_
 #define IDENTITY_MAP_OFFSET 0xFFFF800000000000
 #define PAGE_STRUCT_ADDR 0xFFFFC00000000000
@@ -42,13 +44,14 @@ __attribute__((unused)) static INIT_DATA void *zone_info[] = {
 
 // Page data
 struct page {
-  uint64_t next;
-  uint64_t prev;
+  // For Buddy Allocation
+  page_ptr_t next;
+  page_ptr_t prev;
 };
 
 // Holds everything to keep track of one set of buddies
 struct buddy_data {
-  uint64_t freelist;
+  page_ptr_t freelist;
   void *buddy_data;
 };
 
@@ -63,11 +66,7 @@ struct zone {
 };
 
 enum alloc_flags {
-  // Bits 0-2 are for the zone
-  /// The page can be swapped out and moved throughout memory (not implemented
-  /// yet)
-  ALLOC_MOVABLE = (1 << 3),
-  ALLOC_ZONE_ANY = (1 << 4)
+  ALLOC_ZONE_ANY = (1 << 3)
 };
 
 // Math
@@ -91,6 +90,8 @@ void free_page(void *addr, uint32_t order);
 
 // Returns Max addr + 1
 uintptr_t get_max_addr(void);
+
+struct page* get_page(page_ptr_t ptr);
 
 // Only for early on
 void *fmem_palloc(void);
