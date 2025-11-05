@@ -39,7 +39,7 @@ static INIT void map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
   struct paging_entry *pdpt = NULL;
   const size_t pdpt_index = PDPT_INDEX(map_addr);
 
-  if (pml4[pml4_index].flags & PAGE_PRESENT) {
+  if (pml4[pml4_index].flags & PAGE_ENTRY_PRESENT) {
     const size_t phys_addr = pml4[pml4_index].addr & ADDR_MASK;
     const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
     pdpt = (void *)virt_addr;
@@ -58,7 +58,7 @@ static INIT void map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
   struct paging_entry *pdt = NULL;
   const size_t pdt_index = PDT_INDEX(map_addr);
 
-  if (pdpt[pdpt_index].flags & PAGE_PRESENT) {
+  if (pdpt[pdpt_index].flags & PAGE_ENTRY_PRESENT) {
     const size_t phys_addr = pdpt[pdpt_index].addr & ADDR_MASK;
     const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
     pdt = (void *)virt_addr;
@@ -77,7 +77,7 @@ static INIT void map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
   struct paging_entry *pt = NULL;
   const size_t pt_index = PT_INDEX(map_addr);
 
-  if (pdt[pdt_index].flags & PAGE_PRESENT) {
+  if (pdt[pdt_index].flags & PAGE_ENTRY_PRESENT) {
     const size_t phys_addr = pdt[pdt_index].addr & ADDR_MASK;
     const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
     pt = (void *)virt_addr;
@@ -95,14 +95,14 @@ static INIT void map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
   return;
 
 map_gb_page:
-  flags |= PAGE_HUGE;
+  flags |= PAGE_ENTRY_HUGE;
   pdpt[pdpt_index].addr = phys_addr;
   pdpt[pdpt_index].flags = flags;
   pdpt[pdpt_index].nx = nx;
   return;
 
 map_mb_page:
-  flags |= PAGE_HUGE;
+  flags |= PAGE_ENTRY_HUGE;
   pdt[pdt_index].addr = phys_addr;
   pdt[pdt_index].flags = flags;
   pdt[pdt_index].nx = nx;
@@ -132,10 +132,10 @@ static INIT void map_region(uintptr_t start, size_t size, void *map_addr,
 }
 
 static INIT void map_paging_region(struct limine_memmap_entry *entry) {
-  uint16_t flags = PAGE_RW | PAGE_PRESENT | PAGE_GLOBAL;
+  uint16_t flags = PAGE_ENTRY_RW | PAGE_ENTRY_PRESENT | PAGE_ENTRY_GLOBAL;
 
   if (entry->type == LIMINE_MEMMAP_FRAMEBUFFER) {
-    flags |= PAGE_WRITE_THROUGH;
+    flags |= PAGE_ENTRY_WRITE_THROUGH;
   }
 
   map_region(entry->base, entry->length,
@@ -157,10 +157,10 @@ static INIT uintptr_t clone_table(uintptr_t table, uint8_t level) {
   struct paging_entry *new_entries = (void *)(new_table + IDENTITY_MAP_OFFSET);
 
   for (int i = 0; i < 512; i++) {
-    if ((entries[i].flags & PAGE_HUGE || level == 0) &&
-        (entries[i].flags & PAGE_PRESENT)) {
+    if ((entries[i].flags & PAGE_ENTRY_HUGE || level == 0) &&
+        (entries[i].flags & PAGE_ENTRY_PRESENT)) {
       new_entries[i].addr = entries[i].addr;
-    } else if (entries[i].flags & PAGE_PRESENT) {
+    } else if (entries[i].flags & PAGE_ENTRY_PRESENT) {
       new_entries[i].addr = clone_table(entries[i].addr & ADDR_MASK, level - 1);
       new_entries[i].flags = entries[i].flags;
       new_entries[i].nx = entries[i].nx;
@@ -178,7 +178,7 @@ static INIT void clone_kernel_mappings(void) {
       (void *)((uintptr_t)old_cr3 + IDENTITY_MAP_OFFSET);
 
   pml4[511].addr = clone_table(old_pml4[511].addr & ADDR_MASK, 2);
-  pml4[511].flags = PAGE_GLOBAL | PAGE_PRESENT | PAGE_RW;
+  pml4[511].flags = PAGE_ENTRY_GLOBAL | PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW;
 }
 
 uintptr_t max_addr = 0;
@@ -203,7 +203,7 @@ reserve_page_struct_space(size_t entry_count,
   for (size_t i = 0; i < pages_needed; i++) {
     const uintptr_t addr = PAGE_STRUCT_ADDR + i * PAGE_SIZE;
     map_page((uintptr_t)fmem_palloc(), (void *)addr,
-             PAGE_PRESENT | PAGE_RW | PAGE_GLOBAL, true, 0);
+             PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW | PAGE_ENTRY_GLOBAL, true, 0);
   }
 
   memset(pages, 0, pages_needed * PAGE_SIZE);
@@ -220,7 +220,7 @@ static INIT void reserve_buddy_space(size_t entry_count,
   for (size_t i = 0; i < pages_needed; i++) {
     const uintptr_t addr = BUDDY_DATA_ADDR + i * PAGE_SIZE;
     map_page((uintptr_t)fmem_palloc(), (void *)addr,
-             PAGE_PRESENT | PAGE_RW | PAGE_GLOBAL, true, 0);
+             PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW | PAGE_ENTRY_GLOBAL, true, 0);
   }
 
   memset((void *)BUDDY_DATA_ADDR, 0, pages_needed * PAGE_SIZE);

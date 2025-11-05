@@ -3,7 +3,6 @@
 
 #include "lib/spinlock.h"
 #include "limine.h"
-#include "util.h"
 #include <stdint.h>
 
 #define PAGE_NULL 0xFFFFFFFFFFFFFFFF
@@ -24,11 +23,17 @@ __attribute__((unused)) static struct page *pages =
 #error "Cannot define identity map offset"
 #endif
 
+enum page_flags { PAGE_MOVABLE = (1 << 0), PAGE_USER = (1 << 1) };
+
 // Page data
 struct page {
   // For Buddy Allocation
   page_ptr_t next;
   page_ptr_t prev;
+  union {
+    uint32_t alloc_order;
+  };
+  uint32_t flags;
 };
 
 // Holds everything to keep track of one set of buddies
@@ -54,17 +59,24 @@ enum zones {
   ZONE_COUNT,
 };
 
+#define AMETHOD_OFFSET 8
+#define PAGE_FLAGS_OFFSET 16
+
+#define GET_AMETHOD(flags) (((flags)) & 0xFF)
+#define GET_PAGE_FLAGS(flags) (((flags)) & 0xFFFF)
+#define GET_ZONE(flags) ((flags) & 0xFF)
+
 // How it should be allocated
 enum alloc_methods {
-  AMETHOD_NOBLOCK,
-  AMETHOD_BLOCKING,
+  AMETHOD_NOBLOCK = (0 << AMETHOD_OFFSET),
+  AMETHOD_BLOCKING = (1 << AMETHOD_OFFSET),
 };
 
 // The flags a page should have for allocation
 // Currently not implemented
-enum page_flags {
-  PF_USER = (1 << 0),
-  PF_MOVABLE = (1 << 1)
+enum page_alloc_flags {
+  PF_USER = (1 << (PAGE_FLAGS_OFFSET)),
+  PF_MOVABLE = (1 << (PAGE_FLAGS_OFFSET + 1))
 };
 
 enum alloc_flags {
@@ -90,8 +102,11 @@ void init_paging(
     struct limine_memmap_entry **map_entries); // Architecture Dependent
 void init_buddy(void);
 
-void *__alloc_page(uint32_t order, uint32_t zone);
-void __free_page(void *addr, uint32_t order);
+void *__alloc_pages(uint32_t order, uint32_t zone);
+void __free_pages(void *addr, uint32_t order);
+
+void *alloc_pages(uint32_t order, uint32_t type);
+void free_pages(void *addr, uint32_t order);
 
 // Returns Max addr + 1
 uintptr_t get_max_addr(void);

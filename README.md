@@ -30,7 +30,7 @@ Takes in a zone
 
 This one either returns null or allocates a page (no blocking other than spinlock)
 
-Get a page with properties:
+Get a page with properties (also returns virtual instead of physical address):
 alloc_page
 free_page
 

@@ -3,22 +3,22 @@
 
 #include <stdint.h>
 
-enum page_flags {
-  PAGE_PRESENT = 1 << 0,
-  PAGE_RW = 1 << 1,
-  PAGE_USER = 1 << 2,
-  PAGE_WRITE_THROUGH = 1 << 3,
-  PAGE_WT = 1 << 3,
-  PAGE_CACHE_DISABLED = 1 << 4,
-  PAGE_UC = 1 << 4,
-  PAGE_ACCESSED = 1 << 5,
-  PAGE_DIRTY = 1 << 6,
+enum page_entry_flags {
+  PAGE_ENTRY_PRESENT = 1 << 0,
+  PAGE_ENTRY_RW = 1 << 1,
+  PAGE_ENTRY_USER = 1 << 2,
+  PAGE_ENTRY_WRITE_THROUGH = 1 << 3,
+  PAGE_ENTRY_WT = 1 << 3,
+  PAGE_ENTRY_CACHE_DISABLED = 1 << 4,
+  PAGE_ENTRY_UC = 1 << 4,
+  PAGE_ENTRY_ACCESSED = 1 << 5,
+  PAGE_ENTRY_DIRTY = 1 << 6,
   // Should the MMU use the PAT
-  PAGE_ATTRIBUTE_TABLE = 1 << 7,
-  PAGE_PAT = 1 << 7,
-  PAGE_HUGE = 1 << 7,
-  PAGE_GLOBAL = 1 << 8,
-  PAGE_HUGE_PAT = 1 << 12,
+  PAGE_ENTRY_ATTRIBUTE_TABLE = 1 << 7,
+  PAGE_ENTRY_PAT = 1 << 7,
+  PAGE_ENTRY_HUGE = 1 << 7,
+  PAGE_ENTRY_GLOBAL = 1 << 8,
+  PAGE_ENTRY_HUGE_PAT = 1 << 12,
 };
 
 struct paging_entry {
