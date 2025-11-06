@@ -134,6 +134,7 @@ uint64_t alloc_from_freelist(int zone, uint32_t order) {
 
   uint64_t page_index = freelist->freelist;
   freelist->freelist = pages[page_index].next;
+  kprintf("%x %x %x freelist\n", page_index, freelist->freelist, zones[zone].freelists[order + 3].freelist);
   const uint64_t zone_page_index = page_to_zone_index(page_index, zone);
   const uint64_t bit_index = zone_page_index >> (order + 1);
   flip_bit_in_ptr(freelist->buddy_data, bit_index);
@@ -158,7 +159,9 @@ uint64_t __alloc_page_index(int zone, uint32_t order) {
     return PAGE_NULL;
 
   for (int i = page_order; i > order; i--) {
-    uint64_t partner_index = page_index ^ (1 << i);
+    // For order i, clear bits i - 1 to 0 and flip the other one
+    uint64_t partner_index = page_index & ~((1 << i) - 1);
+    partner_index ^= (1 << i);
     __free_page_index(zone, partner_index, i);
   }
 

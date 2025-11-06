@@ -30,6 +30,12 @@ NORETURN void kinit(void) {
   init_mem();
   kprintf("[INIT] Initialized Memory\n");
 
+  uint64_t *ptr = alloc_pages(0, ALLOC_KERNEL);
+  kprintf("%p 0\n", ptr);
+  free_pages(ptr, 0);
+  ptr = alloc_pages(0, ALLOC_KERNEL);
+  kprintf("%p 1\n", ptr);
+
   kprintf("Hello Kernel World!\n");
 
   while (1) {
