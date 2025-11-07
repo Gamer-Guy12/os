@@ -68,48 +68,76 @@ static inline uint64_t zone_to_page_index(uint64_t zone_index, int zone) {
 }
 
 static void __free_page_index(int zone, uint64_t page_index, uint32_t order) {
-  size_t bit_index = page_to_zone_index(page_index, zone) >> (order + 1);
-  flip_bit_in_ptr(zones[zone].freelists[order].buddy_data, bit_index);
-  if (check_bit_in_ptr(zones[zone].freelists[order].buddy_data, bit_index)) {
-    pages[page_index].next = zones[zone].freelists[order].freelist;
-    if (pages[page_index].next != PAGE_NULL)
-      pages[zones[zone].freelists[order].freelist].prev = page_index;
-    zones[zone].freelists[order].freelist = page_index;
+  uint64_t zone_page_index = page_to_zone_index(page_index, zone);
+  struct buddy_data *freelist = &(zones[zone].freelists[order]);
+
+  // Insert into the bottom
+  uint64_t bit_index = zone_page_index >> (order + 1);
+  flip_bit_in_ptr(freelist->buddy_data, bit_index);
+
+  // If the bit is 1 add it to the freelist and return
+  if (check_bit_in_ptr(freelist->buddy_data, bit_index)) {
+    struct page *page = get_page(page_index);
+    page->next = freelist->freelist;
+    page->prev = PAGE_NULL;
+
+    if (freelist->freelist != PAGE_NULL) {
+      pages[freelist->freelist].prev = page_index;
+    }
+    freelist->freelist = page_index;
+    if (page_index == 0x100000)
+      kprintf("%x insert\n", page_index);
     return;
   }
 
-  page_index &= ~(1 << order);
+  // Start at the page right above, remove the partner from the free list and
+  // then flip the bits and add them to the next freelist
 
+  // In this loop zone_page_index is the main thing that should be used and
+  // page_index should be recalculated based on it
   for (int i = order + 1; i < zones[zone].max_order; i++) {
-    uint64_t partner_zone_index =
-        page_to_zone_index(page_index, zone) ^ (1 << i);
-    uint64_t partner_index = zone_to_page_index(partner_zone_index, zone);
-    uint64_t low_index =
-        partner_zone_index < page_to_zone_index(page_index, zone)
-            ? partner_index
-            : page_index;
-    page_index = low_index;
-    uint64_t bit_index = (page_to_zone_index(low_index, zone) >> (i + 1));
+    page_ptr_t parent_index = zone_page_index & ~((1 << i) - 1);
+    page_ptr_t partner_index = zone_page_index ^ (1 << (i - 1));
+    page_ptr_t parent_full_index = zone_to_page_index(parent_index, zone);
+    page_ptr_t partner_full_index = zone_to_page_index(partner_index, zone);
+    struct buddy_data *lower_freelist = &zones[zone].freelists[i - 1];
+    struct buddy_data *upper_freelist = &zones[zone].freelists[i];
+    struct page *partner = get_page(partner_full_index);
+    struct page *parent = get_page(parent_full_index);
 
-    if (pages[partner_index].next != PAGE_NULL)
-      pages[pages[partner_index].next].prev = pages[partner_index].prev;
-    if (pages[partner_index].prev != PAGE_NULL)
-      pages[pages[partner_index].prev].next = pages[partner_index].next;
+    // Remove the partner from the free list
+    // Connect the 2 next to it and then clear its index
+    if (partner->next != PAGE_NULL)
+      get_page(partner->next)->prev = partner->prev;
+    if (partner->prev != PAGE_NULL)
+      get_page(partner->prev)->next = partner->next;
     else
-      zones[zone].freelists[i - 1].freelist = pages[partner_index].next;
+      lower_freelist->freelist = partner->next;
 
-    pages[partner_index].next = PAGE_NULL;
-    pages[partner_index].prev = PAGE_NULL;
+    // Flip the upper bit
+    // Then if it is set u can add it to the free list
+    uint64_t bit_index = partner_index >> i;
+    flip_bit_in_ptr(upper_freelist->buddy_data, bit_index);
+    if (check_bit_in_ptr(upper_freelist->buddy_data, bit_index)) {
+      parent->next = upper_freelist->freelist;
+      parent->prev = PAGE_NULL;
+      if (parent_full_index == 0x100000)
+        kprintf("%x insert\n", parent_full_index);
 
-    pages[low_index].next = zones[zone].freelists[i].freelist;
-    pages[low_index].prev = PAGE_NULL;
-    zones[zone].freelists[i].freelist = low_index;
+      if (upper_freelist->freelist != PAGE_NULL) {
+        get_page(upper_freelist->freelist)->prev = parent_full_index;
+      }
 
-    flip_bit_in_ptr(zones[zone].freelists[i].buddy_data, bit_index);
-    if (check_bit_in_ptr(zones[zone].freelists[i].buddy_data, bit_index)) {
+      upper_freelist->freelist = parent_full_index;
+
       return;
     }
+
+    zone_page_index = parent_index;
+    page_index = zone_to_page_index(page_index, zone);
   }
+  // Calculate information
+  // Remove the page's partner from the freelist
 }
 
 void __free_pages(void *addr, uint32_t order) {
@@ -132,9 +160,10 @@ uint64_t alloc_from_freelist(int zone, uint32_t order) {
   if (freelist->freelist == PAGE_NULL)
     return PAGE_NULL;
 
+  if (freelist->freelist == 0x100000) kprintf("Here\n");
+
   uint64_t page_index = freelist->freelist;
   freelist->freelist = pages[page_index].next;
-  kprintf("%x %x %x freelist\n", page_index, freelist->freelist, zones[zone].freelists[order + 3].freelist);
   const uint64_t zone_page_index = page_to_zone_index(page_index, zone);
   const uint64_t bit_index = zone_page_index >> (order + 1);
   flip_bit_in_ptr(freelist->buddy_data, bit_index);
@@ -160,9 +189,9 @@ uint64_t __alloc_page_index(int zone, uint32_t order) {
 
   for (int i = page_order; i > order; i--) {
     // For order i, clear bits i - 1 to 0 and flip the other one
-    uint64_t partner_index = page_index & ~((1 << i) - 1);
+    uint64_t partner_index = page_to_zone_index(page_index, zone) & ~((1 << i) - 1);
     partner_index ^= (1 << i);
-    __free_page_index(zone, partner_index, i);
+    __free_page_index(zone, zone_to_page_index(partner_index, zone), i);
   }
 
   return page_index;
