@@ -30,23 +30,6 @@ NORETURN void kinit(void) {
   init_mem();
   kprintf("[INIT] Initialized Memory\n");
 
-  uint64_t *ptr = alloc_pages(0, ALLOC_KERNEL);
-  kprintf("%p 0\n", ptr);
-  free_pages(ptr, 0);
-  ptr = alloc_pages(0, ALLOC_KERNEL);
-  uint64_t *ptr2 = alloc_pages(0, ALLOC_KERNEL);
-  kprintf("%p %p 1\n", ptr, ptr2);
-  free_pages(ptr, 0);
-  free_pages(ptr2, 0);
-  ptr = alloc_pages(0, ALLOC_KERNEL);
-  ptr2 = alloc_pages(0, ALLOC_KERNEL);
-  uint64_t *ptr3 = alloc_pages(0, ALLOC_KERNEL);
-  uint64_t *ptr4 = alloc_pages(0, ALLOC_KERNEL);
-  uint64_t *ptr5 = alloc_pages(0, ALLOC_KERNEL);
-  uint64_t *ptr6 = alloc_pages(0, ALLOC_KERNEL);
-  uint64_t *ptr7 = alloc_pages(0, ALLOC_KERNEL);
-  kprintf("%p %p %p %p %p %p %p\n", ptr, ptr2, ptr3, ptr4, ptr5, ptr6, ptr7);
-
   kprintf("Hello Kernel World!\n");
 
   while (1) {
