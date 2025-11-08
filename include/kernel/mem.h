@@ -3,6 +3,7 @@
 
 #include "lib/spinlock.h"
 #include "limine.h"
+#include <stddef.h>
 #include <stdint.h>
 
 #define PAGE_NULL 0xFFFFFFFFFFFFFFFF
@@ -16,6 +17,7 @@ typedef uint64_t page_ptr_t;
 #define BUDDY_DATA_ADDR 0xFFFFC08000000000
 #define KERNEL_ADDR 0xFFFFFFFF80000000
 #define PAGE_SIZE 0x1000ull
+#define MAX_ORDER 10
 
 __attribute__((unused)) static struct page *pages =
     (struct page *)PAGE_STRUCT_ADDR;
@@ -31,7 +33,8 @@ struct page {
   page_ptr_t next;
   page_ptr_t prev;
   union {
-    uint32_t alloc_order;
+    // For gheap
+    uint32_t alloc_index;
   };
   uint32_t flags;
 };
@@ -45,10 +48,9 @@ struct buddy_data {
 // Everything for a zone
 // A zone is a region of memory
 struct zone {
-  struct buddy_data freelists[10];
+  struct buddy_data freelists[MAX_ORDER];
   uintptr_t start;
   uintptr_t end;
-  uint32_t max_order;
   spinlock_t lock;
 };
 
@@ -62,8 +64,8 @@ enum zones {
 #define AMETHOD_OFFSET 8
 #define PAGE_FLAGS_OFFSET 16
 
-#define GET_AMETHOD(flags) (((flags)) & 0xFF)
-#define GET_PAGE_FLAGS(flags) (((flags)) & 0xFFFF)
+#define GET_AMETHOD(flags) ((flags) & 0xFF)
+#define GET_PAGE_FLAGS(flags) ((flags) & 0xFFFF)
 #define GET_ZONE(flags) ((flags) & 0xFF)
 
 // How it should be allocated
@@ -83,7 +85,8 @@ enum alloc_flags {
   ALLOC_DMA = AMETHOD_NOBLOCK | ZONE_DMA,
   ALLOC_KERNEL = AMETHOD_BLOCKING | ZONE_HIGH,
   ALLOC_CRITICAL = AMETHOD_NOBLOCK | ZONE_HIGH,
-  ALLOC_USER = AMETHOD_BLOCKING | ZONE_HIGH | PF_USER | PF_MOVABLE
+  ALLOC_USER = AMETHOD_BLOCKING | ZONE_HIGH | PF_USER | PF_MOVABLE,
+  ALLOC_COUNT = 4
 };
 
 #define ZONE_ANY ZONE_HIGH
@@ -108,6 +111,11 @@ void __free_pages(void *addr, uint32_t order);
 void *alloc_pages(uint32_t order, uint32_t type);
 void free_pages(void *addr, uint32_t order);
 
+void init_gheap(void);
+
+void *gmalloc(size_t size, uint32_t type);
+void gfree(void *ptr);
+
 // Returns Max addr + 1
 uintptr_t get_max_addr(void);
 
@@ -117,8 +125,7 @@ struct page *get_page(page_ptr_t ptr);
 /// functions require architecture dependent zones)
 uint32_t get_zone(uint32_t zone);
 uint32_t get_zone_fallback(uint32_t zone);
-void get_zone_info(uint32_t zone, uintptr_t *start, uintptr_t *end,
-                   uint32_t *max_order);
+void get_zone_info(uint32_t zone, uintptr_t *start, uintptr_t *end);
 
 // Only for early on
 void *fmem_palloc(void);

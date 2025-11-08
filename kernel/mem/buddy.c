@@ -33,7 +33,7 @@ static INIT void init_buddy_data(void) {
     const size_t bit_count = (page_count - 1) / 2 + 1;
     size_t byte_count = (bit_count - 1) / 8 + 1;
 
-    for (int j = 0; j < zones[i].max_order; j++) {
+    for (int j = 0; j < MAX_ORDER; j++) {
       zones[i].freelists[j].buddy_data = alloc_buddy_data(byte_count);
 
       byte_count = (byte_count - 1) / 2 + 1;
@@ -43,10 +43,9 @@ static INIT void init_buddy_data(void) {
 
 INIT void init_buddy(void) {
   for (int i = 0; i < ZONE_COUNT; i++) {
-    get_zone_info(get_zone(i), &zones[i].start, &zones[i].end,
-                  &zones[i].max_order);
+    get_zone_info(get_zone(i), &zones[i].start, &zones[i].end);
 
-    for (int j = 0; j < zones[i].max_order; j++) {
+    for (int j = 0; j < MAX_ORDER; j++) {
       zones[i].freelists[j].buddy_data = NULL;
       zones[i].freelists[j].freelist = PAGE_NULL;
     }
@@ -93,7 +92,7 @@ static void free_page_index(uint64_t page_index, int zone, uint32_t order) {
   // At this point we are at order + 1 and one child is in a freelist
   //
   // Witin this loop page index and zone page index are updated each iteration
-  for (uint32_t i = order + 1; i < zones[zone].max_order; i++) {
+  for (uint32_t i = order + 1; i < MAX_ORDER; i++) {
     const uint64_t zone_partner_index = zone_page_index ^ (1 << (i - 1));
     const uint64_t partner_index = zone_to_page_index(zone_partner_index, zone);
     const uint64_t zone_parent_index = zone_page_index & ~((1 << i) - 1);
@@ -132,7 +131,7 @@ static void free_page_index(uint64_t page_index, int zone, uint32_t order) {
     page_index = zone_to_page_index(zone_page_index, zone);
   }
 
-  freelist = &zones[zone].freelists[zones[zone].max_order - 1];
+  freelist = &zones[zone].freelists[MAX_ORDER - 1];
   struct page *page = get_page(page_index);
   page->next = freelist->freelist;
   page->prev = PAGE_NULL;
@@ -177,7 +176,7 @@ static uint64_t alloc_page_index(uint32_t order, uint32_t zone) {
   uint32_t page_order = MAX_32;
 
   // First try to allocate from any frelist starting at order and going up
-  for (uint32_t i = order; i < zones[zone].max_order; i++) {
+  for (uint32_t i = order; i < MAX_ORDER; i++) {
     page_index = alloc_from_freelist(i, zone);
 
     if (page_index != PAGE_NULL) {
@@ -186,7 +185,8 @@ static uint64_t alloc_page_index(uint32_t order, uint32_t zone) {
     }
   }
 
-  if (page_index == PAGE_NULL) return PAGE_NULL;
+  if (page_index == PAGE_NULL)
+    return PAGE_NULL;
 
   uint64_t zone_page_index = page_to_zone_index(page_index, zone);
 

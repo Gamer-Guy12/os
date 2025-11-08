@@ -35,29 +35,24 @@ uint32_t get_zone_fallback(uint32_t zone) {
   }
 }
 
-void get_zone_info(uint32_t zone, uintptr_t *start, uintptr_t *end,
-                   uint32_t *max_order) {
+void get_zone_info(uint32_t zone, uintptr_t *start, uintptr_t *end) {
   zone = get_zone(zone);
 
   switch (zone) {
   case ARCH_ZONE_DMA:
     *start = 0x0;
     *end = 16 * MB - 1;
-    *max_order = 5;
     break;
   case ARCH_ZONE_LOW:
     *start = 16 * MB;
     *end = GB * 4 - 1;
-    *max_order = 10;
     break;
   case ARCH_ZONE_HIGH:
     *start = GB * 4;
     *end = MAX_64;
-    *max_order = 10;
     break;
   default:
     *start = 0x0;
     *end = 0x0;
-    *max_order = 0;
   }
 }
