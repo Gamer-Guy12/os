@@ -141,6 +141,9 @@ static void free_page_index(uint64_t page_index, int zone, uint32_t order) {
 }
 
 void __free_pages(void *addr, uint32_t order) {
+  if (order >= MAX_ORDER)
+    return;
+
   int zone = ZONE_COUNT;
   uintptr_t addr_bits = (uintptr_t)addr;
   uint64_t page_index = addr_bits / PAGE_SIZE;
@@ -201,6 +204,10 @@ static uint64_t alloc_page_index(uint32_t order, uint32_t zone) {
 }
 
 void *__alloc_pages(uint32_t order, uint32_t zone) {
+  if (order >= MAX_ORDER) {
+    return NULL;
+  }
+
   spinlock_acquire(&zones[zone].lock);
   uint64_t page_index = alloc_page_index(order, zone);
   spinlock_release(&zones[zone].lock);

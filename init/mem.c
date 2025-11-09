@@ -49,4 +49,5 @@ void init_mem(void) {
   init_paging(memmap_entry_count, memmap_entries);
   init_buddy();
   add_to_buddy();
+  init_gheap();
 }

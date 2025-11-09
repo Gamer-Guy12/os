@@ -18,6 +18,8 @@
 #define INIT __attribute__((section(".init.text")))
 #define INIT_DATA __attribute__((section(".init.data")))
 
+#define SASSERT _Static_assert
+
 #ifdef _x86_64_
 
 #define HLT __asm__ volatile("hlt");

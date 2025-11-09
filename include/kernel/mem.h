@@ -3,6 +3,7 @@
 
 #include "lib/spinlock.h"
 #include "limine.h"
+#include "util.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -27,17 +28,25 @@ __attribute__((unused)) static struct page *pages =
 
 enum page_flags { PAGE_MOVABLE = (1 << 0), PAGE_USER = (1 << 1) };
 
+struct slab;
+
 // Page data
 struct page {
   // For Buddy Allocation
   page_ptr_t next;
   page_ptr_t prev;
+  // 12 bytes available
   union {
     // For gheap
-    uint32_t alloc_index;
-  };
+    struct {
+      struct slab *slab;
+    };
+    uint8_t reserved[12];
+  } __attribute__((packed));
   uint32_t flags;
 };
+
+SASSERT(sizeof(struct page) == 32, "Incorrect size of page struct");
 
 // Holds everything to keep track of one set of buddies
 struct buddy_data {
@@ -104,6 +113,7 @@ void init_paging(
     uint64_t map_entry_count,
     struct limine_memmap_entry **map_entries); // Architecture Dependent
 void init_buddy(void);
+void init_gheap(void);
 
 void *__alloc_pages(uint32_t order, uint32_t zone);
 void __free_pages(void *addr, uint32_t order);
