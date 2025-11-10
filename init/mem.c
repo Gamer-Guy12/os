@@ -1,4 +1,5 @@
 #include "kernel/mem.h"
+#include "kernel/gheap.h"
 #include "kernel/kprintf.h"
 #include "limine.h"
 #include "util.h"

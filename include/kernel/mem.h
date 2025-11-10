@@ -121,11 +121,6 @@ void __free_pages(void *addr, uint32_t order);
 void *alloc_pages(uint32_t order, uint32_t type);
 void free_pages(void *addr, uint32_t order);
 
-void init_gheap(void);
-
-void *gmalloc(size_t size, uint32_t type);
-void gfree(void *ptr);
-
 // Returns Max addr + 1
 uintptr_t get_max_addr(void);
 
