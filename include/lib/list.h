@@ -8,6 +8,8 @@ struct list_node {
 
 void list_insert(struct list_node *list, struct list_node *node);
 void list_remove(struct list_node *list, struct list_node *node);
+void *list_pop_front(struct list_node *list);
+void *list_pop_back(struct list_node *list);
 
 #define LIST_CREATE(name) struct list_node list = {.prev = &list, .next = &list}
 #define LIST_INIT(list)                                                        \

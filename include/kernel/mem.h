@@ -26,10 +26,6 @@ __attribute__((unused)) static struct page *pages =
 #error "Cannot define identity map offset"
 #endif
 
-enum page_flags { PAGE_MOVABLE = (1 << 0), PAGE_USER = (1 << 1) };
-
-struct slab;
-
 // Page data
 struct page {
   // For Buddy Allocation
@@ -39,7 +35,7 @@ struct page {
   union {
     // For gheap
     struct {
-      struct slab *slab;
+      struct gheap_slab *slab;
     };
     uint8_t reserved[12];
   } __attribute__((packed));
@@ -70,34 +66,6 @@ enum zones {
   ZONE_COUNT,
 };
 
-#define AMETHOD_OFFSET 8
-#define PAGE_FLAGS_OFFSET 16
-
-#define GET_AMETHOD(flags) ((flags) & 0xFF)
-#define GET_PAGE_FLAGS(flags) ((flags) & 0xFFFF)
-#define GET_ZONE(flags) ((flags) & 0xFF)
-
-// How it should be allocated
-enum alloc_methods {
-  AMETHOD_NOBLOCK = (0 << AMETHOD_OFFSET),
-  AMETHOD_BLOCKING = (1 << AMETHOD_OFFSET),
-};
-
-// The flags a page should have for allocation
-// Currently not implemented
-enum page_alloc_flags {
-  PF_USER = (1 << (PAGE_FLAGS_OFFSET)),
-  PF_MOVABLE = (1 << (PAGE_FLAGS_OFFSET + 1))
-};
-
-enum alloc_flags {
-  ALLOC_DMA = AMETHOD_NOBLOCK | ZONE_DMA,
-  ALLOC_KERNEL = AMETHOD_BLOCKING | ZONE_HIGH,
-  ALLOC_CRITICAL = AMETHOD_NOBLOCK | ZONE_HIGH,
-  ALLOC_USER = AMETHOD_BLOCKING | ZONE_HIGH | PF_USER | PF_MOVABLE,
-  ALLOC_COUNT = 4
-};
-
 #define ZONE_ANY ZONE_HIGH
 #define ZONE_NULL 0xFFFFFFFF
 
@@ -118,7 +86,11 @@ void init_gheap(void);
 void *__alloc_pages(uint32_t order, uint32_t zone);
 void __free_pages(void *addr, uint32_t order);
 
-void *alloc_pages(uint32_t order, uint32_t type);
+#define GET_ZONE(flags) ((flags) & 0xFF)
+#define GET_METHOD(flags) ((flags) & 0xFF00)
+#define GET_PAGE_FLAGS(flags) ((flags) & 0xFFFF0000)
+
+void *alloc_pages(uint32_t order, uint32_t flags);
 void free_pages(void *addr, uint32_t order);
 
 // Returns Max addr + 1

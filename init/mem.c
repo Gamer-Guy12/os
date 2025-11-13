@@ -1,5 +1,4 @@
 #include "kernel/mem.h"
-#include "kernel/gheap.h"
 #include "kernel/kprintf.h"
 #include "limine.h"
 #include "util.h"
@@ -50,5 +49,4 @@ void init_mem(void) {
   init_paging(memmap_entry_count, memmap_entries);
   init_buddy();
   add_to_buddy();
-  init_gheap();
 }

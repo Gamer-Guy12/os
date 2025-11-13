@@ -47,6 +47,10 @@ clean:
 	@mkdir -p build/obj build/bin build/deps build/mods
 	@echo "Cleaned Build"
 
+.PHONY: todo
+todo:
+	@grep -Ri "TODO:" kernel init arch include lib
+
 build/obj/%.o: %.c
 	@mkdir -p $(dir $@)
 	@mkdir -p $(patsubst build/obj/%,build/deps/%,$(dir $@))
