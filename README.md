@@ -63,3 +63,11 @@ Architecture dependent implementations:
 
 ZONE_NULL: 0xFFFF
 
+# CLS
+
+- Section in linker.ld called .cls
+    - Contains a whole load of cls entries with format
+        - size_t offset
+    - CLS thingies for each core are created and are sized with the size contained in offset
+    - then they replace offset with the offset into CLS
+

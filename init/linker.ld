@@ -15,6 +15,10 @@ SECTIONS {
     *(.bss)
   }
 
+  .cls : {
+    *(.cls)
+  }
+
   .limine_requests_start : {
     KEEP(*(.limine_requests_start))
   }

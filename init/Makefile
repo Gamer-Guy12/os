@@ -1,6 +1,6 @@
 kernel-mods += build/mods/init.o 
 
-init-src = init/init.c init/mem.c init/fmem.c
+init-src = init/init.c init/mem.c init/fmem.c init/cls.c
 init-obj = $(addprefix build/obj/, $(patsubst %.c,%.o,$(init-src)))
 
 build/mods/init.o: $(init-obj)

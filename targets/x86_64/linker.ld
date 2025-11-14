@@ -42,6 +42,11 @@ SECTIONS {
 
     *(.init.data)
 
+    . = ALIGN(8);
+    _start_cls = .;
+    *(.cls)
+    _end_cls = .;
+
     _end_init_data = .;
   } :init_data
 

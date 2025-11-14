@@ -1,3 +1,4 @@
+#include "kernel/cls.h"
 #include "kernel/console.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
@@ -29,6 +30,10 @@ NORETURN void kinit(void) {
   kprintf("[INIT] Starting Memory Initialization\n");
   init_mem();
   kprintf("[INIT] Initialized Memory\n");
+
+  kprintf("[INIT] Starting CLS Initialization\n");
+  init_cls();
+  kprintf("[INIT] Initialized CLS\n");
 
   kprintf("Hello Kernel World!\n");
 
