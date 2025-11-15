@@ -29,7 +29,6 @@ debug: build/bin/kernel.bin
 
 include $(filter-out arch/%, $(wildcard **/Makefile))
 include $(wildcard arch/$(ARCH)/**/Makefile)
-include $(wildcard build/deps/**/*.d)
 
 build/bin/kernel.bin: tools/limine/limine $(kernel-mods)
 	$(LD) $(LDFLAGS) $(kernel-mods) -o $@
