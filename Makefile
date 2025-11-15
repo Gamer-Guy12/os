@@ -5,7 +5,7 @@ INCLUDE=include
 CC:=$(ARCH)-elf-gcc
 # General flags for compiling non-architecture-specific code 
 # Assumes that the rule name is the rule for outputting the object file
-CFLAGS=-Werror -Wall -Wpedantic -ffreestanding -nostdlib -nostartfiles -no-pie -fno-pie -mcmodel=kernel -I $(INCLUDE) -D _$(ARCH)_ -MP -MMD -DLIMINE_API_REVISION=2 -std=c11 -I arch/$(ARCH)/include
+CFLAGS=-Werror -Wall -Wpedantic -ffreestanding -nostdlib -nostartfiles -no-pie -fno-pie -mcmodel=kernel -I $(INCLUDE) -D _$(ARCH)_ -MP -MMD -DLIMINE_API_REVISION=2 -std=c11
 
 LD:=$(ARCH)-elf-ld
 # Flags for making the final binary, for make object files just use -r and a linker script if necessary
