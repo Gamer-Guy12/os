@@ -11,9 +11,9 @@ LD:=$(ARCH)-elf-ld
 # Flags for making the final binary, for make object files just use -r and a linker script if necessary
 LDFLAGS=-T targets/$(ARCH)/linker.ld -z noexecstack -L . -no-pie 
 
-include arch/$(ARCH)/Makefile
-
 kernel-mods=
+
+include arch/$(ARCH)/Makefile
 
 .PHONY: build
 build: CFLAGS += -s -pipe -O3 -D _BUILD_

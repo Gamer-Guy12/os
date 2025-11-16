@@ -1,4 +1,5 @@
 #include "kernel/console.h"
+#include "kernel/cores.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "limine.h"
@@ -29,6 +30,10 @@ NORETURN void kinit(void) {
   kprintf("[INIT] Starting Memory Initialization\n");
   init_mem();
   kprintf("[INIT] Initialized Memory\n");
+
+  kprintf("[INIT] Starting Up All Cores\n");
+  init_cores();
+  kprintf("[INIT] Initialized All Cores\n");
 
   kprintf("Hello Kernel World!\n");
 
