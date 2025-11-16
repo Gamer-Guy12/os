@@ -41,6 +41,11 @@ SECTIONS {
     _start_init_data = .;
 
     *(.init.data)
+    
+    . = ALIGN(4K);
+    _start_cls = .;
+    KEEP(*(.cls));
+    _end_cls = .;
 
     _end_init_data = .;
   } :init_data

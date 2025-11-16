@@ -31,6 +31,9 @@ NORETURN void kinit(void) {
   init_mem();
   kprintf("[INIT] Initialized Memory\n");
 
+  init_cls();
+  kprintf("[INIT] Initialized CLS\n");
+
   kprintf("[INIT] Starting Up All Cores\n");
   init_cores();
   kprintf("[INIT] Initialized All Cores\n");
@@ -39,4 +42,13 @@ NORETURN void kinit(void) {
 
   while (1) {
   }
+}
+
+NORETURN INIT void core_entry(void) {
+  kprintf("[INIT] Starting Core %u Initialization\n", get_core_id());
+
+  init_cls();
+  kprintf("[INIT] Initialized CLS on Core %u\n", get_core_id());
+
+  while (1) {}
 }
