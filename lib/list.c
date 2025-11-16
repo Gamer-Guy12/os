@@ -9,7 +9,7 @@ void list_insert(struct list_node *list, struct list_node *node) {
   list->next = node;
 }
 
-void list_remove(struct list_node *list, struct list_node *node) {
+void list_remove(struct list_node *node) {
   node->prev->next = node->next;
   node->next->prev = node->prev;
 
@@ -22,7 +22,7 @@ void *list_pop_front(struct list_node *list) {
     return NULL;
 
   struct list_node *ret = list->next;
-  list_remove(list, ret);
+  list_remove(ret);
 
   return ret;
 }
@@ -32,7 +32,7 @@ void *list_pop_back(struct list_node *list) {
     return NULL;
 
   struct list_node *ret = list->prev;
-  list_remove(list, ret);
+  list_remove(ret);
 
   return ret;
 }

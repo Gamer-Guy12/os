@@ -7,7 +7,7 @@ struct list_node {
 };
 
 void list_insert(struct list_node *list, struct list_node *node);
-void list_remove(struct list_node *list, struct list_node *node);
+void list_remove(struct list_node *node);
 void *list_pop_front(struct list_node *list);
 void *list_pop_back(struct list_node *list);
 
@@ -17,6 +17,7 @@ void *list_pop_back(struct list_node *list);
     (list)->prev = list;                                                       \
     (list)->next = list;                                                       \
   } while (0)
+#define LIST_EMPTY(list) ((list)->next == (list))
 
 #define LIST_FOREACH(pos, list)                                                \
   for ((pos) = (list)->next; (pos) != (list); (pos) = (pos)->next)

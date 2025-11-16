@@ -19,12 +19,13 @@ typedef uint64_t page_ptr_t;
 #define KERNEL_ADDR 0xFFFFFFFF80000000
 #define PAGE_SIZE 0x1000ull
 #define MAX_ORDER 10
+#else
+#error                                                                         \
+    "Cannot determine architecture dependent memory information. Please define everything that is defined in the x86_64 architecture."
+#endif
 
 __attribute__((unused)) static struct page *pages =
     (struct page *)PAGE_STRUCT_ADDR;
-#else
-#error "Cannot define identity map offset"
-#endif
 
 // Page data
 struct page {
@@ -97,6 +98,7 @@ void free_pages(void *addr, uint32_t order);
 uintptr_t get_max_addr(void);
 
 struct page *get_page(page_ptr_t ptr);
+struct page *addr_page(void *addr);
 
 /// Converts an architecture independent zone to a dependent one (all other zone
 /// functions require architecture dependent zones)

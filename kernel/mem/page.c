@@ -26,3 +26,8 @@ void free_pages(void *addr, uint32_t order) {
 
   __free_pages((void *)actual_addr, order);
 }
+
+struct page* addr_page(void *addr) {
+  page_ptr_t page_index = ((uintptr_t)addr - IDENTITY_MAP_OFFSET) / PAGE_SIZE;
+  return get_page(page_index);
+}
