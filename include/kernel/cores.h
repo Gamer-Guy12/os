@@ -1,7 +1,6 @@
 #ifndef _KERNEL_CORES_H_
 #define _KERNEL_CORES_H_
 
-#include "asm.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -19,6 +18,13 @@ uint32_t get_core_id(void);
 // Must be called from every core
 void init_cls(void);
 
+#ifdef _x86_64_
+#include "asm.h"
+#include "x86_64.h"
+
 #define GET_CLS(name) ((void *)(rdmsr(GS_BASE_MSR) + name))
+#else
+#error "Cannot read CLS"
+#endif
 
 #endif

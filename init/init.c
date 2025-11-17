@@ -1,3 +1,4 @@
+#include "init.h"
 #include "kernel/console.h"
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
@@ -34,6 +35,8 @@ NORETURN void kinit(void) {
   init_cls();
   kprintf("[INIT] Initialized CLS\n");
 
+  arch_init();
+
   kprintf("[INIT] Starting Up All Cores\n");
   init_cores();
   kprintf("[INIT] Initialized All Cores\n");
@@ -50,5 +53,8 @@ NORETURN INIT void core_entry(void) {
   init_cls();
   kprintf("[INIT] Initialized CLS on Core %u\n", get_core_id());
 
-  while (1) {}
+  arch_init();
+
+  while (1) {
+  }
 }

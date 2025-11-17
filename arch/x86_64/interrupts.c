@@ -1,6 +1,7 @@
 #include "interrupts.h"
-#include "kernel/kprintf.h"
+#include "init.h"
 #include "util.h"
+#include "kernel/kprintf.h"
 
 static int interrupt_count = 0;
 
@@ -20,3 +21,5 @@ void enable_interrupts(void) {
     panic();
   }
 }
+
+void init_interrupts(void) {}
