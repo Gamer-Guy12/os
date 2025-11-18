@@ -9,6 +9,9 @@ typedef struct {
   uint64_t addr;
 } __attribute__((packed)) idtptr_t;
 
+#define IDT_GATE_INT 0xE
+#define IDT_GATE_TRAP 0xF
+
 struct idt_descriptor {
   uint16_t offset_1;
   uint16_t segment;
@@ -23,5 +26,16 @@ struct idt_descriptor {
   uint32_t reserved_3;
 } __attribute__((packed));
 
-#endif
+struct int_context {
+  uint64_t int_number;
+  uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
+  uint64_t rsi, rdi, rbp, rdx, rcx, rbx, rax;
+  uint64_t error_code;
+  uint64_t rip, cs, rflags;
+  uint64_t rsp, ss;
+} __attribute__((packed));
 
+void init_interrupts(void);
+void common_int_handler(struct int_context *context);
+
+#endif

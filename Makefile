@@ -12,14 +12,21 @@ LD:=$(ARCH)-elf-ld
 LDFLAGS=-T targets/$(ARCH)/linker.ld -z noexecstack -L . -no-pie 
 
 kernel-mods=
-
-include arch/$(ARCH)/Makefile
+mods=$(patsubst %,build/mods/%,$(kernel-mods))
 
 .PHONY: build
 build: CFLAGS += -s -pipe -O3 -D _BUILD_
 build: build/bin/kernel.bin
 	strip --strip-unneeded build/bin/kernel.bin
 	@echo "Stripped Kernel"
+
+build/obj/%.c.o: %.c
+	@mkdir -p $(dir $@)
+	@mkdir -p $(patsubst build/obj/%,build/deps/%,$(dir $@))
+	@# I'll figure out a better way of including limine.h later
+	$(CC) $(CFLAGS) -c -o $@ $< -MF $(patsubst build/obj/%.o,build/deps/%.d,$@) -I tools/limine
+
+include arch/$(ARCH)/Makefile
 
 .PHONY: debug
 debug: CFLAGS += -g3 -Og -ggdb -D _DEBUG_
@@ -30,8 +37,8 @@ debug: build/bin/kernel.bin
 include $(filter-out arch/%, $(wildcard **/Makefile))
 include $(wildcard arch/$(ARCH)/**/Makefile)
 
-build/bin/kernel.bin: tools/limine/limine $(kernel-mods)
-	$(LD) $(LDFLAGS) $(kernel-mods) -o $@
+build/bin/kernel.bin: tools/limine/limine $(mods)
+	$(LD) $(LDFLAGS) $(mods) -o $@
 	@echo "Kernel Build Complete!"
 
 # Useful for making tools that are used
@@ -51,7 +58,7 @@ clean:
 todo:
 	@grep -Ri "TODO:" kernel init arch include lib
 
-build/obj/%.o: %.c
+build/obj/%.c.o: %.c
 	@mkdir -p $(dir $@)
 	@mkdir -p $(patsubst build/obj/%,build/deps/%,$(dir $@))
 	@# I'll figure out a better way of including limine.h later

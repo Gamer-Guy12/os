@@ -1,5 +1,4 @@
-#include "interrupts.h"
-#include "init.h"
+#include "arch_interrupts.h"
 #include "util.h"
 #include "kernel/kprintf.h"
 
@@ -22,4 +21,6 @@ void enable_interrupts(void) {
   }
 }
 
-void init_interrupts(void) {}
+void init_interrupts(void) {
+
+}
