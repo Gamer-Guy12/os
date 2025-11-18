@@ -1,6 +1,13 @@
 CFLAGS += -mno-sse -mno-avx -mno-mmx -mno-red-zone
 
+ASM=nasm
+ASMFLAGS=-felf64
+
 kernel-mods += x86_64.o
 
-x86_64-src = arch/x86_64/cores.c arch/x86_64/init.c arch/x86_64/interrupts.c arch/x86_64/gdt.c
+x86_64-src = arch/x86_64/cores.c arch/x86_64/init.c arch/x86_64/interrupts.c arch/x86_64/gdt.c arch/x86_64/handlers.asm
+
+build/obj/arch/x86_64/handlers.asm.o: arch/x86_64/handlers.asm
+	@mkdir -p $(dir $@)
+	$(ASM) $(ASMFLAGS) -o $@ $<
 

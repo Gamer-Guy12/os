@@ -1,6 +1,6 @@
 #include "arch_interrupts.h"
-#include "util.h"
 #include "kernel/kprintf.h"
+#include "util.h"
 
 static int interrupt_count = 0;
 
@@ -21,6 +21,17 @@ void enable_interrupts(void) {
   }
 }
 
-void init_interrupts(void) {
+void common_handler(struct int_context *context) {
+  while (1) {}
+}
 
+static struct idt_descriptor idt[256];
+
+#include "./idt_gen.h"
+
+void init_interrupts(void) {
+  fill_idt();
+
+  idtptr_t ptr = { .size = sizeof(idt) - 1, .addr = (uint64_t)idt };
+  __asm__ volatile("lidt (%0)" :: "r"(&ptr) : "memory");
 }

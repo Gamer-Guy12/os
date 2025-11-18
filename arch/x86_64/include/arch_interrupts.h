@@ -27,15 +27,16 @@ struct idt_descriptor {
 } __attribute__((packed));
 
 struct int_context {
-  uint64_t int_number;
+  uint64_t ds;
   uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
   uint64_t rsi, rdi, rbp, rdx, rcx, rbx, rax;
+  uint64_t int_number;
   uint64_t error_code;
   uint64_t rip, cs, rflags;
   uint64_t rsp, ss;
 } __attribute__((packed));
 
 void init_interrupts(void);
-void common_int_handler(struct int_context *context);
+void common_handler(struct int_context *context);
 
 #endif

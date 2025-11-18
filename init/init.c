@@ -41,8 +41,6 @@ NORETURN void kinit(void) {
   init_cores();
   kprintf("[INIT] Initialized All Cores\n");
 
-  kprintf("Hello Kernel World!\n");
-
   while (1) {
   }
 }
