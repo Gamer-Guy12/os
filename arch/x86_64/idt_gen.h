@@ -11,9 +11,14 @@ static inline void register_int(uint8_t num, uintptr_t handler, uint8_t ist,
   idt[num].dpl = dpl;
   idt[num].gate_type = gate_type;
 
-  idt[num].offset_1 = handler & 0xFF;
-  idt[num].offset_2 = (handler >> 16) & 0xFF;
+  idt[num].offset_1 = handler & 0xFFFF;
+  idt[num].offset_2 = (handler >> 16) & 0xFFFF;
   idt[num].offset_3 = handler >> 32;
+
+  idt[num].present = 1;
+
+  // Code segment
+  idt[num].segment = 0x8;
 }
 
 void fill_idt(void) {

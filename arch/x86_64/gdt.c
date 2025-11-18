@@ -64,4 +64,8 @@ void init_gdt(void) {
   gdtptr_t ptr = {.addr = (uint64_t)core_gdt, .size = sizeof(uint64_t) * 7 - 1};
 
   __asm__ volatile("lgdt (%0)" ::"r"(&ptr));
+
+  __asm__ volatile("mov %%ax, %%ds" :: "a"(0x10));
+  __asm__ volatile("mov %%ax, %%es" :: "a"(0x10));
+  __asm__ volatile("mov %%ax, %%ss" :: "a"(0x10));
 }
