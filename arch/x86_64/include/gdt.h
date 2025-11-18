@@ -47,6 +47,57 @@ struct gdt_segment {
   };
 } __attribute__((packed));
 
+enum gdt_ss_flags {
+  SS_LDT = 0x2,
+  SS_TSS_AVAIL = 0x9,
+  SS_TSS_BUDY = 0xB,
+};
+
+struct system_segment {
+  uint16_t limit_1;
+  uint16_t base_1;
+  uint8_t base_2;
+  uint8_t access;
+  uint8_t limit_2 : 4;
+  uint8_t flags : 4;
+  uint8_t base_3;
+  uint32_t base_4;
+  uint32_t reserved;
+} __attribute__((packed));
+
+struct tss {
+  union {
+    struct {
+      uint32_t reserved_1;
+      uint64_t rsp0;
+      uint64_t rsp1;
+      uint64_t rsp2;
+      uint64_t reserved_2;
+      union {
+        struct {
+          uint64_t ist1;
+          uint64_t ist2;
+          uint64_t ist3;
+          uint64_t ist4;
+          uint64_t ist5;
+          uint64_t ist6;
+          uint64_t ist7;
+        };
+        uint64_t ist[7];
+      };
+      uint64_t reserved_3;
+      uint16_t reserved_4;
+      uint16_t iopb;
+    } __attribute__((packed));
+    struct {
+      uint64_t segment_low;
+      uint64_t segment_high;
+    } __attribute__((packed));
+  } __attribute__((packed));
+} __attribute__((packed));
+
 void init_gdt(void);
+// A value of 0 will be put into the rsp field
+void gdt_tss_stack(uint8_t ist, void *ptr);
 
 #endif

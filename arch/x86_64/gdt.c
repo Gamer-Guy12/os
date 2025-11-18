@@ -1,9 +1,22 @@
 #include "gdt.h"
-#include "init.h"
-#include "./init.h"
 #include "kernel/cores.h"
+#include <stdint.h>
 
 CLS(uint64_t[7], gdt);
+
+struct tss tss;
+
+void gdt_tss_stack(uint8_t ist, void* ptr) {
+  if (ist == 0) {
+    tss.rsp0 = (uint64_t)ptr;
+  } else {
+    tss.ist[ist] = (uint64_t)ptr;
+  }
+
+  uint64_t *core_gdt = GET_CLS(gdt);
+  core_gdt[5] = tss.segment_low;
+  core_gdt[6] = tss.segment_high;
+}
 
 void init_gdt(void) {
   uint64_t *core_gdt = GET_CLS(gdt);
@@ -45,11 +58,10 @@ void init_gdt(void) {
 
   core_gdt[4] = segment.segment;
 
-  gdtptr_t ptr = {
-    .addr = (uint64_t)core_gdt,
-    .size = sizeof(uint64_t) * 7 - 1
-  };
+  core_gdt[5] = tss.segment_low;
+  core_gdt[6] = tss.segment_high;
 
-  __asm__ volatile("lgdt (%0)" :: "r"(&ptr));
+  gdtptr_t ptr = {.addr = (uint64_t)core_gdt, .size = sizeof(uint64_t) * 7 - 1};
+
+  __asm__ volatile("lgdt (%0)" ::"r"(&ptr));
 }
-
