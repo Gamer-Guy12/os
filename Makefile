@@ -1,3 +1,4 @@
+.SECONDARY:
 ARCH?=x86_64
 
 INCLUDE=include
@@ -19,6 +20,10 @@ build: CFLAGS += -s -pipe -O3 -D _BUILD_
 build: build/bin/kernel.bin
 	strip --strip-unneeded build/bin/kernel.bin
 	@echo "Stripped Kernel"
+
+.SECONDEXPANSION:
+build/mods/%.o: $$(addprefix build/obj/, $$(addsuffix .o, $$($$*-src)))
+	$(LD) -r $^ -o $@ 
 
 build/obj/%.c.o: %.c
 	@mkdir -p $(dir $@)

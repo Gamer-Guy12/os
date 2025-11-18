@@ -4,6 +4,3 @@ kernel-mods += x86_64.o
 
 x86_64-src = arch/x86_64/cores.c arch/x86_64/init.c arch/x86_64/interrupts.c arch/x86_64/gdt.c
 
-build/mods/x86_64.o: $(addprefix build/obj/, $(patsubst %,%.o,$(x86_64-src)))
-	$(LD) -r $^ -o $@
-
