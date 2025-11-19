@@ -12,6 +12,13 @@ LD:=$(ARCH)-elf-ld
 # Flags for making the final binary, for make object files just use -r and a linker script if necessary
 LDFLAGS=-T targets/$(ARCH)/linker.ld -z noexecstack -L . -no-pie 
 
+ifeq ($(ARCH),x86_64)
+
+ASM=nasm
+ASMFLAGS=-felf64
+
+endif
+
 kernel-mods=
 mods=$(patsubst %,build/mods/%,$(kernel-mods))
 

@@ -1,4 +1,4 @@
 kernel-mods += kernel.o
 
-kernel-src = kernel/console.c kernel/kprintf.c kernel/mem/buddy.c kernel/mem/page.c kernel/mem/gheap.c
+kernel-src = kernel/console.c kernel/kprintf.c kernel/mem/buddy.c kernel/mem/page.c kernel/mem/gheap.c kernel/threads/switch.c
 

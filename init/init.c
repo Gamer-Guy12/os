@@ -3,10 +3,23 @@
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "kernel/threads.h"
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
 #include <stddef.h>
+
+struct thread cur_thread;
+struct thread new_thread;
+
+void test(void) {
+  kprintf("Here\n");
+  switch_threads(&new_thread, &cur_thread);
+  kprintf("Here 2\n");
+  switch_threads(&new_thread, &cur_thread);
+  while (1) {
+  }
+}
 
 #define LIMINE_SECTION(name) __attribute__((used, section(name)))
 
@@ -38,8 +51,22 @@ NORETURN void kinit(void) {
   arch_init();
 
   kprintf("[INIT] Starting Up All Cores\n");
-  init_cores();
+  //init_cores();
   kprintf("[INIT] Initialized All Cores\n");
+
+  cur_thread.page_tables = NULL;
+  cur_thread.cpu_id = get_core_id();
+  cur_thread.state = THREAD_RUNNING;
+  cur_thread.tid = 0;
+
+  new_thread.page_tables = NULL;
+  new_thread.cpu_id = get_core_id();
+  new_thread.state = THREAD_STARTING;
+  new_thread.tid = 1;
+  __create_context(test, &new_thread.context);
+
+  switch_threads(&cur_thread, &new_thread);
+  switch_threads(&cur_thread, &new_thread);
 
   while (1) {
   }
