@@ -10,12 +10,10 @@ struct registers {
 };
 
 struct context {
-  // Stack contains other registers and return address
   union {
     void *rsp;
     struct registers *regs;
   };
-  uint64_t fs, gs;
 };
 
 typedef void *pt_t;
