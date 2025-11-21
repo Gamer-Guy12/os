@@ -8,7 +8,8 @@ enum thread_state {
   THREAD_RUNNING,
   THREAD_WAITING,
   THREAD_TERMINATED,
-  THREAD_STARTING
+  THREAD_STARTING,
+  THREAD_READY
 };
 
 struct thread {
@@ -20,12 +21,8 @@ struct thread {
   uint32_t cpu_id;
 };
 
-// Do not call
 void __switch_context(struct context *old_ctx, struct context *new_ctx);
-// Do not call
-void __switch_page_tables(pt_t new_tables);
-// Do not call
-void __create_context(void (*entry)(void), struct context *context);
+void __create_context(struct context *context);
 void switch_threads(struct thread *old_thread, struct thread *new_thread);
 
 #endif

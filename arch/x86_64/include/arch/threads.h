@@ -2,6 +2,7 @@
 #define _x86_64_ARCH_THREADS_H_
 
 #include <stdint.h>
+#include <stddef.h>
 
 struct registers {
   uint64_t rflags;
@@ -14,8 +15,11 @@ struct context {
     void *rsp;
     struct registers *regs;
   };
+  void *cr3;
 };
 
 typedef void *pt_t;
+
+#define PT_NULL NULL
 
 #endif
