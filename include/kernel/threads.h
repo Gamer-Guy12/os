@@ -4,6 +4,8 @@
 #include "arch/threads.h"
 #include <stdint.h>
 
+#define STACK_ORDER 2
+
 enum thread_state {
   THREAD_RUNNING,
   THREAD_WAITING,
@@ -22,7 +24,9 @@ struct thread {
 };
 
 void __switch_context(struct context *old_ctx, struct context *new_ctx);
-void __create_context(struct context *context);
+struct context *__clone_context(struct context *old_ctx, struct context *new_ctx);
 void switch_threads(struct thread *old_thread, struct thread *new_thread);
+// Returns 0 for child, child tid for parent
+uint64_t fork_thread(struct thread *thread);
 
 #endif
