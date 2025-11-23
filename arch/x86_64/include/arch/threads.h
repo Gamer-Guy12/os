@@ -15,7 +15,6 @@ struct context {
     void *rsp;
     struct registers *regs;
   };
-  void *cr3;
 };
 
 typedef void *pt_t;
