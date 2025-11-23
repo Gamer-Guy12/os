@@ -35,6 +35,7 @@ void switch_threads(struct thread *old_thread, struct thread *new_thread);
 void thread_trampoline(struct thread *old_thread, struct thread *new_thread);
 struct thread *get_cur_thread(void);
 struct thread *create_thread(NORETURN void (*entry)(void));
+void destroy_thread(struct thread *thread);
 void init_threading(void);
 
 // Thread Switching full process

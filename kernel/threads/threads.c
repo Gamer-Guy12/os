@@ -40,3 +40,8 @@ NORETURN void thread_trampoline(struct thread *old_thread,
 }
 
 struct thread *get_cur_thread(void) { return GET_CLS(cur_thread); }
+
+void destroy_thread(struct thread *thread) {
+  free_pages(thread->stack, STACK_ORDER);
+  gheap_cache_free(&thread_cache, thread);
+}
