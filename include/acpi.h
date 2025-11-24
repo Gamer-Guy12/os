@@ -1,5 +1,5 @@
-#ifndef _x86_64_ACPI_H_
-#define _x86_64_ACPI_H_
+#ifndef _ACPI_H_
+#define _ACPI_H_
 
 #include <stdint.h>
 
