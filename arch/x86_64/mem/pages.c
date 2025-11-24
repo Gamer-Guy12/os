@@ -1,4 +1,5 @@
 #include "./paging.h"
+#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include <stdint.h>
 
@@ -17,8 +18,8 @@ static uintptr_t phys_to_virt(void *phys) {
 // Size of 2 means 1gb page
 //
 // Returns whether it actually mapped the page or not
-static INIT bool __map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
-                            bool nx, uint8_t size, void *cr3) {
+static bool __map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
+                       bool nx, uint8_t size, void *cr3) {
   struct paging_entry *pml4 = (void *)((uintptr_t)cr3 + IDENTITY_MAP_OFFSET);
   const size_t pml4_index = PML4_INDEX(map_addr);
 
@@ -26,11 +27,9 @@ static INIT bool __map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
   const size_t pdpt_index = PDPT_INDEX(map_addr);
 
   // PDPTs are gaurenteed to be there
-  uintptr_t pdpt_phys_addr = (uintptr_t)alloc_pages(0, ZONE_HIGH);
-  pdpt = (void *)phys_to_virt((void *)pdpt_phys_addr);
-  pml4[pml4_index].addr = pdpt_phys_addr;
-  pml4[pml4_index].flags = flags;
-  pml4[pml4_index].nx = nx;
+  const size_t pdpt_phys_addr = pml4[pml4_index].addr & ADDR_MASK;
+  const size_t virt_addr = pdpt_phys_addr + IDENTITY_MAP_OFFSET;
+  pdpt = (void *)virt_addr;
 
   if (size == 2) {
     goto map_gb_page;
@@ -44,7 +43,7 @@ static INIT bool __map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
     const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
     pdt = (void *)virt_addr;
   } else {
-    uintptr_t phys_addr = (uintptr_t)alloc_pages(0, ZONE_HIGH);
+    uintptr_t phys_addr = (uintptr_t)alloc_pages(0, ZONE_HIGH) - IDENTITY_MAP_OFFSET;
     pdt = (void *)(phys_to_virt((void *)phys_addr));
     pdpt[pdpt_index].addr = phys_addr;
     pdpt[pdpt_index].flags = flags;
@@ -63,7 +62,7 @@ static INIT bool __map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
     const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
     pt = (void *)virt_addr;
   } else {
-    uintptr_t phys_addr = (uintptr_t)alloc_pages(0, ZONE_HIGH);
+    uintptr_t phys_addr = (uintptr_t)alloc_pages(0, ZONE_HIGH) - IDENTITY_MAP_OFFSET;
     pt = (void *)(phys_to_virt((void *)phys_addr));
     pdt[pdt_index].addr = phys_addr;
     pdt[pdt_index].flags = flags;

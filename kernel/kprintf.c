@@ -6,6 +6,7 @@
 #include "lib/io.h"
 #include "lib/spinlock.h"
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 static spinlock_t print_lock;

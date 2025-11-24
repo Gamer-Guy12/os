@@ -2,6 +2,7 @@
 #define _APIC_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #define LAPIC_BASE 0xFEE00000
 
@@ -14,7 +15,7 @@
 #define LAPIC_RRD_REG 0xC0
 #define LAPIC_LOGICAL_DEST_REG 0xD0
 #define LAPIC_DEST_FORMAT_REG 0xE0
-#define LAPIC_SPURIOUS_INT_REG 0xF0
+#define LAPIC_SVR_REG 0xF0
 #define LAPIC_ESR_REG 0x280
 #define LAPIC_LVT_CMCI_REG 0x2F0
 #define LAPIC_ICR_LOW_REG 0x300
@@ -31,6 +32,8 @@
 
 bool check_apic(void);
 void enable_apic(void);
+void write_apic_reg(uint16_t reg, uint32_t val);
+uint32_t read_apic_reg(uint16_t reg);
 
 #endif
 
