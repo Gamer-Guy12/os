@@ -94,6 +94,23 @@ void __free_pages(void *addr, uint32_t order);
 void *alloc_pages(uint32_t order, uint32_t flags);
 void free_pages(void *addr, uint32_t order);
 
+enum pm_flags {
+  PM_RW = (1 << 0),
+  PM_EXEC = (1 << 1),
+  // Same as x86_64 global
+  PM_PINNED = (1 << 2),
+  PM_WRITE_THROUGH = (1 << 3)
+};
+
+// Aligned mapping is always preferred
+//
+// Allocates all intermediate pages
+// Does not clean tlb
+void __map_pages(void *virt, void *phys, uint64_t page_count, uint32_t flags);
+// Frees all unnecessary intermediate pages
+// Does not clean tlb
+void __unmap_pages(void *virt);
+
 // Returns Max addr + 1
 uintptr_t get_max_addr(void);
 

@@ -7,3 +7,4 @@
     - Manages Resources and whos asking for them
 - [ ] Scheduler interrupts
 - [ ] Keyboard & Mouse input
+- [-] Page Mapping
