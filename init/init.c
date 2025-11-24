@@ -8,6 +8,7 @@
 #include "util.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 struct thread *thread1;
 struct thread *thread2;
@@ -63,12 +64,8 @@ NORETURN void kinit(void) {
   arch_init();
 
   kprintf("[INIT] Starting Up All Cores\n");
-//  init_cores();
+  init_cores();
   kprintf("[INIT] Initialized All Cores\n");
-
-  thread1 = create_thread(test1);
-  thread2 = create_thread(test2);
-  test1();
 
   while (1) {
   }

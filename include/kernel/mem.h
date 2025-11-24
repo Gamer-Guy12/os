@@ -102,14 +102,9 @@ enum pm_flags {
   PM_WRITE_THROUGH = (1 << 3)
 };
 
-// Aligned mapping is always preferred
-//
-// Allocates all intermediate pages
-// Does not clean tlb
-void __map_pages(void *virt, void *phys, uint64_t page_count, uint32_t flags);
-// Frees all unnecessary intermediate pages
-// Does not clean tlb
-void __unmap_pages(void *virt);
+// Maps a physical page into virtual memory
+// Will run allocators
+void *map_phys(void *phys, uint32_t flags);
 
 // Returns Max addr + 1
 uintptr_t get_max_addr(void);
