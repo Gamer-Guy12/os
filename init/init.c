@@ -61,7 +61,7 @@ NORETURN void kinit(void) {
   init_threading();
   kprintf("[INIT] Initialized Threading\n");
 
-  arch_init();
+  arch_init_single();
 
   kprintf("[INIT] Starting Up All Cores\n");
   init_cores();

@@ -61,12 +61,14 @@ enum madt_lapic_flags {
 };
 
 struct madt_lapic {
+  struct madt_entry header;
   uint8_t apic_processor_id;
   uint8_t apic_id;
   uint32_t flags;
 }__attribute__((packed));
 
 struct madt_ioapic {
+  struct madt_entry header;
   uint8_t ioapic_id;
   uint8_t reserved;
   uint32_t ioapic_addr;
@@ -74,6 +76,7 @@ struct madt_ioapic {
 }__attribute__((packed));
 
 struct madt_ioapic_override {
+  struct madt_entry header;
   uint8_t bus_source;
   uint8_t irq_source;
   uint32_t gsi_interrupt;

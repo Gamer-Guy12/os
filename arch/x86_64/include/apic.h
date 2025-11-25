@@ -1,5 +1,5 @@
-#ifndef _APIC_H_
-#define _APIC_H_
+#ifndef _x86_64_APIC_H_
+#define _x86_64_APIC_H_
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -34,6 +34,21 @@ bool check_apic(void);
 void enable_apic(void);
 void write_apic_reg(uint16_t reg, uint32_t val);
 uint32_t read_apic_reg(uint16_t reg);
+void apic_eoi(void);
+void init_apic_timer(void);
+// Waits for ipi to finish
+void send_ipi(uint32_t cpuid, uint8_t interrupt);
+void write_ioapic(uint32_t reg, uint32_t value);
+uint32_t read_ioapic(uint32_t reg);
+void configure_ioapic_entry(uint8_t interrupt, uint8_t delivery_mode,
+                            bool logical_dest, bool active_low,
+                            bool level_triggered, bool masked, uint8_t irq);
+void mask_ioapic_irq(uint8_t irq);
+void unmask_ioapic_irq(uint8_t irq);
+// Take ISA irq and get its real value you should map
+uint8_t get_real_irq(uint8_t irq);
+
+#define IOAPIC_IRQ(interrupt, irq)                                             \
+  configure_ioapic_entry(interrupt, 0, 0, 0, 0, 1, irq)
 
 #endif
-

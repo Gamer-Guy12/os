@@ -34,6 +34,10 @@ static inline void cpuid(int code, uint32_t *a, uint32_t *d) {
   __asm__ volatile("cpuid" : "=a"(*a), "=d"(*d) : "0"(code) : "ebx", "ecx");
 }
 
+static inline void cpuid_all(int code, uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d) {
+  __asm__ volatile("cpuid" : "=a"(*a), "=d"(*d), "=b"(*b), "=c"(*c) : "0"(code));
+}
+
 #define WRMSR(msr, value)                                                      \
   __asm__ volatile("wrmsr" ::"c"(msr), "a"((uint64_t)(value) & 0xFFFFFFFF),    \
                    "d"((uint64_t)(value) >> 32))
