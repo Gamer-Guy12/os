@@ -1,6 +1,7 @@
 #ifndef _x86_64_PIT_H_
 #define _x86_64_PIT_H_
 
+#include "asm.h"
 #include <stdint.h>
 
 #define PIT_16_BINARY 0
@@ -38,10 +39,10 @@
 #define PIT_DATA_2 0x42
 #define PIT_COMMAND 0x43
 
-#define WRITE_PIT_DATA_0(data) outb(0x40, data)
-#define WRITE_PIT_DATA_1(data) outb(0x41, data)
-#define WRITE_PIT_DATA_2(data) outb(0x42, data)
-#define WRITE_PIT_COMMAND(command) outb(0x43, command)
+#define WRITE_PIT_DATA_0(data) OUTB(0x40, data)
+#define WRITE_PIT_DATA_1(data) OUTB(0x41, data)
+#define WRITE_PIT_DATA_2(data) OUTB(0x42, data)
+#define WRITE_PIT_COMMAND(command) OUTB(0x43, command)
 
 #define PIT_FREQUENCY 1193182
 

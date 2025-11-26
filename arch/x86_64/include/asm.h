@@ -10,7 +10,7 @@
 #define OUTL(port, val)                                                        \
   __asm__ volatile("outl %0, %w1" ::"a"(val), "Nd"(port) : "memory");
 
-#define IO_WAIT() outb(0x80, 0)
+#define IO_WAIT() OUTB(0x80, 0)
 
 static inline uint8_t inb(uint16_t port) {
   uint8_t ret;

@@ -1,4 +1,5 @@
 #include "apic.h"
+#include "interrupts.h"
 #include "acpi.h"
 #include "asm.h"
 #include "kernel/kprintf.h"
@@ -19,11 +20,37 @@ INIT bool check_apic(void) {
   return d & (1 << 9);
 }
 
+INIT void disable_pic(void) {
+  OUTB(0x20, 0x11);
+  IO_WAIT();
+  OUTB(0xA0, 0x11);
+  IO_WAIT();
+  OUTB(0x21, 0x20);
+  IO_WAIT();
+  OUTB(0xA1, 0x28);
+  IO_WAIT();
+  OUTB(0x21, 4);
+  IO_WAIT();
+  OUTB(0xA1, 2);
+  IO_WAIT();
+
+  OUTB(0x21, 0x01);
+  IO_WAIT();
+  OUTB(0xA1, 0x01);
+  IO_WAIT();
+
+  OUTB(0x21, 0xFF);
+  OUTB(0xA1, 0xFF);
+}
+
 INIT void enable_apic(void) {
+  disable_interrupts();
   if (!check_apic()) {
     kprintf("No Apic On Chip\n");
     panic();
   }
+
+  disable_pic();
 
   // Enable with apic base address
   WRMSR(IA32_APIC_BASE_MSR, LAPIC_BASE | (1 << 11));
@@ -59,6 +86,7 @@ INIT void enable_apic(void) {
   }
 
   ioapic_addr = (void *)(uint64_t)ioapic_entry->ioapic_addr;
+  enable_interrupts();
 }
 
 void write_apic_reg(uint16_t reg, uint32_t val) {

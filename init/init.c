@@ -1,4 +1,5 @@
 #include "init.h"
+#include "acpi.h"
 #include "kernel/console.h"
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
@@ -60,6 +61,9 @@ NORETURN void kinit(void) {
 
   init_threading();
   kprintf("[INIT] Initialized Threading\n");
+
+  init_acpi();
+  kprintf("[INIT] Initialized ACPI\n");
 
   arch_init_single();
 

@@ -1,10 +1,11 @@
 #include "acpi.h"
+#include "kernel/mem.h"
 #include "kernel/kprintf.h"
 #include "limine.h"
 #include "util.h"
 #include <stddef.h>
 
-static volatile struct limine_rsdp_request rsdp_request = {
+LIMINE_REQUEST static volatile struct limine_rsdp_request rsdp_request = {
     .revision = 0, .id = LIMINE_RSDP_REQUEST};
 
 static struct rsdp *rsdp = NULL;
@@ -12,7 +13,7 @@ static struct xsdt *xsdt = NULL;
 
 void init_rsdp(void) {
   rsdp = (struct rsdp *)rsdp_request.response->address;
-  xsdt = (struct xsdt *)rsdp->xsdt;
+  xsdt = (struct xsdt *)(rsdp->xsdt + IDENTITY_MAP_OFFSET);
 }
 
 void check_rsdp(struct rsdp *rsdp) {

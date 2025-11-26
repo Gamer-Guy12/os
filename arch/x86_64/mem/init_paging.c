@@ -260,7 +260,9 @@ INIT void init_paging(uint64_t map_entry_count,
         entry->type == LIMINE_MEMMAP_EXECUTABLE_AND_MODULES ||
         entry->type == LIMINE_MEMMAP_FRAMEBUFFER ||
         entry->type == LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE ||
-        entry->type == LIMINE_MEMMAP_ACPI_TABLES) {
+        entry->type == LIMINE_MEMMAP_ACPI_TABLES ||
+        entry->type == LIMINE_MEMMAP_ACPI_NVS ||
+        entry->type == LIMINE_MEMMAP_ACPI_RECLAIMABLE) {
       map_paging_region(entry);
     }
   }

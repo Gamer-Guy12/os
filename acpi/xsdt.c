@@ -1,4 +1,5 @@
 #include "acpi.h"
+#include "kernel/mem.h"
 #include "kernel/kprintf.h"
 #include "lib/string.h"
 #include "util.h"
@@ -27,9 +28,9 @@ void *get_acpi_table(char *signature) {
   uint32_t entry_count = (xsdt->header.length - sizeof(xsdt->header)) / 8;
 
   for (uint32_t i = 0; i < entry_count; i++) {
-    struct sdt_header *header = (struct sdt_header *)xsdt->sdts[i];
+    struct sdt_header *header = (struct sdt_header *)(xsdt->sdts[i] + IDENTITY_MAP_OFFSET);
     if (strncmp(header->signature, signature, 4) == 0) {
-      return header;
+      return (void *)header;
     }
   }
 
