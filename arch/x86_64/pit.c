@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 void init_pit(void) {
-  
+  // Since im not using interupts or anything it should be fine just not to use it
 }
 
 void pit_wait_ticks(uint16_t ticks) {

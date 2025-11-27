@@ -1,25 +1,34 @@
 #include "arch_interrupts.h"
+#include "kernel/cores.h"
 #include "kernel/kprintf.h"
 #include "util.h"
 #include <stddef.h>
 #include <stdint.h>
 
-static int interrupt_count = 0;
+CLS(int, interrupt_count);
 
 void disable_interrupts(void) {
   __asm__ volatile("cli" ::: "memory");
-  interrupt_count++;
+  int *this_int = GET_CLS(interrupt_count);
+  if (CHECK_CLS(interrupt_count))
+    (*this_int)++;
 }
 
 // Since this only happens on one core at a time its fine to not use atomics
 void enable_interrupts(void) {
-  interrupt_count--;
-
-  if (interrupt_count == 0)
+  int *this_int = GET_CLS(interrupt_count);
+  if (CHECK_CLS(interrupt_count))
+    (*this_int)--;
+  else {
     __asm__ volatile("sti" ::: "memory");
-  else if (interrupt_count < 0) {
-    kprintf("Too many interrupt reenables\n");
-    panic();
+    return;
+  }
+
+  if (*this_int == 0) {
+    __asm__ volatile("sti" ::: "memory");
+  } else if (*this_int < 0) {
+    __asm__ volatile("sti" ::: "memory");
+    *this_int = 0;
   }
 }
 

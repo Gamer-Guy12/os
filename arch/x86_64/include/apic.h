@@ -30,6 +30,19 @@
 #define LAPIC_TIMER_CUR_COUNT_REG 0x390
 #define LAPIC_DIV_CONFIG_REG 0x3E0
 
+#define DIV_2 0x0
+#define DIV_4 0x1
+#define DIV_8 0x2
+#define DIV_16 0x3
+#define DIV_32 0x8
+#define DIV_64 0x9
+#define DIV_128 0xA
+#define DIV_1 0xB
+
+#define ONE_SHOT 0x0
+#define PERIODIC (0x1 << 17) 
+#define TSC_DEADLINE (0x2 << 17)
+
 bool check_apic(void);
 void enable_apic(void);
 void write_apic_reg(uint16_t reg, uint32_t val);
@@ -47,6 +60,8 @@ void mask_ioapic_irq(uint8_t irq);
 void unmask_ioapic_irq(uint8_t irq);
 // Take ISA irq and get its real value you should map
 uint8_t get_real_irq(uint8_t irq);
+uint32_t apic_ticks(uint32_t ms);
+void apic_wait_ms(void (*handler)(void), uint32_t ms);
 
 #define IOAPIC_IRQ(interrupt, irq)                                             \
   configure_ioapic_entry(interrupt, 0, 0, 0, 0, 1, irq)

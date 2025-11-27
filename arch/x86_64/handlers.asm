@@ -6,6 +6,10 @@ global idt_handler_%1
 idt_handler_%1:
   ; Phony error code
   push 0
+  
+  ; Set CS
+  mov qword [rsp + 16], 0x8
+
   ; Interrupt number
   push %1
 
@@ -73,6 +77,9 @@ idt_handler_%1:
 
 global idt_handler_%1
 idt_handler_%1:
+  ; Set CS
+  mov qword [rsp + 16], 0x8
+
   ; Interrupt number
   push %1
 

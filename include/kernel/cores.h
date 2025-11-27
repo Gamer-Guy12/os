@@ -23,6 +23,7 @@ void init_cls(void);
 #include "x86_64.h"
 
 #define GET_CLS(name) ((void *)(rdmsr(GS_BASE_MSR) + name))
+#define CHECK_CLS(name) ((void *)rdmsr(GS_BASE_MSR) != NULL)
 #else
 #error "Cannot read CLS"
 #endif

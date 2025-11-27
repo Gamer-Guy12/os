@@ -1,7 +1,6 @@
 #include "kernel/cores.h"
 #include "asm.h"
 #include "kernel/gheap.h"
-#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "limine.h"
 #include "util.h"

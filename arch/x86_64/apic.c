@@ -1,9 +1,12 @@
 #include "apic.h"
-#include "interrupts.h"
 #include "acpi.h"
 #include "asm.h"
+#include "interrupts.h"
+#include "kernel/cores.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "lib/atomic.h"
+#include "tsc.h"
 #include "util.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -13,6 +16,8 @@
 
 static uintptr_t lapic_addr = 0;
 static volatile uint32_t *ioapic_addr = NULL;
+
+CLS(uint64_t, timer_frequency);
 
 INIT bool check_apic(void) {
   uint32_t a, d;
@@ -85,7 +90,16 @@ INIT void enable_apic(void) {
     panic();
   }
 
-  ioapic_addr = (void *)(uint64_t)ioapic_entry->ioapic_addr;
+  ioapic_addr =
+      (void *)((uint64_t)ioapic_entry->ioapic_addr + IDENTITY_MAP_OFFSET);
+  map_phys((void *)(uint64_t)ioapic_entry->ioapic_addr,
+           PM_RW | PM_WRITE_THROUGH | PM_PINNED);
+
+  // Mask all interrupts 24
+  for (int i = 0; i < 24; i++) {
+    mask_ioapic_irq(i);
+  }
+
   enable_interrupts();
 }
 
@@ -164,4 +178,67 @@ uint8_t get_real_irq(uint8_t irq) {
   return irq;
 }
 
-void init_apic_timer(void) {}
+CLS(atomic_t, apic_calculated);
+CLS(uint64_t, end_ticks);
+
+typedef void (*handler_t)(void);
+
+CLS(handler_t, handlers);
+
+static void apic_handler(void *data) {
+  apic_eoi();
+
+  atomic_t *this_apic = GET_CLS(apic_calculated);
+  if (atomic_load(this_apic) == 0) {
+    uint64_t *this_end = GET_CLS(end_ticks);
+    *this_end = rdtsc();
+
+    atomic_store(this_apic, 1);
+  } else {
+    handler_t *local_handler = GET_CLS(handlers);
+    (*local_handler)();
+  }
+}
+
+uint32_t apic_ticks(uint32_t ms) {
+  uint64_t *this_freq = GET_CLS(timer_frequency);
+
+  return ms * *this_freq / 1000;
+}
+
+void apic_wait_ms(void (*handler)(void), uint32_t ms) {
+  uint32_t ticks = apic_ticks(ms);
+  handler_t *this_handler = GET_CLS(handlers);
+  *this_handler = handler;
+
+  write_apic_reg(LAPIC_DIV_CONFIG_REG, DIV_4);
+  // Interrupt 0x60, not masked, one shot
+  write_apic_reg(LAPIC_LVT_TIMER_REG, 0x60);
+  write_apic_reg(LAPIC_TIMER_INIT_COUNT_REG, ticks);
+}
+
+INIT void init_apic_timer(void) {
+  __asm__ volatile("sti" ::: "memory");
+  uint64_t *freq = GET_CLS(timer_frequency);
+  write_apic_reg(LAPIC_DIV_CONFIG_REG, DIV_4);
+  // Interrupt 0x60, not masked, one shot
+  register_int_handler(0x60, apic_handler);
+  write_apic_reg(LAPIC_LVT_TIMER_REG, 0x60);
+  // Wait this many ticks and then see how many ms that is
+
+  uint64_t start_ticks = rdtsc();
+  write_apic_reg(LAPIC_TIMER_INIT_COUNT_REG, 16384);
+
+  atomic_t *this_apic = GET_CLS(apic_calculated);
+  while (!atomic_load(this_apic)) {
+  }
+
+  uint64_t *this_end = GET_CLS(end_ticks);
+  uint64_t tick_diff = *this_end - start_ticks;
+  // Ticks per second
+  const uint64_t tsc_freq = get_tsc_freq();
+  // Always use the div 4 divider
+  const uint64_t lapic_freq = tsc_freq * 16384 / tick_diff;
+
+  *freq = lapic_freq;
+}
