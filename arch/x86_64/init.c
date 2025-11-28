@@ -8,10 +8,6 @@
 #include "arch_interrupts.h"
 #include "kernel/kprintf.h"
 
-void hi(void) {
-  kprintf("hi\n");
-}
-
 void INIT arch_init_single(void) {
   init_gdt();
   kprintf("[INIT] Initialized GDT\n");
@@ -27,9 +23,6 @@ void INIT arch_init_single(void) {
   enable_apic();
   init_apic_timer();
   kprintf("[INIT] Enabled APIC\n");
-  __asm__ volatile("div %%rcx" :: "c"(0));
-
-  apic_wait_ms(hi, 1000);
 }
 
 void INIT arch_init(void) {

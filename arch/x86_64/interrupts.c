@@ -10,8 +10,9 @@ CLS(int, interrupt_count);
 void disable_interrupts(void) {
   __asm__ volatile("cli" ::: "memory");
   int *this_int = GET_CLS(interrupt_count);
-  if (CHECK_CLS(interrupt_count))
+  if (CHECK_CLS(interrupt_count)) {
     (*this_int)++;
+  }
 }
 
 // Since this only happens on one core at a time its fine to not use atomics
@@ -24,11 +25,9 @@ void enable_interrupts(void) {
     return;
   }
 
-  if (*this_int == 0) {
-    __asm__ volatile("sti" ::: "memory");
-  } else if (*this_int < 0) {
-    __asm__ volatile("sti" ::: "memory");
+  if (*this_int <= 0) {
     *this_int = 0;
+    __asm__ volatile("sti" ::: "memory");
   }
 }
 
