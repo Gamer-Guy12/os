@@ -1,4 +1,5 @@
 #include "init.h"
+#include "kernel/timers.h"
 #include "acpi.h"
 #include "kernel/console.h"
 #include "kernel/cores.h"
@@ -14,22 +15,8 @@
 struct thread *thread1;
 struct thread *thread2;
 
-NORETURN void test1(void) {
-  kprintf("Hello 1\n");
-  switch_threads(thread1, thread2);
-  kprintf("Hello 1 2\n");
-  switch_threads(thread1, thread2);
-  while (1) {
-  }
-}
-
-NORETURN void test2(void) {
-  kprintf("Hello 2\n");
-  switch_threads(thread2, thread1);
-  kprintf("Hello 2 2\n");
-  switch_threads(thread2, thread1);
-  while (1) {
-  }
+void handler(void * data) {
+  kprintf("Hi\n");
 }
 
 #define LIMINE_SECTION(name) __attribute__((used, section(name)))
@@ -65,7 +52,14 @@ NORETURN void kinit(void) {
   init_acpi();
   kprintf("[INIT] Initialized ACPI\n");
 
+  init_timers();
+  kprintf("[INIT] Initialized Timers");
+
   arch_init_single();
+
+  int_at_ticks(10000, handler, NULL);
+
+  while (1) {}
 
   kprintf("[INIT] Starting Up All Cores\n");
   init_cores();

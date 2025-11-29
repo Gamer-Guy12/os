@@ -5,6 +5,7 @@
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "kernel/timers.h"
 #include "lib/atomic.h"
 #include "tsc.h"
 #include "util.h"
@@ -217,8 +218,10 @@ void apic_wait_ms(void (*handler)(void), uint32_t ms) {
   write_apic_reg(LAPIC_TIMER_INIT_COUNT_REG, ticks);
 }
 
+void apic_tick_handler(void);
+
 INIT void init_apic_timer(void) {
-  __asm__ volatile("sti" ::: "memory");
+  enable_interrupts();
   uint64_t *freq = GET_CLS(timer_frequency);
   write_apic_reg(LAPIC_DIV_CONFIG_REG, DIV_4);
   // Interrupt 0x60, not masked, one shot
@@ -239,6 +242,15 @@ INIT void init_apic_timer(void) {
   const uint64_t tsc_freq = get_tsc_freq();
   // Always use the div 4 divider
   const uint64_t lapic_freq = tsc_freq * 16384 / tick_diff;
-
   *freq = lapic_freq;
+
+  // Start ticking
+  apic_wait_ms(apic_tick_handler, TICK_LEN_MS);
+}
+
+// The apic timer will be the only one handling ticks, if that doesn't work then
+// womp womp
+void apic_tick_handler(void) {
+  increment_tick();
+  apic_wait_ms(apic_tick_handler, TICK_LEN_MS);
 }
