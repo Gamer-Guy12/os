@@ -1,12 +1,13 @@
 #include "init.h"
-#include "interrupts.h"
+#include "arch_interrupts.h"
 #include "gdt.h"
+#include "hpet.h"
 #include "include/apic.h"
 #include "include/pit.h"
 #include "include/tsc.h"
-#include "util.h"
-#include "arch_interrupts.h"
+#include "interrupts.h"
 #include "kernel/kprintf.h"
+#include "util.h"
 
 void INIT arch_init_single(void) {
   init_gdt();
@@ -23,6 +24,9 @@ void INIT arch_init_single(void) {
   enable_apic();
   init_apic_timer();
   kprintf("[INIT] Enabled APIC\n");
+
+  init_hpet();
+  kprintf("[INIT] Enabled Main Core Timers\n");
 }
 
 void INIT arch_init(void) {

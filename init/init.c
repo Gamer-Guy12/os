@@ -12,13 +12,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct thread *thread1;
-struct thread *thread2;
-
-void handler(void * data) {
-  kprintf("Hi\n");
-}
-
 #define LIMINE_SECTION(name) __attribute__((used, section(name)))
 
 // clang-format off
@@ -56,10 +49,6 @@ NORETURN void kinit(void) {
   kprintf("[INIT] Initialized Timers");
 
   arch_init_single();
-
-  int_at_ticks(10000, handler, NULL);
-
-  while (1) {}
 
   kprintf("[INIT] Starting Up All Cores\n");
   init_cores();
