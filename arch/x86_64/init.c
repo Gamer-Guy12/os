@@ -22,7 +22,7 @@ void INIT arch_init_single(void) {
   kprintf("[INIT] Initialized PIT and TSC\n");
 
   enable_apic();
-  init_apic_timer();
+  // init_apic_timer();
   kprintf("[INIT] Enabled APIC\n");
 
   init_hpet();

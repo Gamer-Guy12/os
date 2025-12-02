@@ -57,6 +57,11 @@ static void hpet_handler(void *context) {
   hpet_write_reg(HPET_GEN_INT_STATUS, 1 << hpet);
   spinlock_release(&hpet_handler_lock);
 
+  kprintf("Here\n");
+
+  hpet_write_reg(HPET_TIMER_CONF_CAPS(hpet),
+                 hpet_read_reg(HPET_TIMER_CONF_CAPS(hpet)) & ~(1 << 2));
+
   hpet_callback_t callback = callbacks[hpet];
   callbacks[hpet] = NULL;
   callback();
@@ -96,6 +101,8 @@ static void hpet_int_microseconds(void (*callback)(void),
   // Enable interrupts
   hpet_write_reg(HPET_TIMER_CONF_CAPS(timer->hpet),
                  hpet_read_reg(HPET_TIMER_CONF_CAPS(timer->hpet)) | (1 << 2));
+
+  kprintf("%x\n", hpet_read_reg(HPET_TIMER_CONF_CAPS(timer->hpet)));
 
   enable_interrupts();
 }
@@ -149,6 +156,7 @@ void init_hpet(void) {
 
   for (int i = 0; i < comparator_count; i++) {
     uint64_t timer_setup = hpet_read_reg(HPET_TIMER_CONF_CAPS(i));
+    kprintf("%x\n", timer_setup);
 
     // Timer doesn't support 64 bit
     if (!(timer_setup & (1 << 5))) {
@@ -206,7 +214,7 @@ void init_hpet(void) {
     //    register_timer((void *)timer);
     my_timer = (void *)timer;
 
-    kprintf("\t[HPET] Initialized HPET Comparator %d\n", i);
+    kprintf("\t[HPET] Initialized HPET Comparator %d %x %x\n", i, hpet_read_reg(HPET_TIMER_CONF_CAPS(i)), timer_setup);
   }
 
   if (unmask_2) {
@@ -231,4 +239,6 @@ void init_hpet(void) {
   enable_interrupts();
 
   my_timer->int_micro_seconds(test, my_timer, 3000000);
+
+  while (1) {}
 }
