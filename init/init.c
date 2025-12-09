@@ -46,12 +46,12 @@ NORETURN void kinit(void) {
   kprintf("[INIT] Initialized ACPI\n");
 
   init_timers();
-  kprintf("[INIT] Initialized Timers");
+  kprintf("[INIT] Initialized Timers\n");
 
   arch_init_single();
 
   kprintf("[INIT] Starting Up All Cores\n");
-  init_cores();
+  // init_cores();
   kprintf("[INIT] Initialized All Cores\n");
 
   while (1) {

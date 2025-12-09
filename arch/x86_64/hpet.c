@@ -57,6 +57,8 @@ static void hpet_handler(void *context) {
   hpet_write_reg(HPET_GEN_INT_STATUS, 1 << hpet);
   spinlock_release(&hpet_handler_lock);
 
+  kprintf("Here\n");
+
   hpet_callback_t callback = callbacks[hpet];
   callbacks[hpet] = NULL;
   callback();
@@ -72,7 +74,7 @@ static void hpet_cancel(struct timer *timer_struct) {
 
   uint64_t config = hpet_read_reg(HPET_TIMER_CONF_CAPS(timer->hpet));
   // Disable interrupts
-  config &= ~(1 << 9);
+  config &= ~(1 << 2);
   hpet_write_reg(HPET_TIMER_CONF_CAPS(timer->hpet), config);
 
   // Clear any interrupts if they happened
@@ -91,11 +93,11 @@ static void hpet_int_microseconds(void (*callback)(void),
   callbacks[timer->hpet] = callback;
 
   uint64_t tick_count = frequency * micro_seconds / 1000000;
-  hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet),
-                 cur_ticks + tick_count);
   // Enable interrupts
   hpet_write_reg(HPET_TIMER_CONF_CAPS(timer->hpet),
                  hpet_read_reg(HPET_TIMER_CONF_CAPS(timer->hpet)) | (1 << 2));
+  hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet),
+                 cur_ticks + tick_count);
 
   enable_interrupts();
 }
@@ -196,7 +198,7 @@ void init_hpet(void) {
       continue;
     }
 
-    write_apic_reg(HPET_TIMER_CONF_CAPS(i), timer_setup);
+    hpet_write_reg(HPET_TIMER_CONF_CAPS(i), timer_setup);
 
     struct hpet_timer *timer = gmalloc(sizeof(struct hpet_timer), ZONE_ANY);
     timer->hpet = i;
@@ -225,10 +227,18 @@ void init_hpet(void) {
     unmask_ioapic_irq(18);
   }
 
+  enable_interrupts();
   // Enable counter
   hpet_write_reg(HPET_GEN_CONF, 1);
 
-  enable_interrupts();
-
   my_timer->int_micro_seconds(test, my_timer, 3000000);
+  struct hpet_timer *timer = (void *)my_timer;
+
+  while ((long long)hpet_read_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet)) -
+             (long long)hpet_read_reg(HPET_MAIN_COUNTER) >
+         -10000) {
+  }
+
+  kprintf("%x\n", read_ioapic(0x14) & (1 << 14));
+  kprintf("%x\n", hpet_read_reg(HPET_GEN_INT_STATUS));
 }
