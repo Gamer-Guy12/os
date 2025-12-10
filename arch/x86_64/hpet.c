@@ -56,6 +56,7 @@ static void hpet_handler(void *context) {
 
   hpet_write_reg(HPET_GEN_INT_STATUS, 1 << hpet);
   spinlock_release(&hpet_handler_lock);
+  apic_eoi();
 
   kprintf("Here\n");
 
@@ -102,12 +103,13 @@ static void hpet_int_microseconds(void (*callback)(void),
   hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet),
                  cur_ticks + tick_count);
 
-  kprintf("%x\n", hpet_read_reg(HPET_TIMER_CONF_CAPS(timer->hpet)));
-
   enable_interrupts();
 }
 
-void test(void) { kprintf("3 secs\n"); }
+void test(void) {
+  __asm__ volatile("div %%rcx" ::"c"(0));
+  kprintf("3 secs\n");
+}
 
 void init_hpet(void) {
   disable_interrupts();
@@ -138,12 +140,12 @@ void init_hpet(void) {
 
   frequency = 1000000000000000 / (capabilities >> 32);
 
-  // Clear all pending interrupts
-  hpet_write_reg(HPET_GEN_INT_STATUS, MAX_32);
   // Set counter to 1 to not trigger interrupts
   hpet_write_reg(HPET_MAIN_COUNTER, 1);
   // Disable legacy remapping
   hpet_write_reg(HPET_GEN_CONF, 0);
+  // Clear all pending interrupts
+  hpet_write_reg(HPET_GEN_INT_STATUS, MAX_32);
 
   register_int_handler(0x90, hpet_handler);
 
@@ -156,7 +158,6 @@ void init_hpet(void) {
 
   for (int i = 0; i < comparator_count; i++) {
     uint64_t timer_setup = hpet_read_reg(HPET_TIMER_CONF_CAPS(i));
-    kprintf("%x\n", timer_setup);
 
     // Timer doesn't support 64 bit
     if (!(timer_setup & (1 << 5))) {
@@ -185,19 +186,19 @@ void init_hpet(void) {
     // Irqs 2, 16, 17, and 18 are allowed
     if ((timer_setup >> 32) & (1 << 2)) {
       timer_setup |= (2 << 9);
-      configure_ioapic_entry(0x90, 0, false, false, true, true, 2);
+      configure_ioapic_entry(0x90, 0, false, false, true, false, 2);
       unmask_2 = true;
     } else if ((timer_setup >> 32) & (1 << 16)) {
       timer_setup |= (16 << 9);
-      configure_ioapic_entry(0x90, 0, false, false, true, true, 16);
+      configure_ioapic_entry(0x90, 0, false, false, true, false, 16);
       unmask_16 = true;
     } else if ((timer_setup >> 32) & (1 << 17)) {
       timer_setup |= (17 << 9);
-      configure_ioapic_entry(0x90, 0, false, false, true, true, 17);
+      configure_ioapic_entry(0x90, 0, false, false, true, false, 17);
       unmask_17 = true;
     } else if ((timer_setup >> 32) & (1 << 18)) {
       timer_setup |= (18 << 9);
-      configure_ioapic_entry(0x90, 0, false, false, true, true, 18);
+      configure_ioapic_entry(0x90, 0, false, false, true, false, 18);
       unmask_18 = true;
     } else {
       comparator_sizes[i] = false;
@@ -212,9 +213,10 @@ void init_hpet(void) {
     timer->timer.cancel = hpet_cancel;
 
     //    register_timer((void *)timer);
-    my_timer = (void *)timer;
+    if (!my_timer)
+      my_timer = (void *)timer;
 
-    kprintf("\t[HPET] Initialized HPET Comparator %d %x %x\n", i, hpet_read_reg(HPET_TIMER_CONF_CAPS(i)), timer_setup);
+    kprintf("\t[HPET] Initialized HPET Comparator %d\n", i);
   }
 
   if (unmask_2) {
@@ -245,6 +247,6 @@ void init_hpet(void) {
          -10000) {
   }
 
-  kprintf("%x\n", read_ioapic(0x14) & (1 << 14));
   kprintf("%x\n", hpet_read_reg(HPET_GEN_INT_STATUS));
+  kprintf("%x\n", hpet_read_reg(HPET_TIMER_CONF_CAPS(1)));
 }
