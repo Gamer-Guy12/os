@@ -99,7 +99,8 @@ enum pm_flags {
   PM_EXEC = (1 << 1),
   // Same as x86_64 global
   PM_PINNED = (1 << 2),
-  PM_WRITE_THROUGH = (1 << 3)
+  PM_WRITE_THROUGH = (1 << 3),
+  PM_UNCACHEABLE = (1 << 4)
 };
 
 // Maps a physical page into virtual memory

@@ -58,8 +58,6 @@ static void hpet_handler(void *context) {
   spinlock_release(&hpet_handler_lock);
   apic_eoi();
 
-  kprintf("Here\n");
-
   hpet_write_reg(HPET_TIMER_CONF_CAPS(hpet),
                  hpet_read_reg(HPET_TIMER_CONF_CAPS(hpet)) & ~(1 << 2));
 
@@ -104,11 +102,6 @@ static void hpet_int_microseconds(void (*callback)(void),
                  cur_ticks + tick_count);
 
   enable_interrupts();
-}
-
-void test(void) {
-  __asm__ volatile("div %%rcx" ::"c"(0));
-  kprintf("3 secs\n");
 }
 
 void init_hpet(void) {
@@ -186,19 +179,19 @@ void init_hpet(void) {
     // Irqs 2, 16, 17, and 18 are allowed
     if ((timer_setup >> 32) & (1 << 2)) {
       timer_setup |= (2 << 9);
-      configure_ioapic_entry(0x90, 0, false, false, true, false, 2);
+      configure_ioapic_entry(0x90, 0, false, false, true, true, 2);
       unmask_2 = true;
     } else if ((timer_setup >> 32) & (1 << 16)) {
       timer_setup |= (16 << 9);
-      configure_ioapic_entry(0x90, 0, false, false, true, false, 16);
+      configure_ioapic_entry(0x90, 0, false, false, true, true, 16);
       unmask_16 = true;
     } else if ((timer_setup >> 32) & (1 << 17)) {
       timer_setup |= (17 << 9);
-      configure_ioapic_entry(0x90, 0, false, false, true, false, 17);
+      configure_ioapic_entry(0x90, 0, false, false, true, true, 17);
       unmask_17 = true;
     } else if ((timer_setup >> 32) & (1 << 18)) {
       timer_setup |= (18 << 9);
-      configure_ioapic_entry(0x90, 0, false, false, true, false, 18);
+      configure_ioapic_entry(0x90, 0, false, false, true, true, 18);
       unmask_18 = true;
     } else {
       comparator_sizes[i] = false;
@@ -238,15 +231,4 @@ void init_hpet(void) {
   enable_interrupts();
   // Enable counter
   hpet_write_reg(HPET_GEN_CONF, 1);
-
-  my_timer->int_micro_seconds(test, my_timer, 3000000);
-  struct hpet_timer *timer = (void *)my_timer;
-
-  while ((long long)hpet_read_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet)) -
-             (long long)hpet_read_reg(HPET_MAIN_COUNTER) >
-         -10000) {
-  }
-
-  kprintf("%x\n", hpet_read_reg(HPET_GEN_INT_STATUS));
-  kprintf("%x\n", hpet_read_reg(HPET_TIMER_CONF_CAPS(1)));
 }

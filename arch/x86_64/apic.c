@@ -91,10 +91,8 @@ INIT void enable_apic(void) {
     panic();
   }
 
-  ioapic_addr =
-      (void *)((uint64_t)ioapic_entry->ioapic_addr + IDENTITY_MAP_OFFSET);
-  map_phys((void *)(uint64_t)ioapic_entry->ioapic_addr,
-           PM_RW | PM_WRITE_THROUGH | PM_PINNED);
+  ioapic_addr = map_phys((void *)(uint64_t)ioapic_entry->ioapic_addr,
+           PM_RW | PM_UNCACHEABLE | PM_PINNED);
 
   // Mask all interrupts 24
   for (int i = 0; i < 24; i++) {
@@ -148,11 +146,13 @@ void configure_ioapic_entry(uint8_t interrupt, uint8_t delivery_mode,
 }
 
 void mask_ioapic_irq(uint8_t irq) {
-  configure_ioapic_entry(0, 0, 0, 0, 0, 1, irq);
+  uint32_t reg = read_ioapic(0x10 + irq * 2);
+  reg |= (1 << 16);
+  write_ioapic(0x10 + irq * 2, reg);
 }
 
 void unmask_ioapic_irq(uint8_t irq) {
-  uint32_t reg = read_apic_reg(0x10 + irq * 2);
+  uint32_t reg = read_ioapic(0x10 + irq * 2);
   reg &= ~(1 << 16);
   write_ioapic(0x10 + irq * 2, reg);
 }

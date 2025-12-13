@@ -51,7 +51,7 @@ NORETURN void kinit(void) {
   arch_init_single();
 
   kprintf("[INIT] Starting Up All Cores\n");
-  // init_cores();
+  init_cores();
   kprintf("[INIT] Initialized All Cores\n");
 
   while (1) {

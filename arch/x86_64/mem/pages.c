@@ -43,7 +43,8 @@ static bool __map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
     const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
     pdt = (void *)virt_addr;
   } else {
-    uintptr_t phys_addr = (uintptr_t)alloc_pages(0, ZONE_HIGH) - IDENTITY_MAP_OFFSET;
+    uintptr_t phys_addr =
+        (uintptr_t)alloc_pages(0, ZONE_HIGH) - IDENTITY_MAP_OFFSET;
     pdt = (void *)(phys_to_virt((void *)phys_addr));
     pdpt[pdpt_index].addr = phys_addr;
     pdpt[pdpt_index].flags = flags;
@@ -62,7 +63,8 @@ static bool __map_page(uintptr_t phys_addr, void *map_addr, uint16_t flags,
     const size_t virt_addr = phys_addr + IDENTITY_MAP_OFFSET;
     pt = (void *)virt_addr;
   } else {
-    uintptr_t phys_addr = (uintptr_t)alloc_pages(0, ZONE_HIGH) - IDENTITY_MAP_OFFSET;
+    uintptr_t phys_addr =
+        (uintptr_t)alloc_pages(0, ZONE_HIGH) - IDENTITY_MAP_OFFSET;
     pt = (void *)(phys_to_virt((void *)phys_addr));
     pdt[pdt_index].addr = phys_addr;
     pdt[pdt_index].flags = flags;
@@ -110,6 +112,8 @@ void *map_phys(void *phys, uint32_t flags) {
     map_flags |= PAGE_ENTRY_RW;
   if (flags & PM_WRITE_THROUGH)
     map_flags |= PAGE_ENTRY_WRITE_THROUGH;
+  if (flags & PM_UNCACHEABLE)
+    map_flags |= PAGE_ENTRY_CACHE_DISABLED;
 
   __map_page((uintptr_t)phys, virt, map_flags, !(flags & PM_EXEC), 0, cr3);
 
