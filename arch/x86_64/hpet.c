@@ -205,7 +205,7 @@ void init_hpet(void) {
     timer->timer.int_micro_seconds = hpet_int_microseconds;
     timer->timer.cancel = hpet_cancel;
 
-    //    register_timer((void *)timer);
+    register_timer((void *)timer);
     if (!my_timer)
       my_timer = (void *)timer;
 

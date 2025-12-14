@@ -1,8 +1,8 @@
 #include "kernel/timers.h"
-#include "kernel/kprintf.h"
 #include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
+#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "util.h"
 #include <stdint.h>
@@ -49,7 +49,8 @@ uint64_t get_cur_tick(void) {
 }
 
 INIT void init_timers(void) {
-  gheap_cache_create(&tick_handler_cache, sizeof(struct tick_handler), ZONE_ANY);
+  gheap_cache_create(&tick_handler_cache, sizeof(struct tick_handler),
+                     ZONE_ANY);
 }
 
 void int_at_ticks(uint64_t ticks, void (*handler)(void *), void *data) {
@@ -89,4 +90,8 @@ void int_at_ticks(uint64_t ticks, void (*handler)(void *), void *data) {
   }
 
   enable_interrupts();
+}
+
+void register_timer(struct timer *timer) {
+
 }
