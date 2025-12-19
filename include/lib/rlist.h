@@ -6,6 +6,7 @@
 // Ring List
 struct rlist {
   struct rlist_node *cur;
+  spinlock_t lock;
 };
 
 struct rlist_node {
@@ -14,5 +15,9 @@ struct rlist_node {
 };
 
 void rlist_insert(struct rlist *list, struct rlist_node *node);
+void rlist_cycle(struct rlist *list);
+struct rlist_node *__rlist_use(struct rlist *list);
+
+#define RLIST_USE(list, node) for (node = __rlist_use(list); 1 < 0; spinlock_release(&node->lock))
 
 #endif

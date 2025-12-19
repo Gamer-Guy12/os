@@ -1,19 +1,41 @@
 #include "lib/rlist.h"
+#include "lib/spinlock.h"
+#include <stdbool.h>
 #include <stddef.h>
 
 void rlist_insert(struct rlist *list, struct rlist_node *node) {
+  spinlock_acquire(&list->lock);
+
+  node->next = list->cur->next;
+  list->cur->next = node;
+
+  spinlock_release(&list->lock);
+}
+
+void rlist_cycle(struct rlist *list) {
+  spinlock_acquire(&list->lock);
+
+  list->cur = list->cur->next;
+
+  spinlock_release(&list->lock);
+}
+
+struct rlist_node *__rlist_use(struct rlist *list) {
+  spinlock_acquire(&list->lock);
+
+  struct rlist_node *node = NULL;
+
   while (true) {
-    struct rlist_node *cur = __atomic_load_n(&list->cur, __ATOMIC_ACQUIRE); 
+    node = list->cur;
+    list->cur = list->cur->next;
 
-    if (cur == NULL) {
-      __atomic_compare_exchange_n(&list->cur, &cur, node, false, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
-    } else {
-      node->next = cur;
-
-      if (__atomic_compare_exchange_n(&list->cur, &cur, node, false, __ATOMIC_RELEASE, __ATOMIC_ACQUIRE)) {
-        break;
-      }
+    if (spinlock_attempt(&node->lock)) {
+      break;
     }
   }
+
+  spinlock_release(&list->lock);
+
+  return node;
 }
 
