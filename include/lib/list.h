@@ -6,6 +6,7 @@ struct list_node {
   struct list_node *next;
 };
 
+// Inserts so that list->next == node
 void list_insert(struct list_node *list, struct list_node *node);
 void list_remove(struct list_node *node);
 void *list_pop_front(struct list_node *list);

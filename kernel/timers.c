@@ -4,6 +4,7 @@
 #include "kernel/gheap.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "kernel/threads.h"
 #include "lib/rlist.h"
 #include "util.h"
 #include <stddef.h>
@@ -44,6 +45,11 @@ void increment_tick(void) {
 
   // Run anything that happens every tick
   handle_timers();
+
+  struct thread *cur_thread = get_cur_thread();
+  struct thread *new_thread = get_queued_thread();
+  if (cur_thread != NULL && new_thread != NULL)
+    switch_threads(cur_thread, new_thread);
 }
 
 uint64_t get_cur_tick(void) {

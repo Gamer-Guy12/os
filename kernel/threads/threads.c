@@ -19,6 +19,7 @@ void switch_threads(struct thread *old_thread, struct thread *new_thread) {
       !__pages_null(new_thread->page_tables))
     __switch_pages(new_thread->page_tables);
   __switch_context(&old_thread->context, &new_thread->context);
+  queue_cur_thread(old_thread);
 }
 
 struct thread *create_thread(NORETURN void (*entry)(void)) {
@@ -36,6 +37,7 @@ struct thread *create_thread(NORETURN void (*entry)(void)) {
 
 NORETURN void thread_trampoline(struct thread *old_thread,
                                 struct thread *new_thread) {
+  queue_cur_thread(old_thread);
   new_thread->entry();
 }
 

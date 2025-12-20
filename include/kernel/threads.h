@@ -2,6 +2,7 @@
 #define _KERNEL_THREADS_H_
 
 #include "arch/threads.h"
+#include "lib/list.h"
 #include "util.h"
 #include <stdint.h>
 
@@ -15,6 +16,7 @@ enum thread_state {
 };
 
 struct thread {
+  struct list_node node;
   struct context context;
   uint64_t tid;
   // Used for freeing the stack
@@ -24,6 +26,10 @@ struct thread {
   enum thread_state state;
   // Last cpu this was run on
   uint32_t cpu_id;
+};
+
+struct thread_queue {
+  struct list_node threads;
 };
 
 void __switch_context(struct context *old_ctx, struct context *new_ctx);
@@ -37,6 +43,10 @@ struct thread *get_cur_thread(void);
 struct thread *create_thread(NORETURN void (*entry)(void));
 void destroy_thread(struct thread *thread);
 void init_threading(void);
+struct thread *get_thread(struct thread_queue *queue);
+void queue_thread(struct thread_queue *queue, struct thread *thread);
+struct thread *get_queued_thread(void);
+void queue_cur_thread(struct thread *thread);
 
 // Thread Switching full process
 //
