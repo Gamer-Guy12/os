@@ -4,12 +4,15 @@
 #include "kernel/gheap.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "lib/rlist.h"
 #include "util.h"
+#include <stddef.h>
 #include <stdint.h>
 
 CLS(uint64_t, ticks);
 CLS(struct tick_handler *, tick_handlers);
 static struct gheap_cache tick_handler_cache;
+struct rlist timers;
 
 struct tick_handler {
   struct tick_handler *next;
@@ -92,6 +95,3 @@ void int_at_ticks(uint64_t ticks, void (*handler)(void *), void *data) {
   enable_interrupts();
 }
 
-void register_timer(struct timer *timer) {
-
-}
