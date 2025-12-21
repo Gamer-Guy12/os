@@ -22,8 +22,11 @@ LIMINE_SECTION(".limine_requests_start") static volatile LIMINE_REQUESTS_START_M
 LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKER
     // clang-format on
 
+static NORETURN void kmain(void *new_stack);
+static NORETURN void core_main(void *new_stack);
+
     // clang-format off
-NORETURN void kinit(void) {
+INIT NORETURN void kinit(void) {
   // clang-format on
   if (LIMINE_BASE_REVISION_SUPPORTED == false) {
     panic();
@@ -36,11 +39,22 @@ NORETURN void kinit(void) {
   init_mem();
   kprintf("[INIT] Initialized Memory\n");
 
+  // Starting stack switch
+  __switch_stacks(kmain);
+
+  while (1) {
+  }
+}
+
+static NORETURN void kmain(void *new_stack) {
   init_cls();
   kprintf("[INIT] Initialized CLS\n");
 
-  init_threading();
-  kprintf("[INIT] Initialized Threading\n");
+  init_general_threading();
+  kprintf("[INIT] Initialized General Threading\n");
+
+  init_threading(new_stack);
+  kprintf("[INIT] Initialized Threading on Core %u\n", get_core_id());
 
   init_acpi();
   kprintf("[INIT] Initialized ACPI\n");
@@ -54,18 +68,25 @@ NORETURN void kinit(void) {
   init_cores();
   kprintf("[INIT] Initialized All Cores\n");
 
+  while (1) {}
+}
+
+NORETURN void core_entry(void) {
+  kprintf("[INIT] Starting Core %u Initialization\n", get_core_id());
+  __switch_stacks(core_main);
+
   while (1) {
   }
 }
 
-NORETURN INIT void core_entry(void) {
-  kprintf("[INIT] Starting Core %u Initialization\n", get_core_id());
-
+static NORETURN void core_main(void *new_stack) {
   init_cls();
   kprintf("[INIT] Initialized CLS on Core %u\n", get_core_id());
 
+  init_threading(new_stack);
+  kprintf("[INIT] Initialized Threading on Core %u\n", get_core_id());
+
   arch_init();
 
-  while (1) {
-  }
+  while (1) {}
 }

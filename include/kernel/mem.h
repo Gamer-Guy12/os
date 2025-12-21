@@ -128,4 +128,6 @@ void fmem_vfree(void *addr);
 
 void fmem_pfree_range(void *start, void *end);
 
+void __switch_stacks(void (*entry)(void *new_stack));
+
 #endif

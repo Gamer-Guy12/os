@@ -2,6 +2,7 @@
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include <stdint.h>
+#include <stddef.h>
 
 void __create_context(struct thread *thread) {
   thread->context.rsp =
@@ -28,3 +29,8 @@ void __create_context(struct thread *thread) {
 
   thread->context.rsp = sp;
 }
+
+pt_t __null_pages(void) {
+  return NULL;
+}
+

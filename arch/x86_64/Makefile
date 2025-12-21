@@ -10,9 +10,14 @@ x86_64-src = arch/x86_64/cores.c \
 	arch/x86_64/apic.c \
 	arch/x86_64/tsc.c \
 	arch/x86_64/pit.c \
-	arch/x86_64/hpet.c
+	arch/x86_64/hpet.c \
+	arch/x86_64/stack.asm
 
 build/obj/arch/x86_64/handlers.asm.o: arch/x86_64/handlers.asm
+	@mkdir -p $(dir $@)
+	$(ASM) $(ASMFLAGS) -o $@ $<
+
+build/obj/arch/x86_64/stack.asm.o: arch/x86_64/stack.asm
 	@mkdir -p $(dir $@)
 	$(ASM) $(ASMFLAGS) -o $@ $<
 

@@ -7,6 +7,8 @@
 #include "include/tsc.h"
 #include "interrupts.h"
 #include "kernel/kprintf.h"
+#include "kernel/mem.h"
+#include "kernel/threads.h"
 #include "util.h"
 
 void INIT arch_init_single(void) {
@@ -41,4 +43,10 @@ void INIT arch_init(void) {
 
   init_apic_timer();
   kprintf("[INIT] Initialized Timers\n");
+}
+
+extern void __do_stack_switch(void (*entry)(void *new_stack), void *stack, size_t stack_size);
+
+void __switch_stacks(void (*entry)(void *new_stack)) {
+  __do_stack_switch(entry, alloc_pages(STACK_ORDER, ZONE_ANY), PAGE_SIZE * (1 << STACK_ORDER));
 }

@@ -7,5 +7,4 @@ kernel-src = kernel/console.c \
 	kernel/mem/gheap.c \
 	kernel/threads/threads.c \
 	kernel/timers.c \
-	kernel/threads/queue.c
 
