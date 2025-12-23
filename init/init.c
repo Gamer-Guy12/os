@@ -1,11 +1,12 @@
 #include "init.h"
-#include "kernel/timers.h"
 #include "acpi.h"
 #include "kernel/console.h"
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "kernel/threads.h"
+#include "kernel/timers.h"
+#include "lib/queue.h"
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
@@ -22,10 +23,10 @@ LIMINE_SECTION(".limine_requests_start") static volatile LIMINE_REQUESTS_START_M
 LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKER
     // clang-format on
 
-static NORETURN void kmain(void *new_stack);
+    static NORETURN void kmain(void *new_stack);
 static NORETURN void core_main(void *new_stack);
 
-    // clang-format off
+// clang-format off
 INIT NORETURN void kinit(void) {
   // clang-format on
   if (LIMINE_BASE_REVISION_SUPPORTED == false) {
@@ -68,7 +69,8 @@ static NORETURN void kmain(void *new_stack) {
   init_cores();
   kprintf("[INIT] Initialized All Cores\n");
 
-  while (1) {}
+  while (1) {
+  }
 }
 
 NORETURN void core_entry(void) {
@@ -88,5 +90,6 @@ static NORETURN void core_main(void *new_stack) {
 
   arch_init();
 
-  while (1) {}
+  while (1) {
+  }
 }
