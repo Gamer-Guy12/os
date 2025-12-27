@@ -6,7 +6,6 @@
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "kernel/timers.h"
-#include "lib/queue.h"
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
@@ -69,8 +68,7 @@ static NORETURN void kmain(void *new_stack) {
   init_cores();
   kprintf("[INIT] Initialized All Cores\n");
 
-  while (1) {
-  }
+  terminate();
 }
 
 NORETURN void core_entry(void) {
@@ -89,7 +87,6 @@ static NORETURN void core_main(void *new_stack) {
   kprintf("[INIT] Initialized Threading on Core %u\n", get_core_id());
 
   arch_init();
-
-  while (1) {
-  }
+  
+  terminate();
 }

@@ -4,6 +4,7 @@
 #include "kernel/gheap.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "kernel/threads.h"
 #include "lib/rlist.h"
 #include "util.h"
 #include <stddef.h>
@@ -44,6 +45,8 @@ void increment_tick(void) {
 
   // Run anything that happens every tick
   handle_timers();
+  get_thread();
+  schedule();
 }
 
 uint64_t get_cur_tick(void) {
@@ -94,4 +97,3 @@ void int_at_ticks(uint64_t ticks, void (*handler)(void *), void *data) {
 
   enable_interrupts();
 }
-

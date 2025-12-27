@@ -15,9 +15,9 @@ struct queue {
 
 #define QUEUE_INIT(queue)                                                      \
   do {                                                                         \
-    queue->dummy.next = NULL;                                                  \
-    queue->head = &queue->dummy;                                               \
-    queue->tail = &queue->dummy;                                               \
+    (queue)->dummy.next = NULL;                                                  \
+    (queue)->head = &(queue)->dummy;                                               \
+    (queue)->tail = &(queue)->dummy;                                               \
   } while (0);
 
 #define QUEUE_CREATE(name)                                                     \
