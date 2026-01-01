@@ -1,8 +1,10 @@
 #include "kernel/threads.h"
+#include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
 #include "kernel/mem.h"
 #include "lib/atomic.h"
+#include <stdbool.h>
 #include <stddef.h>
 
 static struct gheap_cache thread_cache;
@@ -32,6 +34,7 @@ void init_threading(void *stack) {
 
 // Threads must be different
 void switch_threads(struct thread *old_thread, struct thread *new_thread) {
+  disable_interrupts();
   if (new_thread->page_tables != __cur_pages() &&
       !__pages_null(new_thread->page_tables))
     __switch_pages(new_thread->page_tables);
@@ -46,10 +49,13 @@ void switch_tail(struct thread *old_thread, struct thread *new_thread) {
     old_thread->state = THREAD_READY;
     // Requeue thread
     requeue_thread(old_thread);
+  } else if (old_thread->state == THREAD_WAITING) {
+    // Do nothing
   }
 
   struct thread **cpu_thread = GET_CLS(cur_thread);
   *cpu_thread = new_thread;
+  enable_interrupts();
 }
 
 void thread_trampoline(struct thread *old_thread, struct thread *new_thread) {
@@ -64,7 +70,7 @@ struct thread *get_cur_thread(void) {
   return *cpu_thread;
 }
 
-struct thread *create_thread(void (*entry)(void)) {
+uint64_t create_thread(void (*entry)(void)) {
   struct thread *thread = gheap_cache_alloc(&thread_cache);
 
   thread->entry = entry;
@@ -74,11 +80,24 @@ struct thread *create_thread(void (*entry)(void)) {
   thread->page_tables = __null_pages();
   __create_context(thread);
 
+  waitqueue_create(&thread->thread_dependencies);
+
   schedule_thread(thread);
-  return thread;
+  return thread->tid;
 }
 
 void destroy_thread(struct thread *thread) {
+  // Awaken all child threads
+  while (true) {
+    struct list_node *node = thread->thread_dependencies.list.next;
+    list_remove(thread->thread_dependencies.list.next);
+
+    if (node == NULL) break;
+
+    struct wait_queue_node *wnode = WQ_NODE(node);
+    waitqueue_awaken(&thread->thread_dependencies, wnode);
+  }
+
   free_pages(thread->stack, STACK_ORDER);
   gheap_cache_free(&thread_cache, thread);
 }

@@ -68,7 +68,10 @@ static NORETURN void kmain(void *new_stack) {
   init_cores();
   kprintf("[INIT] Initialized All Cores\n");
 
-  terminate();
+  // This thread will be the idle thread
+  while (true) {
+    schedule();
+  }
 }
 
 NORETURN void core_entry(void) {
@@ -88,5 +91,8 @@ static NORETURN void core_main(void *new_stack) {
 
   arch_init();
   
-  terminate();
+  // This thread will be the idle thread
+  while (true) {
+    schedule();
+  }
 }

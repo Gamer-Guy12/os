@@ -2,7 +2,9 @@
 #define _KERNEL_THREADS_H_
 
 #include "arch/threads.h"
+#include "lib/list.h"
 #include "lib/queue.h"
+#include "lib/rw_lock.h"
 #include "util.h"
 #include <stdint.h>
 
@@ -19,10 +21,22 @@ enum thread_state {
   THREAD_READY
 };
 
+struct wait_queue {
+  struct list_node list;
+  rw_lock_t lock;
+};
+
+struct wait_queue_node {
+  struct list_node node;
+  struct thread* thread;
+};
+
 struct thread {
   // Don't put anything before the context
   struct context context;
   struct queue_node node;
+  // Threads that are waiting for it to end
+  struct wait_queue thread_dependencies;
   uint64_t tid;
   // Used for freeing the stack
   void *stack;
@@ -55,7 +69,7 @@ struct thread *get_cur_thread(void);
 
 // Lifecycle
 // Puts the thread into thread queues
-struct thread *create_thread(void (*entry)(void));
+uint64_t create_thread(void (*entry)(void));
 void destroy_thread(struct thread *thread);
 
 // Init
@@ -79,5 +93,16 @@ void get_thread(void);
 void schedule(void);
 // Kills current thread
 NORETURN void terminate(void);
+
+// Utils
+uint64_t kfork(void);
+void kjoin(uint64_t thread);
+
+// Waiting
+void waitqueue_create(struct wait_queue *queue);
+void waitqueue_awaken(struct wait_queue *queue, struct wait_queue_node *thread);
+
+// List node to wait queue node
+#define WQ_NODE(node) (((struct wait_queue_node *)((uintptr_t)node - offsetof(struct wait_queue_node, node))))
 
 #endif
