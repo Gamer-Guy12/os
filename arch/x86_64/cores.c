@@ -59,7 +59,7 @@ extern char _start_cls[];
 extern char _end_cls[];
 
 static INIT_DATA size_t full_size = 0;
-static INIT_DATA spinlock_t calculate;
+static INIT_DATA spinlock_t calculate = SPINLOCK_ZERO;
 
 void init_cls(void) {
   if (spinlock_attempt(&calculate)) {

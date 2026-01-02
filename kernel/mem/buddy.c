@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct zone zones[ZONE_COUNT];
+struct zone zones[ZONE_COUNT] = { 0 };
 static INIT_DATA uintptr_t buddy_data_ptr = BUDDY_DATA_ADDR;
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))

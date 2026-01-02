@@ -36,7 +36,7 @@ static void hpet_write_reg(uint16_t reg, uint64_t val) {
   *reg_addr = val;
 }
 
-spinlock_t hpet_handler_lock;
+spinlock_t hpet_handler_lock = SPINLOCK_ZERO;
 
 static void hpet_handler(void *context) {
   // Find which hpet interrupted and acknowledge

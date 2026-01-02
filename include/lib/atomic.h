@@ -11,6 +11,8 @@ int atomic_add(atomic_t *atomic, int num);
 int atomic_sub(atomic_t *atomic, int num);
 int atomic_load(atomic_t *atomic);
 void atomic_store(atomic_t *atomic, int num);
-bool atomic_cas(atomic_t* atomic, int old_val, int new_val);
+bool atomic_cas(atomic_t *atomic, int old_val, int new_val);
+
+#define ATOMIC_ZERO ((atomic_t){0})
 
 #endif

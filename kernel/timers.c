@@ -13,7 +13,7 @@
 CLS(uint64_t, ticks);
 CLS(struct tick_handler *, tick_handlers);
 static struct gheap_cache tick_handler_cache;
-struct rlist timers;
+struct rlist timers = {0};
 
 struct tick_handler {
   struct tick_handler *next;
