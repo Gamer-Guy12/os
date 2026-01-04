@@ -19,9 +19,7 @@ enum thread_state {
   // Thread dead
   THREAD_TERMINATED,
   // It is in the queue
-  THREAD_READY,
-  // Thread needs to be forked
-  THREAD_FORKING
+  THREAD_READY
 };
 
 struct wait_queue {
@@ -47,6 +45,7 @@ struct thread {
   void (*entry)(void);
   pt_t page_tables;
   enum thread_state state;
+  int exit_code;
 };
 
 struct thread_queue {
@@ -99,11 +98,14 @@ void get_thread(void);
 // Switch to new thread
 void schedule(void);
 // Kills current thread
-NORETURN void terminate(void);
+NORETURN void terminate(int code);
+int wait_thread(uint64_t tid);
 
 // Waiting
 void waitqueue_create(struct wait_queue *queue);
 void waitqueue_awaken(struct wait_queue *queue, struct wait_queue_node *thread);
+// Inserts current thread into waitqueue
+void waitqueue_wait(struct wait_queue *queue);
 
 // List node to wait queue node
 #define WQ_NODE(node)                                                          \

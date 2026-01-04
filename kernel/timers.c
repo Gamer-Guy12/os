@@ -70,7 +70,6 @@ void int_at_ticks(uint64_t ticks, void (*handler)(void *), void *data) {
   disable_interrupts();
 
   if (*this_handlers == NULL) {
-    kprintf("Loading\n");
     *this_handlers = handler_data;
     handler_data->next = NULL;
   } else if ((*this_handlers)->ticks > ticks) {

@@ -10,12 +10,14 @@ void schedule(void) {
 
   if (thread == cur_thread) return;
 
+  // Because there is always an idle thread, it is gaurenteed to swap away unless something goes terribly wrong
   switch_threads(cur_thread, thread);
 }
 
-void terminate(void) {
+void terminate(int code) {
   struct thread* thread = get_cur_thread();
   thread->state = THREAD_TERMINATED;
+  thread->exit_code = code;
 
   while (1)
     schedule();

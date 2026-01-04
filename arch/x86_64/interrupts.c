@@ -53,7 +53,7 @@ void common_handler(struct int_context *context) {
   if (handlers[context->int_number] != NULL) {
     handlers[context->int_number](context);
   } else {
-    kprintf("No handler for interrupt %u\n", context->int_number);
+    kprintf("No handler for interrupt %u on core %u\n", context->int_number, get_core_id());
     panic();
   }
 }

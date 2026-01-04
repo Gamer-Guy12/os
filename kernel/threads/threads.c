@@ -23,7 +23,7 @@ static int compare_threads(struct rbnode *n1, struct rbnode *n2) {
       (struct thread *)((uintptr_t)n1 - offsetof(struct thread, id_node));
   struct thread *t2 =
       (struct thread *)((uintptr_t)n2 - offsetof(struct thread, id_node));
-  return t1 - t2;
+  return t1->tid - t2->tid;
 }
 
 void init_general_threading(void) {
@@ -75,7 +75,7 @@ void switch_tail(struct thread *old_thread, struct thread *new_thread) {
 void thread_trampoline(struct thread *old_thread, struct thread *new_thread) {
   switch_tail(old_thread, new_thread);
   new_thread->entry();
-  terminate();
+  terminate(0);
 }
 
 struct thread *get_cur_thread(void) {
@@ -129,5 +129,12 @@ struct thread *thread_id(uint64_t id) {
   struct thread *ret =
       (struct thread *)((uintptr_t)node - offsetof(struct thread, id_node));
   return ret;
+}
+
+int wait_thread(uint64_t tid) {
+  struct thread *thread = thread_id(tid);
+  waitqueue_wait(&thread->thread_dependencies);
+
+  return thread->exit_code;
 }
 
