@@ -65,7 +65,7 @@ static NORETURN void kmain(void *new_stack) {
   arch_init_single();
 
   kprintf("[INIT] Starting Up All Cores\n");
-  init_cores();
+  //  init_cores();
   kprintf("[INIT] Initialized All Cores\n");
 
   // This thread will be the idle thread

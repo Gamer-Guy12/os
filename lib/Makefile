@@ -8,5 +8,6 @@ lib-src = lib/string.c \
 	lib/list.c \
 	lib/slist.c \
 	lib/rlist.c \
-	lib/queue.c
+	lib/queue.c \
+	lib/rbtree.c
 

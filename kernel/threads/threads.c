@@ -4,18 +4,31 @@
 #include "kernel/gheap.h"
 #include "kernel/mem.h"
 #include "lib/atomic.h"
+#include "lib/rbtree.h"
+#include "lib/string.h"
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 static struct gheap_cache thread_cache;
 static atomic_t cur_tid;
+static struct rbtree thread_ids;
 CLS(struct thread *, cur_thread);
 
 #define GET_TID (atomic_add(&cur_tid, 1) - 1)
 
+static int compare_threads(struct rbnode *n1, struct rbnode *n2) {
+  struct thread *t1 =
+      (struct thread *)((uintptr_t)n1 - offsetof(struct thread, id_node));
+  struct thread *t2 =
+      (struct thread *)((uintptr_t)n2 - offsetof(struct thread, id_node));
+  return t1 - t2;
+}
+
 void init_general_threading(void) {
   gheap_cache_create(&thread_cache, sizeof(struct thread), ZONE_ANY);
   init_global_thread_queue();
+  rb_create(&thread_ids, compare_threads);
 }
 
 void init_threading(void *stack) {
@@ -82,6 +95,8 @@ uint64_t create_thread(void (*entry)(void)) {
 
   waitqueue_create(&thread->thread_dependencies);
 
+  rb_insert(&thread_ids, &thread->id_node);
+
   schedule_thread(thread);
   return thread->tid;
 }
@@ -92,7 +107,8 @@ void destroy_thread(struct thread *thread) {
     struct list_node *node = thread->thread_dependencies.list.next;
     list_remove(thread->thread_dependencies.list.next);
 
-    if (node == NULL) break;
+    if (node == NULL)
+      break;
 
     struct wait_queue_node *wnode = WQ_NODE(node);
     waitqueue_awaken(&thread->thread_dependencies, wnode);
@@ -101,3 +117,32 @@ void destroy_thread(struct thread *thread) {
   free_pages(thread->stack, STACK_ORDER);
   gheap_cache_free(&thread_cache, thread);
 }
+
+struct thread *thread_id(uint64_t id) {
+  struct thread dummy = {.tid = id};
+
+  struct rbnode *node = rb_search(&thread_ids, NULL, &dummy.id_node);
+
+  if (node == NULL)
+    return NULL;
+  struct thread *ret =
+      (struct thread *)((uintptr_t)node - offsetof(struct thread, id_node));
+  return ret;
+}
+
+uint64_t kfork(void);
+// {
+//   // Threads in the kernel share everything but a stack
+//   struct thread *cur_thread = get_cur_thread();
+//   struct thread *new_thread = gheap_cache_alloc(&thread_cache);
+//   memcpy(new_thread, cur_thread, sizeof(struct thread));
+//
+//   new_thread->tid = GET_TID;
+//   waitqueue_create(&new_thread->thread_dependencies);
+//   new_thread->stack = alloc_pages(STACK_ORDER, ZONE_ANY);
+//   rb_insert(&thread_ids, &new_thread->id_node);
+//   __copy_context(cur_thread, new_thread);
+//   schedule_thread(new_thread);
+// }
+
+void kjoin(uint64_t thread);

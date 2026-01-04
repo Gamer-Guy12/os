@@ -4,6 +4,7 @@
 #include "arch/threads.h"
 #include "lib/list.h"
 #include "lib/queue.h"
+#include "lib/rbtree.h"
 #include "lib/rw_lock.h"
 #include "util.h"
 #include <stdint.h>
@@ -18,7 +19,9 @@ enum thread_state {
   // Thread dead
   THREAD_TERMINATED,
   // It is in the queue
-  THREAD_READY
+  THREAD_READY,
+  // Thread needs to be forked
+  THREAD_FORKING
 };
 
 struct wait_queue {
@@ -28,12 +31,13 @@ struct wait_queue {
 
 struct wait_queue_node {
   struct list_node node;
-  struct thread* thread;
+  struct thread *thread;
 };
 
 struct thread {
   // Don't put anything before the context
   struct context context;
+  struct rbnode id_node;
   struct queue_node node;
   // Threads that are waiting for it to end
   struct wait_queue thread_dependencies;
@@ -57,6 +61,7 @@ void __switch_pages(pt_t tables);
 int __pages_null(pt_t tables);
 pt_t __cur_pages(void);
 void __create_context(struct thread *thread);
+void __copy_context(struct thread *old_ctx, struct thread *new_ctx);
 pt_t __null_pages(void);
 
 // Switch
@@ -66,6 +71,8 @@ void thread_trampoline(struct thread *old_thread, struct thread *new_thread);
 
 // Utils
 struct thread *get_cur_thread(void);
+// Gets a thread from its id
+struct thread *thread_id(uint64_t id);
 
 // Lifecycle
 // Puts the thread into thread queues
@@ -94,7 +101,9 @@ void schedule(void);
 // Kills current thread
 NORETURN void terminate(void);
 
-// Utils
+// Flow
+// Returns childs tid to parent and 1 to child
+// Returns 0 on failure
 uint64_t kfork(void);
 void kjoin(uint64_t thread);
 
@@ -103,6 +112,8 @@ void waitqueue_create(struct wait_queue *queue);
 void waitqueue_awaken(struct wait_queue *queue, struct wait_queue_node *thread);
 
 // List node to wait queue node
-#define WQ_NODE(node) (((struct wait_queue_node *)((uintptr_t)node - offsetof(struct wait_queue_node, node))))
+#define WQ_NODE(node)                                                          \
+  (((struct wait_queue_node *)((uintptr_t)node -                               \
+                               offsetof(struct wait_queue_node, node))))
 
 #endif

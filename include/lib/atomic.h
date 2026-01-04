@@ -13,6 +13,6 @@ int atomic_load(atomic_t *atomic);
 void atomic_store(atomic_t *atomic, int num);
 bool atomic_cas(atomic_t *atomic, int old_val, int new_val);
 
-#define ATOMIC_ZERO ((atomic_t){0})
+__attribute__((unused)) static const atomic_t ATOMIC_ZERO = {0};
 
 #endif

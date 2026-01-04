@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "kernel/mem.h"
 #include "kernel/cores.h"
 #include <stdint.h>
 
@@ -58,6 +59,12 @@ void init_gdt(void) {
 
   core_gdt[4] = segment.segment;
 
+  // Put a stack into ist1
+  // This stack will never be destoryed
+  void *stack = alloc_pages(3, ZONE_ANY);
+  uintptr_t stack_ptr = (uintptr_t)stack + PAGE_SIZE * (1 << 3);
+  gdt_tss_stack(1, (void*)stack_ptr);
+
   core_gdt[5] = tss.segment_low;
   core_gdt[6] = tss.segment_high;
 
@@ -65,7 +72,6 @@ void init_gdt(void) {
 
   __asm__ volatile("lgdt (%0)" ::"r"(&ptr));
 
-  __asm__ volatile("mov %%ax, %%ds" :: "a"(0x10));
   __asm__ volatile("mov %%ax, %%es" :: "a"(0x10));
   __asm__ volatile("mov %%ax, %%ss" :: "a"(0x10));
 }

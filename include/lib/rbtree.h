@@ -1,7 +1,6 @@
 #ifndef _LIB_RBTREE_H_
 #define _LIB_RBTREE_H_
 
-#include "lib/atomic.h"
 #include "lib/spinlock.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -30,8 +29,7 @@ struct rbnode {
 #endif
 };
 
-__attribute__((unused)) static struct rbnode rbnil = {NULL, NULL, NULL,
-                                                      RB_BLACK};
+__attribute__((unused)) static struct rbnode rbnil = {0};
 
 struct rbtree {
   // Return < 0 if n1 is less than n2

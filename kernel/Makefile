@@ -8,5 +8,6 @@ kernel-src = kernel/console.c \
 	kernel/threads/threads.c \
 	kernel/timers.c \
 	kernel/threads/queue.c \
-	kernel/threads/sched.c
+	kernel/threads/sched.c \
+	kernel/threads/wait.c
 
