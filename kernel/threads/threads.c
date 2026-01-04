@@ -15,7 +15,8 @@ static atomic_t cur_tid;
 static struct rbtree thread_ids;
 CLS(struct thread *, cur_thread);
 
-#define GET_TID (atomic_add(&cur_tid, 1) - 1)
+// Skips over 0
+#define GET_TID (atomic_add(&cur_tid, 1))
 
 static int compare_threads(struct rbnode *n1, struct rbnode *n2) {
   struct thread *t1 =
@@ -130,19 +131,3 @@ struct thread *thread_id(uint64_t id) {
   return ret;
 }
 
-uint64_t kfork(void);
-// {
-//   // Threads in the kernel share everything but a stack
-//   struct thread *cur_thread = get_cur_thread();
-//   struct thread *new_thread = gheap_cache_alloc(&thread_cache);
-//   memcpy(new_thread, cur_thread, sizeof(struct thread));
-//
-//   new_thread->tid = GET_TID;
-//   waitqueue_create(&new_thread->thread_dependencies);
-//   new_thread->stack = alloc_pages(STACK_ORDER, ZONE_ANY);
-//   rb_insert(&thread_ids, &new_thread->id_node);
-//   __copy_context(cur_thread, new_thread);
-//   schedule_thread(new_thread);
-// }
-
-void kjoin(uint64_t thread);

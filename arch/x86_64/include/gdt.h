@@ -66,32 +66,47 @@ struct system_segment {
 } __attribute__((packed));
 
 struct tss {
+  uint32_t reserved_1;
+  uint64_t rsp0;
+  uint64_t rsp1;
+  uint64_t rsp2;
+  uint64_t reserved_2;
   union {
     struct {
-      uint32_t reserved_1;
-      uint64_t rsp0;
-      uint64_t rsp1;
-      uint64_t rsp2;
-      uint64_t reserved_2;
-      union {
-        struct {
-          uint64_t ist1;
-          uint64_t ist2;
-          uint64_t ist3;
-          uint64_t ist4;
-          uint64_t ist5;
-          uint64_t ist6;
-          uint64_t ist7;
-        };
-        uint64_t ist[7];
-      };
-      uint64_t reserved_3;
-      uint16_t reserved_4;
-      uint16_t iopb;
-    } __attribute__((packed));
+      uint64_t ist1;
+      uint64_t ist2;
+      uint64_t ist3;
+      uint64_t ist4;
+      uint64_t ist5;
+      uint64_t ist6;
+      uint64_t ist7;
+    };
+    uint64_t ist[7];
+  };
+  uint64_t reserved_3;
+  uint16_t reserved_4;
+  uint16_t iopb;
+} __attribute__((packed));
+
+// TSS, system segment, ring 0, present
+#define TSS_ACCESS (0x9 | (0 << 4) | (0 << 5) | (1 << 7))
+
+struct tss_segment {
+  union {
     struct {
-      uint64_t segment_low;
-      uint64_t segment_high;
+      uint16_t limit_1;
+      uint16_t base_1;
+      uint8_t base_2;
+      uint8_t access;
+      uint8_t limit_2 : 4;
+      uint8_t flags : 4;
+      uint8_t base_3;
+      uint32_t base_4;
+      uint32_t reserved;
+    };
+    struct {
+      uint64_t low;
+      uint64_t high;
     } __attribute__((packed));
   } __attribute__((packed));
 } __attribute__((packed));

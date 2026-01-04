@@ -101,12 +101,6 @@ void schedule(void);
 // Kills current thread
 NORETURN void terminate(void);
 
-// Flow
-// Returns childs tid to parent and 1 to child
-// Returns 0 on failure
-uint64_t kfork(void);
-void kjoin(uint64_t thread);
-
 // Waiting
 void waitqueue_create(struct wait_queue *queue);
 void waitqueue_awaken(struct wait_queue *queue, struct wait_queue_node *thread);

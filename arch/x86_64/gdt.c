@@ -13,10 +13,6 @@ void gdt_tss_stack(uint8_t ist, void* ptr) {
   } else {
     tss.ist[ist] = (uint64_t)ptr;
   }
-
-  uint64_t *core_gdt = GET_CLS(gdt);
-  core_gdt[5] = tss.segment_low;
-  core_gdt[6] = tss.segment_high;
 }
 
 void init_gdt(void) {
@@ -59,19 +55,29 @@ void init_gdt(void) {
 
   core_gdt[4] = segment.segment;
 
-  // Put a stack into ist1
-  // This stack will never be destoryed
-  void *stack = alloc_pages(3, ZONE_ANY);
-  uintptr_t stack_ptr = (uintptr_t)stack + PAGE_SIZE * (1 << 3);
-  gdt_tss_stack(1, (void*)stack_ptr);
+  struct tss_segment tss_seg;
+  tss_seg.access = TSS_ACCESS;
+  tss_seg.flags = 0;
 
-  core_gdt[5] = tss.segment_low;
-  core_gdt[6] = tss.segment_high;
+  size_t tss_size = sizeof(struct tss);
+  tss_seg.limit_1 = (tss_size - 1) & 0xFFFF;
+  tss_seg.limit_2 = ((tss_size - 1) >> 16) & 0xF;
+  
+  uintptr_t tss_addr = (uintptr_t)&tss;
+  tss_seg.base_1 = tss_addr & 0xFFFF;
+  tss_seg.base_2 = (tss_addr >> 16) & 0xFF;
+  tss_seg.base_3 = (tss_addr >> 24) & 0xFF;
+  tss_seg.base_4 = (tss_addr >> 32) & 0xFFFFFFFF;
+
+  core_gdt[5] = tss_seg.low;
+  core_gdt[6] = tss_seg.high;
 
   gdtptr_t ptr = {.addr = (uint64_t)core_gdt, .size = sizeof(uint64_t) * 7 - 1};
 
   __asm__ volatile("lgdt (%0)" ::"r"(&ptr));
+  __asm__ volatile("ltr %%ax" :: "a"(0x28));
 
+  __asm__ volatile("mov %%ax, %%ds" :: "a"(0x10));
   __asm__ volatile("mov %%ax, %%es" :: "a"(0x10));
   __asm__ volatile("mov %%ax, %%ss" :: "a"(0x10));
 }

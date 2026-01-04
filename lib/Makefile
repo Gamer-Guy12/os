@@ -9,5 +9,6 @@ lib-src = lib/string.c \
 	lib/slist.c \
 	lib/rlist.c \
 	lib/queue.c \
+	lib/vector.c \
 	lib/rbtree.c
 

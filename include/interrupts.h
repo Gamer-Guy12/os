@@ -1,8 +1,6 @@
 #ifndef _INTERRUPTS_H_
 #define _INTERRUPTS_H_
 
-// All interrupts are gaurenteed to have an interrupt specific stack
-
 #include <stdint.h>
 
 void disable_interrupts(void);
