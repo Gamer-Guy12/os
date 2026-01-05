@@ -1,5 +1,4 @@
 #include "kernel/threads.h"
-#include "kernel/kprintf.h"
 #include "kernel/cores.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -35,19 +34,19 @@ void queue_thread(struct thread_queue *queue, struct thread *thread) {
 
 void schedule_thread(struct thread *thread) {
   queue_enqueue(&global_queue.queue, &thread->node);
-  kprintf("sched\n");
 }
 
 void requeue_thread(struct thread *thread) {
   queue_thread(GET_CLS(core_queues), thread);
-  kprintf("requeue\n");
 }
 
 struct thread *pop_thread(void) {
   struct thread_queue *queue = GET_CLS(core_queues);
   struct queue_node *node = queue_dequeue(&queue->queue);
 
-  if (node == NULL) return NULL;
+  if (node == NULL) {
+    return NULL;
+  }
 
   uintptr_t thread = (uintptr_t)node - offsetof(struct thread, node);
 

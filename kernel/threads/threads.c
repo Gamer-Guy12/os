@@ -66,7 +66,6 @@ void switch_tail(struct thread *old_thread, struct thread *new_thread) {
     old_thread->state = THREAD_READY;
     // Requeue thread
     requeue_thread(old_thread);
-    kprintf("he e %x\n", old_thread->tid);
   } else if (old_thread->state == THREAD_WAITING) {
     // Do nothing
   }

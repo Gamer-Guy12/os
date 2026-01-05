@@ -1,5 +1,6 @@
 #include "init.h"
 #include "acpi.h"
+#include "interrupts.h"
 #include "kernel/console.h"
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
@@ -24,12 +25,6 @@ LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKE
 
     static NORETURN void kmain(void *new_stack);
 static NORETURN void core_main(void *new_stack);
-
-void entry(void) {
-  kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
-  while (1) {
-  }
-}
 
 // clang-format off
 INIT NORETURN void kinit(void) {
@@ -71,18 +66,8 @@ static NORETURN void kmain(void *new_stack) {
   arch_init_single();
 
   kprintf("[INIT] Starting Up All Cores\n");
-  // init_cores();
+  init_cores();
   kprintf("[INIT] Initialized All Cores\n");
-
-  create_thread(entry);
-  create_thread(entry);
-  create_thread(entry);
-  create_thread(entry);
-  create_thread(entry);
-  create_thread(entry);
-  create_thread(entry);
-  create_thread(entry);
-  kprintf("Down here\n");
 
   // This thread will be the idle thread
   while (true) {

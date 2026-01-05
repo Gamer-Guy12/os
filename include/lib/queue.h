@@ -1,6 +1,7 @@
 #ifndef _LIB_QUEUE_H_
 #define _LIB_QUEUE_H_
 
+#include "spinlock.h"
 #include <stddef.h>
 
 struct queue_node {
@@ -8,20 +9,21 @@ struct queue_node {
 };
 
 struct queue {
-  struct queue_node dummy;
   struct queue_node *head;
   struct queue_node *tail;
+  spinlock_t lock;
 };
 
 #define QUEUE_INIT(queue)                                                      \
   do {                                                                         \
-    (queue)->dummy.next = NULL;                                                  \
-    (queue)->head = &(queue)->dummy;                                               \
-    (queue)->tail = &(queue)->dummy;                                               \
+    (queue)->head = NULL;                                                      \
+    (queue)->tail = NULL;                                                      \
+    (queue)->lock = (spinlock_t)SPINLOCK_ZERO;                                 \
   } while (0);
 
 #define QUEUE_CREATE(name)                                                     \
-  struct queue name = {.dummy = {NULL}, .head = &name.dummy, .tail = &name.dummy}
+  struct queue name = {                                                        \
+      .lock = (spinlock_t)SPINLOCK_ZERO, .head = NULL, .tail = NULL}
 
 void queue_enqueue(struct queue *queue, struct queue_node *node);
 struct queue_node *queue_dequeue(struct queue *queue);
