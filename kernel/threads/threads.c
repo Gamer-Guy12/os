@@ -1,4 +1,5 @@
 #include "kernel/threads.h"
+#include "kernel/kprintf.h"
 #include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
@@ -41,6 +42,8 @@ void init_threading(void *stack) {
   thread->page_tables = __null_pages();
   thread->tid = GET_TID;
   thread->stack = stack;
+  waitqueue_create(&thread->thread_dependencies);
+  rb_insert(&thread_ids, &thread->id_node);
 
   struct thread **cpu_thread = GET_CLS(cur_thread);
   *cpu_thread = thread;
@@ -59,10 +62,11 @@ void switch_threads(struct thread *old_thread, struct thread *new_thread) {
 void switch_tail(struct thread *old_thread, struct thread *new_thread) {
   if (old_thread->state == THREAD_TERMINATED)
     destroy_thread(old_thread);
-  else if (old_thread->state == THREAD_RUNNING) {
+  else if (old_thread->state == THREAD_RUNNING || old_thread->state == THREAD_RUNNING) {
     old_thread->state = THREAD_READY;
     // Requeue thread
     requeue_thread(old_thread);
+    kprintf("he e %x\n", old_thread->tid);
   } else if (old_thread->state == THREAD_WAITING) {
     // Do nothing
   }
@@ -95,7 +99,6 @@ uint64_t create_thread(void (*entry)(void)) {
   __create_context(thread);
 
   waitqueue_create(&thread->thread_dependencies);
-
   rb_insert(&thread_ids, &thread->id_node);
 
   schedule_thread(thread);

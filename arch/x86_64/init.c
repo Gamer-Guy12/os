@@ -24,7 +24,7 @@ void INIT arch_init_single(void) {
   kprintf("[INIT] Initialized PIT and TSC\n");
 
   enable_apic();
-  // init_apic_timer();
+  init_apic_timer();
   kprintf("[INIT] Enabled APIC\n");
 
   init_hpet();
@@ -41,12 +41,14 @@ void INIT arch_init(void) {
   enable_apic();
   kprintf("[INIT] Enabled APIC\n");
 
-  // init_apic_timer();
+  init_apic_timer();
   kprintf("[INIT] Initialized Timers\n");
 }
 
-extern void __do_stack_switch(void (*entry)(void *new_stack), void *stack, size_t stack_size);
+extern void __do_stack_switch(void (*entry)(void *new_stack), void *stack,
+                              size_t stack_size);
 
 void __switch_stacks(void (*entry)(void *new_stack)) {
-  __do_stack_switch(entry, alloc_pages(STACK_ORDER, ZONE_ANY), PAGE_SIZE * (1 << STACK_ORDER));
+  __do_stack_switch(entry, alloc_pages(STACK_ORDER, ZONE_ANY),
+                    PAGE_SIZE * (1 << STACK_ORDER));
 }

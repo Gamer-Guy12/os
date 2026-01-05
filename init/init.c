@@ -25,12 +25,10 @@ LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKE
     static NORETURN void kmain(void *new_stack);
 static NORETURN void core_main(void *new_stack);
 
-void entry2(void) { kprintf("Her hehehee\n"); }
-
 void entry(void) {
-  kprintf("Here\n");
-  uint64_t thread = create_thread(entry2);
-  kprintf("%x waited\n", wait_thread(thread));
+  kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
+  while (1) {
+  }
 }
 
 // clang-format off
@@ -73,10 +71,18 @@ static NORETURN void kmain(void *new_stack) {
   arch_init_single();
 
   kprintf("[INIT] Starting Up All Cores\n");
-  init_cores();
+  // init_cores();
   kprintf("[INIT] Initialized All Cores\n");
 
   create_thread(entry);
+  create_thread(entry);
+  create_thread(entry);
+  create_thread(entry);
+  create_thread(entry);
+  create_thread(entry);
+  create_thread(entry);
+  create_thread(entry);
+  kprintf("Down here\n");
 
   // This thread will be the idle thread
   while (true) {

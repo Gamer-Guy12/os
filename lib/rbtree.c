@@ -11,7 +11,7 @@ void rb_create(struct rbtree *tree,
   tree->compare = compare;
   tree->root = NULL;
   tree->count = 0;
-  tree->lock = SPINLOCK_ZERO;
+  tree->lock = (spinlock_t)SPINLOCK_ZERO;
 }
 
 static void insert(struct rbtree *tree, struct rbnode *node) {

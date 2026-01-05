@@ -5,7 +5,7 @@
 #include "lib/list.h"
 #include "lib/queue.h"
 #include "lib/rbtree.h"
-#include "lib/rw_lock.h"
+#include "lib/spinlock.h"
 #include "util.h"
 #include <stdint.h>
 
@@ -24,7 +24,7 @@ enum thread_state {
 
 struct wait_queue {
   struct list_node list;
-  rw_lock_t lock;
+  spinlock_t lock;
 };
 
 struct wait_queue_node {

@@ -1,10 +1,12 @@
 #include "kernel/threads.h"
+#include "kernel/kprintf.h"
 
 void schedule(void) {
   struct thread *thread = pop_thread();
   struct thread *cur_thread = get_cur_thread();
 
   if (thread == NULL) {
+//     kprintf("Here\n");
     return;
   }
 

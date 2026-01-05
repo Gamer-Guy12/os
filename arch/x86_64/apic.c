@@ -251,6 +251,6 @@ INIT void init_apic_timer(void) {
 // The apic timer will be the only one handling ticks, if that doesn't work then
 // womp womp
 void apic_tick_handler(void) {
-  increment_tick();
   apic_wait_ms(apic_tick_handler, TICK_LEN_MS);
+  increment_tick();
 }
