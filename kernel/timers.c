@@ -2,8 +2,10 @@
 #include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
+#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "kernel/threads.h"
+#include "lib/rbtree.h"
 #include "lib/rlist.h"
 #include "util.h"
 #include <stddef.h>
@@ -12,7 +14,8 @@
 CLS(uint64_t, ticks);
 CLS(struct tick_handler *, tick_handlers);
 static struct gheap_cache tick_handler_cache;
-struct rlist timers = {0};
+static struct gheap_cache timer_handler_cache;
+RLIST_CREATE(timers);
 
 struct tick_handler {
   struct tick_handler *next;
@@ -20,6 +23,30 @@ struct tick_handler {
   uint64_t ticks;
   void *data;
 };
+
+struct timer_handler {
+  struct rbnode node;
+  uint64_t deadline;
+  void *data;
+  struct timer *timer;
+  void (*handler)(void *);
+};
+
+static int compare_handler(struct rbnode *n1, struct rbnode *n2) {
+  struct timer_handler *t1 =
+      (struct timer_handler *)((uintptr_t)n1 -
+                               offsetof(struct timer_handler, node));
+  struct timer_handler *t2 =
+      (struct timer_handler *)((uintptr_t)n2 -
+                               offsetof(struct timer_handler, node));
+
+  if (t1->deadline > t2->deadline)
+    return 1;
+  else if (t1->deadline < t2->deadline)
+    return -1;
+  else
+    return 0;
+}
 
 static void handle_timers(void) {
   struct tick_handler **handlers = GET_CLS(tick_handlers);
@@ -56,6 +83,54 @@ uint64_t get_cur_tick(void) {
 INIT void init_timers(void) {
   gheap_cache_create(&tick_handler_cache, sizeof(struct tick_handler),
                      ZONE_ANY);
+  gheap_cache_create(&timer_handler_cache, sizeof(struct timer_handler),
+                     ZONE_ANY);
+}
+
+void register_timer(struct timer *timer) {
+  rb_create(&timer->internal.timer_handlers, compare_handler);
+
+  rlist_insert(&timers, &timer->internal.node);
+}
+
+static void timer_handler_cb(void *timer_handler) {
+  struct timer_handler *handler = timer_handler;
+
+  spinlock_acquire(&handler->timer->internal.node.lock);
+
+  rb_delete(&handler->timer->internal.timer_handlers, &handler->node);
+
+  spinlock_release(&handler->timer->internal.node.lock);
+}
+
+void int_in_ms(uint64_t ms, void (*handler)(void *), void *data) {
+  disable_interrupts();
+  uint64_t deadline = abs_ms_deadline(ms);
+  struct timer_handler *timer_handler = gheap_cache_alloc(&timer_handler_cache);
+
+  timer_handler->handler = handler;
+  timer_handler->data = data;
+  timer_handler->deadline = deadline;
+
+  struct rlist_node *node;
+  RLIST_USE(&timers, node) {
+    struct timer *timer =
+        (struct timer *)((uintptr_t)node -
+                         offsetof(struct timer, internal.node));
+
+    timer_handler->timer = timer;
+    rb_insert(&timer->internal.timer_handlers, &timer_handler->node);
+
+    struct rbnode *min_node =
+        rb_find_min(&timer->internal.timer_handlers, NULL);
+    struct timer_handler *min_handler =
+        (struct timer_handler *)((uintptr_t)min_node -
+                                 offsetof(struct timer_handler, node));
+
+    timer->wait_deadline(timer_handler_cb, timer_handler, timer,
+                         min_handler->deadline);
+  }
+  enable_interrupts();
 }
 
 void int_at_ticks(uint64_t ticks, void (*handler)(void *), void *data) {

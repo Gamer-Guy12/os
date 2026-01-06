@@ -6,8 +6,13 @@
 void rlist_insert(struct rlist *list, struct rlist_node *node) {
   spinlock_acquire(&list->lock);
 
-  node->next = list->cur->next;
-  list->cur->next = node;
+  if (list->cur != NULL) {
+    node->next = list->cur->next;
+    list->cur->next = node;
+  } else {
+    node->next = node;
+    list->cur = node;
+  }
 
   spinlock_release(&list->lock);
 }
@@ -38,4 +43,3 @@ struct rlist_node *__rlist_use(struct rlist *list) {
 
   return node;
 }
-

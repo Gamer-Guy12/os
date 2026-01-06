@@ -107,6 +107,9 @@ void waitqueue_awaken(struct wait_queue *queue, struct wait_queue_node *thread);
 // Inserts current thread into waitqueue
 void waitqueue_wait(struct wait_queue *queue);
 
+// Sleep
+void sleep(uint32_t ms);
+
 // List node to wait queue node
 #define WQ_NODE(node)                                                          \
   (((struct wait_queue_node *)((uintptr_t)node -                               \

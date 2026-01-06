@@ -2,6 +2,7 @@
 #define _LIB_RLIST_H_
 
 #include "lib/spinlock.h"
+#include <stddef.h>
 
 // Ring List
 struct rlist {
@@ -18,6 +19,17 @@ void rlist_insert(struct rlist *list, struct rlist_node *node);
 void rlist_cycle(struct rlist *list);
 struct rlist_node *__rlist_use(struct rlist *list);
 
-#define RLIST_USE(list, node) for (node = __rlist_use(list); 1 < 0; spinlock_release(&node->lock))
+#define RLIST_USE(list, node)                                                  \
+  for (node = __rlist_use(list); (node) != NULL;                               \
+       spinlock_release(&(node)->lock), (node) = NULL)
+
+#define RLIST_INIT(list)                                                       \
+  do {                                                                         \
+    (list)->cur = NULL;                                                        \
+    (list)->lock = (spinlock_t)SPINLOCK_ZERO;                                  \
+  } while (0);
+
+#define RLIST_CREATE(name)                                                     \
+  struct rlist name = {.cur = NULL, .lock = SPINLOCK_ZERO}
 
 #endif

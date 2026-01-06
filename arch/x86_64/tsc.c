@@ -1,6 +1,7 @@
 #include "tsc.h"
 #include "asm.h"
 #include "include/pit.h"
+#include "kernel/timers.h"
 #include <stdint.h>
 
 static uint64_t tsc_freq = 0;
@@ -42,6 +43,15 @@ void init_tsc(void) {
   }
 }
 
-uint64_t get_tsc_freq(void) {
-  return tsc_freq;
+uint64_t get_tsc_freq(void) { return tsc_freq; }
+
+uint64_t abs_time(void) { return rdtsc(); }
+
+// What is the timestamp in x ms
+uint64_t abs_ms_deadline(uint64_t ms) { return rdtsc() + tsc_freq * ms / 1000; }
+
+uint64_t abs_microsecond_deadline(uint64_t microseconds) {
+  return rdtsc() + tsc_freq * microseconds / 1000000;
 }
+
+uint64_t abs_freq(void) { return tsc_freq; }
