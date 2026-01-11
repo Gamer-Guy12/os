@@ -180,7 +180,7 @@ void init_hpet(void) {
   frequency = 1000000000000000 / (capabilities >> 32);
 
   // Set counter to 1 to not trigger interrupts
-  hpet_write_reg(HPET_MAIN_COUNTER, 1);
+  hpet_write_reg(HPET_MAIN_COUNTER, 0);
   // Disable legacy remapping
   hpet_write_reg(HPET_GEN_CONF, 0);
   // Clear all pending interrupts
@@ -206,7 +206,7 @@ void init_hpet(void) {
     comparator_sizes[i] = true;
 
     // Set the comparator to trigger with value 0
-    hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(i), 0);
+    hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(i), MAX_64);
 
     // Level Triggered
     timer_setup |= (1 << 1);
@@ -275,7 +275,7 @@ void init_hpet(void) {
     unmask_ioapic_irq(18);
   }
 
-  kprintf("%x\n", read_apic_reg(0x100));
+  hpet_write_reg(HPET_GEN_INT_STATUS, MAX_32);
   enable_interrupts();
   // Enable counter
   hpet_write_reg(HPET_GEN_CONF, 1);
