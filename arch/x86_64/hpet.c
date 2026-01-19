@@ -30,7 +30,7 @@ typedef void (*hpet_callback_t)(void *);
 static hpet_callback_t callbacks[32] = {NULL};
 static void *datas[32] = {NULL};
 
-static uint64_t hpet_read_reg(uint16_t reg) {
+uint64_t hpet_read_reg(uint16_t reg) {
   volatile uint64_t *reg_addr = (volatile uint64_t *)(hpet_regs + reg);
   return *reg_addr;
 }
@@ -99,11 +99,11 @@ static void hpet_int_microseconds(void (*callback)(void *), void *data,
   datas[timer->hpet] = data;
 
   uint64_t tick_count = frequency * micro_seconds / 1000000;
+  hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet),
+                 cur_ticks + tick_count);
   // Enable interrupts
   hpet_write_reg(HPET_TIMER_CONF_CAPS(timer->hpet),
                  hpet_read_reg(HPET_TIMER_CONF_CAPS(timer->hpet)) | (1 << 2));
-  hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet),
-                 cur_ticks + tick_count);
 
   enable_interrupts();
 }
@@ -118,11 +118,12 @@ static void hpet_int_ms(void (*callback)(void *), void *data,
   datas[timer->hpet] = data;
 
   uint64_t tick_count = frequency * ms / 1000;
+  hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet),
+                 cur_ticks + tick_count);
+
   // Enable interrupts
   hpet_write_reg(HPET_TIMER_CONF_CAPS(timer->hpet),
                  hpet_read_reg(HPET_TIMER_CONF_CAPS(timer->hpet)) | (1 << 2));
-  hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet),
-                 cur_ticks + tick_count);
 
   enable_interrupts();
 }
@@ -135,20 +136,17 @@ static void hpet_int_deadline(void (*callback)(void *), void *data,
   uint64_t time_diff = deadline - abs_time();
   uint64_t hpet_tick_count = time_diff * frequency / abs_freq();
   struct hpet_timer *timer = (void *)timer_struct;
-  kprintf("%u %p\n", hpet_tick_count * 1000 / frequency, timer->hpet);
   callbacks[timer->hpet] = callback;
   datas[timer->hpet] = data;
 
+  hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet),
+                 cur_hpet_ticks + hpet_tick_count);
   // Enable interrupts
   hpet_write_reg(HPET_TIMER_CONF_CAPS(timer->hpet),
                  hpet_read_reg(HPET_TIMER_CONF_CAPS(timer->hpet)) | (1 << 2));
-  hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(timer->hpet),
-                 cur_hpet_ticks + hpet_tick_count);
 
   enable_interrupts();
 }
-
-void hello(void *thing) { kprintf("Hello\n"); }
 
 void init_hpet(void) {
   disable_interrupts();
@@ -180,7 +178,7 @@ void init_hpet(void) {
   frequency = 1000000000000000 / (capabilities >> 32);
 
   // Set counter to 1 to not trigger interrupts
-  hpet_write_reg(HPET_MAIN_COUNTER, 0);
+  hpet_write_reg(HPET_MAIN_COUNTER, 1);
   // Disable legacy remapping
   hpet_write_reg(HPET_GEN_CONF, 0);
   // Clear all pending interrupts
@@ -193,8 +191,6 @@ void init_hpet(void) {
   bool unmask_17 = false;
   bool unmask_18 = false;
 
-  struct timer *my_timer = NULL;
-
   for (int i = 0; i < comparator_count; i++) {
     uint64_t timer_setup = hpet_read_reg(HPET_TIMER_CONF_CAPS(i));
 
@@ -206,7 +202,7 @@ void init_hpet(void) {
     comparator_sizes[i] = true;
 
     // Set the comparator to trigger with value 0
-    hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(i), MAX_64);
+    // hpet_write_reg(HPET_TIMER_COMPARATOR_VAL(i), MAX_64);
 
     // Level Triggered
     timer_setup |= (1 << 1);
@@ -254,7 +250,6 @@ void init_hpet(void) {
     timer->hpet = i;
 
     register_timer((void *)timer);
-    my_timer = &timer->timer;
 
     kprintf("\t[HPET] Initialized HPET Comparator %d\n", i);
   }
@@ -279,7 +274,5 @@ void init_hpet(void) {
   enable_interrupts();
   // Enable counter
   hpet_write_reg(HPET_GEN_CONF, 1);
-
-  my_timer->wait_ms(hello, NULL, my_timer, 10000);
-  my_timer->wait_ms(hello, NULL, my_timer, 10000);
+  hpet_write_reg(HPET_GEN_INT_STATUS, MAX_32);
 }

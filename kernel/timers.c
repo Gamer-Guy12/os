@@ -65,6 +65,8 @@ static void handle_timers(void) {
   }
 }
 
+extern uint64_t hpet_read_reg(uint16_t reg);
+
 void increment_tick(void) {
   uint64_t *this_tick = GET_CLS(ticks);
   (*this_tick)++;
@@ -97,6 +99,7 @@ static void timer_handler_cb(void *timer_handler) {
   struct timer_handler *handler = timer_handler;
 
   spinlock_acquire(&handler->timer->internal.node.lock);
+  kprintf("Here\n");
 
   rb_delete(&handler->timer->internal.timer_handlers, &handler->node);
 
@@ -126,6 +129,8 @@ void int_in_ms(uint64_t ms, void (*handler)(void *), void *data) {
     struct timer_handler *min_handler =
         (struct timer_handler *)((uintptr_t)min_node -
                                  offsetof(struct timer_handler, node));
+    kprintf("%x %x %x\n", min_handler->deadline, abs_ms_deadline(ms),
+            abs_time());
 
     timer->wait_deadline(timer_handler_cb, timer_handler, timer,
                          min_handler->deadline);

@@ -1,8 +1,8 @@
 #include "kernel/cores.h"
-#include "lib/string.h"
 #include "asm.h"
 #include "kernel/gheap.h"
 #include "kernel/mem.h"
+#include "lib/string.h"
 #include "limine.h"
 #include "util.h"
 #include "x86_64.h"
@@ -87,4 +87,12 @@ void init_cls(void) {
   void *data = gmalloc(full_size, ZONE_ANY);
   memset(data, 0, full_size);
   WRMSR(GS_BASE_MSR, data);
+}
+
+bool is_bsp(void) {
+  if (mp_request.response->bsp_lapic_id == get_core_id()) {
+    return true;
+  }
+
+  return false;
 }

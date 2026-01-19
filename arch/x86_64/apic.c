@@ -92,12 +92,15 @@ INIT void enable_apic(void) {
   }
 
   ioapic_addr = map_phys((void *)(uint64_t)ioapic_entry->ioapic_addr,
-           PM_RW | PM_UNCACHEABLE | PM_PINNED);
+                         PM_RW | PM_UNCACHEABLE | PM_PINNED);
 
-  // Mask all interrupts 24
-  for (int i = 0; i < 24; i++) {
-    mask_ioapic_irq(i);
+  if (is_bsp()) {
+    // Mask all interrupts 24
+    for (int i = 0; i < 24; i++) {
+      mask_ioapic_irq(i);
+    }
   }
+  apic_eoi();
 
   enable_interrupts();
 }
