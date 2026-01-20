@@ -148,7 +148,7 @@ static void hpet_int_deadline(void (*callback)(void *), void *data,
   enable_interrupts();
 }
 
-void init_hpet(void) {
+INIT void init_hpet(void) {
   disable_interrupts();
   struct hpet_table *table = get_acpi_table("HPET");
   if (table == NULL) {

@@ -28,6 +28,7 @@ void vector_insert(struct vector *vector, void *data, uint64_t index,
 
   void *ptr = (void *)((uintptr_t)vector->data + offset);
   void *copy_ptr = (void *)((uintptr_t)vector->data + copy_offset);
+  vector->usage++;
   memcpy(copy_ptr, ptr, vector->object_size * copy_count);
   memcpy(ptr, data, vector->object_size * count);
 }
@@ -49,6 +50,7 @@ void vector_remove(struct vector *vector, void *data, uint64_t index,
 
   void *copy_ptr = (void *)((uintptr_t)ptr + vector->object_size);
 
+  vector->usage--;
   memcpy(ptr, copy_ptr, copy_count * vector->object_size);
 }
 
@@ -72,6 +74,7 @@ void vector_pushback(struct vector *vector, void *data) {
 
   size_t offset = vector->object_size * vector->usage;
   void *ptr = (void *)((uintptr_t)vector->data + offset);
+  vector->usage++;
 
   memcpy(ptr, data, vector->object_size);
 }
