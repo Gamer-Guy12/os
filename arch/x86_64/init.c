@@ -11,7 +11,7 @@
 #include "kernel/threads.h"
 #include "util.h"
 
-void INIT arch_init_single(void) {
+void INIT arch_init(void) {
   init_gdt();
   kprintf("[INIT] Initialized GDT\n");
 
@@ -19,30 +19,22 @@ void INIT arch_init_single(void) {
   enable_interrupts();
   kprintf("[INIT] Initialized Interrupts\n");
 
-  init_pit();
-  init_tsc();
-  kprintf("[INIT] Initialized PIT and TSC\n");
-
-  enable_apic();
-  init_apic_timer();
-  kprintf("[INIT] Enabled APIC\n");
-
-  init_hpet();
-  kprintf("[INIT] Enabled Main Core Timers\n");
-}
-
-void INIT arch_init(void) {
-  init_gdt();
-  kprintf("[INIT] Initialized GDT\n");
-
-  init_interrupts();
-  kprintf("[INIT] Initialized Interrupts\n");
-
   enable_apic();
   kprintf("[INIT] Enabled APIC\n");
 
+  BSP {
+    init_pit();
+    init_tsc();
+    kprintf("[INIT] Initialized PIT and TSC\n");
+  }
+
+  BSP {
+    init_hpet();
+    kprintf("[INIT] Enabled Main Core Timers\n");
+  }
+
+  kprintf("[INIT] Initialized APIC Timer\n");
   init_apic_timer();
-  kprintf("[INIT] Initialized Timers\n");
 }
 
 extern void __do_stack_switch(void (*entry)(void *new_stack), void *stack,

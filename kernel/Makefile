@@ -9,5 +9,6 @@ kernel-src = kernel/console.c \
 	kernel/timers.c \
 	kernel/threads/queue.c \
 	kernel/threads/sched.c \
-	kernel/threads/wait.c
+	kernel/threads/wait.c \
+	kernel/abs_time.c
 

@@ -1,6 +1,7 @@
 #ifndef _UTIL_H_
 #define _UTIL_H_
 
+#include "kernel/cores.h"
 #include <stdint.h>
 
 #define KB (uint64_t)0x400
@@ -19,6 +20,9 @@
 #define INIT_DATA __attribute__((section(".init.data")))
 
 #define SASSERT _Static_assert
+
+#define BSP if (is_bsp())
+#define AP if (!is_bsp())
 
 #ifdef _x86_64_
 

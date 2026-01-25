@@ -148,6 +148,10 @@ static void hpet_int_deadline(void (*callback)(void *), void *data,
   enable_interrupts();
 }
 
+static uint64_t hpet_get_time(void) { return hpet_read_reg(HPET_MAIN_COUNTER); }
+
+static uint64_t hpet_get_freq(void) { return frequency; }
+
 INIT void init_hpet(void) {
   disable_interrupts();
   struct hpet_table *table = get_acpi_table("HPET");
@@ -275,4 +279,6 @@ INIT void init_hpet(void) {
   // Enable counter
   hpet_write_reg(HPET_GEN_CONF, 1);
   hpet_write_reg(HPET_GEN_INT_STATUS, MAX_32);
+
+  register_abs_timer(hpet_get_time, hpet_get_freq, frequency);
 }

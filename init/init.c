@@ -23,7 +23,6 @@ LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKE
     // clang-format on
 
     static NORETURN void kmain(void *new_stack);
-static NORETURN void core_main(void *new_stack);
 
 void handler(void *data) { kprintf("Here\n"); }
 
@@ -52,27 +51,32 @@ static NORETURN void kmain(void *new_stack) {
   init_cls();
   kprintf("[INIT] Initialized CLS\n");
 
-  init_general_threading();
-  kprintf("[INIT] Initialized General Threading\n");
+  BSP {
+    init_general_threading();
+    kprintf("[INIT] Initialized General Threading\n");
+  }
 
   init_threading(new_stack);
   kprintf("[INIT] Initialized Threading on Core %u\n", get_core_id());
 
-  init_acpi();
-  kprintf("[INIT] Initialized ACPI\n");
+  BSP {
+    init_acpi();
+    kprintf("[INIT] Initialized ACPI\n");
 
-  init_timers();
-  kprintf("[INIT] Initialized Timers\n");
+    init_timers();
+    kprintf("[INIT] Initialized Timers\n");
+  }
 
-  arch_init_single();
+  arch_init();
 
-  kprintf("[INIT] Starting Up All Cores\n");
-  init_cores();
-  kprintf("[INIT] Initialized All Cores\n");
+  BSP {
+    kprintf("[INIT] Starting Up All Cores\n");
+    init_cores();
+    kprintf("[INIT] Initialized All Cores\n");
 
-  int_in_ms(10000, handler, NULL);
+    int_in_ms(10000, handler, NULL);
+  }
 
-  extern uint64_t hpet_read_reg(uint16_t reg);
   // This thread will be the idle thread
   while (true) {
     schedule();
@@ -81,23 +85,8 @@ static NORETURN void kmain(void *new_stack) {
 
 NORETURN void core_entry(void) {
   kprintf("[INIT] Starting Core %u Initialization\n", get_core_id());
-  __switch_stacks(core_main);
+  __switch_stacks(kmain);
 
   while (1) {
-  }
-}
-
-static NORETURN void core_main(void *new_stack) {
-  init_cls();
-  kprintf("[INIT] Initialized CLS on Core %u\n", get_core_id());
-
-  init_threading(new_stack);
-  kprintf("[INIT] Initialized Threading on Core %u\n", get_core_id());
-
-  arch_init();
-
-  // This thread will be the idle thread
-  while (true) {
-    schedule();
   }
 }

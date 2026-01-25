@@ -99,7 +99,7 @@ static void timer_handler_cb(void *timer_handler) {
   struct timer_handler *handler = timer_handler;
 
   spinlock_acquire(&handler->timer->internal.node.lock);
-  kprintf("Here\n");
+  kprintf("Here: %u %u\n", abs_time(), abs_freq());
 
   rb_delete(&handler->timer->internal.timer_handlers, &handler->node);
 
@@ -121,6 +121,8 @@ void int_in_ms(uint64_t ms, void (*handler)(void *), void *data) {
         (struct timer *)((uintptr_t)node -
                          offsetof(struct timer, internal.node));
 
+    kprintf("Start: %u\n", abs_time());
+
     timer_handler->timer = timer;
     rb_insert(&timer->internal.timer_handlers, &timer_handler->node);
 
@@ -132,8 +134,7 @@ void int_in_ms(uint64_t ms, void (*handler)(void *), void *data) {
     kprintf("%x %x %x\n", min_handler->deadline, abs_ms_deadline(ms),
             abs_time());
 
-    timer->wait_deadline(timer_handler_cb, timer_handler, timer,
-                         min_handler->deadline);
+    timer->wait_ms(timer_handler_cb, timer_handler, timer, ms);
   }
   enable_interrupts();
 }

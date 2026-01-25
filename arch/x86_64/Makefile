@@ -11,7 +11,7 @@ x86_64-src = arch/x86_64/cores.c \
 	arch/x86_64/tsc.c \
 	arch/x86_64/pit.c \
 	arch/x86_64/hpet.c \
-	arch/x86_64/stack.asm
+	arch/x86_64/stack.asm 
 
 build/obj/arch/x86_64/handlers.asm.o: arch/x86_64/handlers.asm
 	@mkdir -p $(dir $@)

@@ -30,6 +30,10 @@ uint64_t get_cur_tick(void);
 void int_at_ticks(uint64_t ticks, void (*handler)(void *), void *data);
 void init_timers(void);
 
+void register_abs_timer(uint64_t (*read_time)(void),
+                        uint64_t (*read_freq)(void),
+                        uint64_t freq);
+
 // Arch specific
 uint64_t abs_time(void);
 // What is the timestamp in x ms
