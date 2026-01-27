@@ -95,15 +95,37 @@ void register_timer(struct timer *timer) {
   rlist_insert(&timers, &timer->internal.node);
 }
 
-static void timer_handler_cb(void *timer_handler) {
-  struct timer_handler *handler = timer_handler;
+static void timer_handler_cb(void *passed_timer) {
+  struct timer *timer = passed_timer;
 
-  spinlock_acquire(&handler->timer->internal.node.lock);
-  kprintf("Here: %u %u\n", abs_time(), abs_freq());
+  spinlock_acquire(&timer->internal.node.lock);
+  kprintf("%p\n", timer);
 
-  rb_delete(&handler->timer->internal.timer_handlers, &handler->node);
+  // execute all the handlers that have passed
+  struct timer_handler *min_handler = NULL;
+  do {
+    struct rbnode *min_node =
+        rb_find_min(&timer->internal.timer_handlers, NULL);
 
-  spinlock_release(&handler->timer->internal.node.lock);
+    if (min_node == NULL)
+      break;
+
+    min_handler =
+        (struct timer_handler *)((uintptr_t)min_node -
+                                 offsetof(struct timer_handler, node));
+
+    if (min_handler->deadline > abs_time())
+      break;
+
+    rb_delete(&timer->internal.timer_handlers, min_node);
+    min_handler->handler(min_handler->data);
+    gheap_cache_free(&timer_handler_cache, min_handler);
+  } while (min_handler != NULL && min_handler->deadline <= abs_time());
+
+  if (min_handler != NULL)
+    timer->wait_deadline(timer_handler_cb, min_handler->timer, timer,
+                         min_handler->deadline);
+  spinlock_release(&timer->internal.node.lock);
 }
 
 void int_in_ms(uint64_t ms, void (*handler)(void *), void *data) {
@@ -121,20 +143,35 @@ void int_in_ms(uint64_t ms, void (*handler)(void *), void *data) {
         (struct timer *)((uintptr_t)node -
                          offsetof(struct timer, internal.node));
 
-    kprintf("Start: %u\n", abs_time());
-
     timer_handler->timer = timer;
+    kprintf("%x deadline %p\n", deadline, timer);
     rb_insert(&timer->internal.timer_handlers, &timer_handler->node);
 
-    struct rbnode *min_node =
-        rb_find_min(&timer->internal.timer_handlers, NULL);
-    struct timer_handler *min_handler =
-        (struct timer_handler *)((uintptr_t)min_node -
-                                 offsetof(struct timer_handler, node));
-    kprintf("%x %x %x\n", min_handler->deadline, abs_ms_deadline(ms),
-            abs_time());
+    struct timer_handler *min_handler = NULL;
+    do {
+      struct rbnode *min_node =
+          rb_find_min(&timer->internal.timer_handlers, NULL);
 
-    timer->wait_ms(timer_handler_cb, timer_handler, timer, ms);
+      if (min_node == NULL)
+        break;
+
+      min_handler =
+          (struct timer_handler *)((uintptr_t)min_node -
+                                   offsetof(struct timer_handler, node));
+
+      if (min_handler->deadline > abs_time())
+        break;
+
+      rb_delete(&timer->internal.timer_handlers, min_node);
+      min_handler->handler(min_handler->data);
+      gheap_cache_free(&timer_handler_cache, min_handler);
+    } while (min_handler != NULL && min_handler->deadline <= abs_time());
+
+    if (min_handler != NULL) {
+      kprintf("%x, line\n", min_handler->deadline);
+      timer->wait_deadline(timer_handler_cb, min_handler->timer, timer,
+                           min_handler->deadline);
+    }
   }
   enable_interrupts();
 }

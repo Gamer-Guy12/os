@@ -42,23 +42,8 @@ static void hpet_write_reg(uint16_t reg, uint64_t val) {
 
 spinlock_t hpet_handler_lock = SPINLOCK_ZERO;
 
-static void hpet_handler(void *context) {
-  // Find which hpet interrupted and acknowledge
-  uint8_t hpet = 32;
-  spinlock_acquire(&hpet_handler_lock);
-  uint64_t statuses = hpet_read_reg(HPET_GEN_INT_STATUS);
-
-  for (int i = 0; i < 32; i++) {
-    if (statuses & (1 << i)) {
-      hpet = i;
-      break;
-    }
-  }
-
+static void handle_line(uint8_t hpet) {
   hpet_write_reg(HPET_GEN_INT_STATUS, 1 << hpet);
-  spinlock_release(&hpet_handler_lock);
-  apic_eoi();
-
   hpet_write_reg(HPET_TIMER_CONF_CAPS(hpet),
                  hpet_read_reg(HPET_TIMER_CONF_CAPS(hpet)) & ~(1 << 2));
 
@@ -67,6 +52,34 @@ static void hpet_handler(void *context) {
   callbacks[hpet] = NULL;
   datas[hpet] = NULL;
   callback(data);
+}
+
+static void hpet_handler(void *context) {
+  kprintf("Her\n");
+  // Find which hpet interrupted and acknowledge
+  uint8_t hpet = 32;
+  spinlock_acquire(&hpet_handler_lock);
+
+  uint64_t statuses = hpet_read_reg(HPET_GEN_INT_STATUS);
+  do {
+
+    for (int i = 0; i < 32; i++) {
+      if (statuses & (1 << i)) {
+        hpet = i;
+        break;
+      }
+    }
+
+    if (hpet == 32) {
+      break;
+    }
+
+    handle_line(hpet);
+    statuses = hpet_read_reg(HPET_GEN_INT_STATUS);
+  } while (statuses != 0);
+
+  spinlock_release(&hpet_handler_lock);
+  apic_eoi();
 }
 
 static void hpet_cancel(struct timer *timer_struct) {

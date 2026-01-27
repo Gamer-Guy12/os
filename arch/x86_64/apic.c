@@ -7,7 +7,6 @@
 #include "kernel/mem.h"
 #include "kernel/timers.h"
 #include "lib/atomic.h"
-#include "tsc.h"
 #include "util.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -195,7 +194,7 @@ static void apic_handler(void *data) {
   atomic_t *this_apic = GET_CLS(apic_calculated);
   if (atomic_load(this_apic) == 0) {
     uint64_t *this_end = GET_CLS(end_ticks);
-    *this_end = rdtsc();
+    *this_end = abs_time();
 
     atomic_store(this_apic, 1);
   } else {
@@ -232,7 +231,7 @@ INIT void init_apic_timer(void) {
   write_apic_reg(LAPIC_LVT_TIMER_REG, 0x60);
   // Wait this many ticks and then see how many ms that is
 
-  uint64_t start_ticks = rdtsc();
+  uint64_t start_ticks = abs_time();
   write_apic_reg(LAPIC_TIMER_INIT_COUNT_REG, 16384);
 
   atomic_t *this_apic = GET_CLS(apic_calculated);
@@ -242,9 +241,9 @@ INIT void init_apic_timer(void) {
   uint64_t *this_end = GET_CLS(end_ticks);
   uint64_t tick_diff = *this_end - start_ticks;
   // Ticks per second
-  const uint64_t tsc_freq = get_tsc_freq();
+  const uint64_t abs_frequency = abs_freq();
   // Always use the div 4 divider
-  const uint64_t lapic_freq = tsc_freq * 16384 / tick_diff;
+  const uint64_t lapic_freq = abs_frequency * 16384 / tick_diff;
   *freq = lapic_freq;
 
   // Start ticking
