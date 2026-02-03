@@ -28,7 +28,7 @@ static void insert(struct rbtree *tree, struct rbnode *node) {
   struct rbnode *cur = tree->root;
 
   while (true) {
-    if (tree->compare(node, cur) > 1) {
+    if (tree->compare(node, cur) > 0) {
       struct rbnode *parent = cur;
       cur = cur->right;
 

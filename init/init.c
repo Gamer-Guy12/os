@@ -73,13 +73,6 @@ static NORETURN void kmain(void *new_stack) {
     kprintf("[INIT] Starting Up All Cores\n");
     init_cores();
     kprintf("[INIT] Initialized All Cores\n");
-
-    int_in_ms(20000, handler, NULL);
-    int_in_ms(8000, handler, NULL);
-    int_in_ms(9000, handler, NULL);
-    int_in_ms(15000, handler, NULL);
-    int_in_ms(15000, handler, NULL);
-    int_in_ms(15333, handler, NULL);
   }
 
   // This thread will be the idle thread

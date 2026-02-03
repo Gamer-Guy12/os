@@ -2,7 +2,6 @@
 #include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
-#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "lib/rbtree.h"
@@ -99,7 +98,6 @@ static void timer_handler_cb(void *passed_timer) {
   struct timer *timer = passed_timer;
 
   spinlock_acquire(&timer->internal.node.lock);
-  kprintf("%p\n", timer);
 
   // execute all the handlers that have passed
   struct timer_handler *min_handler = NULL;
@@ -144,7 +142,6 @@ void int_in_ms(uint64_t ms, void (*handler)(void *), void *data) {
                          offsetof(struct timer, internal.node));
 
     timer_handler->timer = timer;
-    kprintf("%x deadline %p\n", deadline, timer);
     rb_insert(&timer->internal.timer_handlers, &timer_handler->node);
 
     struct timer_handler *min_handler = NULL;
@@ -168,7 +165,6 @@ void int_in_ms(uint64_t ms, void (*handler)(void *), void *data) {
     } while (min_handler != NULL && min_handler->deadline <= abs_time());
 
     if (min_handler != NULL) {
-      kprintf("%x, line\n", min_handler->deadline);
       timer->wait_deadline(timer_handler_cb, min_handler->timer, timer,
                            min_handler->deadline);
     }
