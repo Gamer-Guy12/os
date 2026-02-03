@@ -108,6 +108,7 @@ void waitqueue_awaken(struct wait_queue *queue, struct wait_queue_node *thread);
 void waitqueue_wait(struct wait_queue *queue);
 
 // Sleep
+void init_sleep(void);
 void sleep(uint32_t ms);
 
 // List node to wait queue node

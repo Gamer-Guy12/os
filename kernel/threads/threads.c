@@ -1,8 +1,8 @@
 #include "kernel/threads.h"
-#include "kernel/kprintf.h"
 #include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
+#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "lib/atomic.h"
 #include "lib/rbtree.h"
@@ -29,8 +29,12 @@ static int compare_threads(struct rbnode *n1, struct rbnode *n2) {
 
 void init_general_threading(void) {
   gheap_cache_create(&thread_cache, sizeof(struct thread), ZONE_ANY);
+  kprintf("\t[THREADS] Initialized Thread Allocation Cache\n");
   init_global_thread_queue();
+  kprintf("\t[THREADS] Initialized Global Thread Queue\n");
   rb_create(&thread_ids, compare_threads);
+  init_sleep();
+  kprintf("\t[THREADS] Initialized Sleeping Infrastructure");
 }
 
 void init_threading(void *stack) {
@@ -62,7 +66,8 @@ void switch_threads(struct thread *old_thread, struct thread *new_thread) {
 void switch_tail(struct thread *old_thread, struct thread *new_thread) {
   if (old_thread->state == THREAD_TERMINATED)
     destroy_thread(old_thread);
-  else if (old_thread->state == THREAD_RUNNING || old_thread->state == THREAD_RUNNING) {
+  else if (old_thread->state == THREAD_RUNNING ||
+           old_thread->state == THREAD_RUNNING) {
     old_thread->state = THREAD_READY;
     // Requeue thread
     requeue_thread(old_thread);
@@ -139,4 +144,3 @@ int wait_thread(uint64_t tid) {
 
   return thread->exit_code;
 }
-

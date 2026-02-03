@@ -26,6 +26,12 @@ LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKE
 
 void handler(void *data) {}
 
+void test(void) {
+  kprintf("Starting\n");
+  sleep(10000);
+  kprintf("Awake\n");
+}
+
 // clang-format off
 INIT NORETURN void kinit(void) {
   // clang-format on
@@ -74,6 +80,8 @@ static NORETURN void kmain(void *new_stack) {
     init_cores();
     kprintf("[INIT] Initialized All Cores\n");
   }
+
+  create_thread(test);
 
   // This thread will be the idle thread
   while (true) {
