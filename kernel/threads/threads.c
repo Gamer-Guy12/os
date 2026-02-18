@@ -34,7 +34,7 @@ void init_general_threading(void) {
   kprintf("\t[THREADS] Initialized Global Thread Queue\n");
   rb_create(&thread_ids, compare_threads);
   init_sleep();
-  kprintf("\t[THREADS] Initialized Sleeping Infrastructure");
+  kprintf("\t[THREADS] Initialized Sleeping Infrastructure\n");
 }
 
 void init_threading(void *stack) {

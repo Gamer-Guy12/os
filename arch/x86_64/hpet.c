@@ -55,7 +55,6 @@ static void handle_line(uint8_t hpet) {
 }
 
 static void hpet_handler(void *context) {
-  kprintf("Her\n");
   // Find which hpet interrupted and acknowledge
   uint8_t hpet = 32;
   spinlock_acquire(&hpet_handler_lock);

@@ -10,6 +10,18 @@
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "util.h"
+#include <stdint.h>
+
+void temp_int_handler(struct int_context *context) {
+  kprintf("Page Fault Detected!\n");
+  kprintf("P: %x, W: %x, U: %x, I: %x\n", context->error_code & (1 << 0),
+          context->error_code & (1 << 1), context->error_code & (1 << 2),
+          context->error_code & (1 << 4));
+
+  uint64_t cr2;
+  __asm__ volatile("mov %%cr2, %0" : "=r"(cr2));
+  kprintf("Page Fault Address: %x\n", cr2);
+}
 
 void INIT arch_init(void) {
   init_gdt();
@@ -18,6 +30,8 @@ void INIT arch_init(void) {
   init_interrupts();
   enable_interrupts();
   kprintf("[INIT] Initialized Interrupts\n");
+
+  BSP { register_int_handler(14, (void (*)(void *))temp_int_handler); }
 
   enable_apic();
   kprintf("[INIT] Enabled APIC\n");
