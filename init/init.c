@@ -22,14 +22,17 @@ LIMINE_SECTION(".limine_requests_start") static volatile LIMINE_REQUESTS_START_M
 LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKER
     // clang-format on
 
-    void thread(void) {
+    void test(void *data) {
+  kprintf("Im here\n");
+}
+
+void thread(void) {
   kprintf("Starting\n");
   sleep(10000);
+  // int_in_ms(10000, test, NULL);
   kprintf("Done\n");
   terminate(0);
 }
-
-void test(void *data) { kprintf("Im here\n"); }
 
 static NORETURN void kmain(void *new_stack);
 
@@ -83,6 +86,7 @@ static NORETURN void kmain(void *new_stack) {
   }
 
   BSP {
+    create_thread(thread);
     create_thread(thread);
   }
 
