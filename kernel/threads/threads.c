@@ -66,8 +66,7 @@ void switch_threads(struct thread *old_thread, struct thread *new_thread) {
 void switch_tail(struct thread *old_thread, struct thread *new_thread) {
   if (old_thread->state == THREAD_TERMINATED)
     destroy_thread(old_thread);
-  else if (old_thread->state == THREAD_RUNNING ||
-           old_thread->state == THREAD_RUNNING) {
+  else if (old_thread->state == THREAD_RUNNING) {
     old_thread->state = THREAD_READY;
     // Requeue thread
     requeue_thread(old_thread);

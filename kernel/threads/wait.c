@@ -28,7 +28,8 @@ void waitqueue_awaken(struct wait_queue *queue,
 
   spinlock_release(&queue->lock);
 
-  if (wait_node) gfree(wait_node);
+  if (wait_node)
+    gfree(wait_node);
 }
 
 void waitqueue_wait(struct wait_queue *queue) {

@@ -27,8 +27,8 @@ LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKE
 }
 
 void thread(void) {
-  kprintf("Starting\n");
-  sleep(10000);
+  kprintf("Starting %x\n", get_core_id());
+  // sleep(10000);
   // int_in_ms(10000, test, NULL);
   kprintf("Done\n");
   terminate(0);
@@ -86,6 +86,8 @@ static NORETURN void kmain(void *new_stack) {
   }
 
   BSP {
+    create_thread(thread);
+    create_thread(thread);
     create_thread(thread);
     create_thread(thread);
   }
