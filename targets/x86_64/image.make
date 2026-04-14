@@ -12,4 +12,5 @@ $(IMAGE_NAME): build/bin/kernel.bin
 	mcopy -i $(IMAGE_NAME)@@1M build/bin/kernel.bin ::/boot
 	mcopy -i $(IMAGE_NAME)@@1M targets/x86_64/limine.conf ::/boot/limine
 	mcopy -i $(IMAGE_NAME)@@1M tools/limine/BOOTX64.EFI ::/EFI/BOOT
+	mcopy -i $(IMAGE_NAME)@@1M assets ::/boot
 
