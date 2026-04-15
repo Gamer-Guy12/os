@@ -1,49 +1,59 @@
-#include "kernel/gheap.h"
-#include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "lib/spinlock.h"
-#include <stddef.h>
+#include <stdbool.h>
 
-void waitqueue_create(struct wait_queue *queue) { LIST_INIT(&queue->list); }
+void waitqueue_create(struct wait_queue *queue) {
+  queue->lock = (spinlock_t)SPINLOCK_ZERO;
+  LIST_INIT(&queue->list);
+}
 
-void waitqueue_awaken(struct wait_queue *queue,
-                      struct wait_queue_node *thread) {
-  struct wait_queue_node *wait_node = NULL;
+bool waitqueue_destroy(struct wait_queue *queue, bool force) {
+  if (LIST_EMPTY(&queue->list)) {
+    return true;
+  } else if (force) {
+    // If the list is empty and it is force
+    struct list_node *node = NULL;
 
-  spinlock_acquire(&queue->lock);
+    LIST_FOREACH(node, &queue->list) {
+      struct thread *thread = (struct thread *)((uintptr_t)node - offsetof(struct thread, wait_queue_node));
 
+      waitqueue_awaken(queue, thread->tid);
+    }
+
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void waitqueue_awaken(struct wait_queue *queue, uint64_t tid) {
+  struct thread* thread = thread_id(tid);
   struct list_node *node = NULL;
-  LIST_FOREACH(node, &queue->list) {
-    struct wait_queue_node *wnode = WQ_NODE(node);
+  bool found = false;
 
-    if (thread == wnode) {
-      wait_node = wnode;
-      list_remove(&wnode->node);
+  LIST_FOREACH(node, &queue->list) {
+    struct thread *list_thread = (struct thread *)((uintptr_t)node - offsetof(struct thread, wait_queue_node));
+    if (thread->tid == list_thread->tid) {
+      found = true;
       break;
     }
   }
 
-  thread->thread->state = THREAD_READY;
-  schedule_thread(thread->thread);
+  if (!found) return;
 
-  spinlock_release(&queue->lock);
+  list_remove(&thread->wait_queue_node);
+  thread->wait_queue = NULL;
+  thread->state = THREAD_READY;
 
-  if (wait_node)
-    gfree(wait_node);
+  schedule_thread(thread);
 }
 
 void waitqueue_wait(struct wait_queue *queue) {
-  struct wait_queue_node *node =
-      gmalloc(sizeof(struct wait_queue_node), ZONE_ANY);
-  struct thread *thread = get_cur_thread();
+  struct thread* thread = get_cur_thread();
+
+  thread->wait_queue = queue;
   thread->state = THREAD_WAITING;
-  node->thread = thread;
-
-  spinlock_acquire(&queue->lock);
-
-  list_insert(&queue->list, &node->node);
-
-  spinlock_release(&queue->lock);
 
   schedule();
 }
+

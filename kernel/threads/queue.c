@@ -1,16 +1,13 @@
-#include "kernel/cores.h"
+#include "lib/queue.h"
 #include "kernel/threads.h"
 #include <stddef.h>
 #include <stdint.h>
 
-CLS(struct thread_queue, core_queues);
 struct thread_queue global_queue;
 
 void init_thread_queue(struct thread_queue *queue) {
   QUEUE_INIT(&queue->queue);
 }
-
-void init_local_thread_queue(void) { init_thread_queue(GET_CLS(core_queues)); }
 
 void init_global_thread_queue(void) { init_thread_queue(&global_queue); }
 
@@ -34,11 +31,11 @@ void schedule_thread(struct thread *thread) {
 }
 
 void requeue_thread(struct thread *thread) {
-  queue_thread(GET_CLS(core_queues), thread);
+  schedule_thread(thread);
 }
 
 struct thread *pop_thread(void) {
-  struct thread_queue *queue = GET_CLS(core_queues);
+  struct thread_queue *queue = &global_queue;
   struct queue_node *node = queue_dequeue(&queue->queue);
 
   if (node == NULL) {
@@ -51,11 +48,4 @@ struct thread *pop_thread(void) {
 }
 
 void get_thread(void) {
-  struct thread *thread = pop_queue_thread(&global_queue);
-
-  if (thread == NULL)
-    return;
-
-  struct thread_queue *queue = GET_CLS(core_queues);
-  queue_thread(queue, thread);
 }

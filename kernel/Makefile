@@ -10,6 +10,5 @@ kernel-src = kernel/console.c \
 	kernel/threads/queue.c \
 	kernel/threads/sched.c \
 	kernel/threads/wait.c \
+	kernel/threads/event.c \
 	kernel/abs_time.c \
-	kernel/threads/sleep.c
-

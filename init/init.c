@@ -22,15 +22,9 @@ LIMINE_SECTION(".limine_requests_start") static volatile LIMINE_REQUESTS_START_M
 LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKER
     // clang-format on
 
-    void test(void *data) {
-  kprintf("Im here\n");
-}
-
 void thread(void) {
-  kprintf("Starting %x\n", get_core_id());
-  // sleep(10000);
-  // int_in_ms(10000, test, NULL);
-  kprintf("Done\n");
+  kprintf("Here %x\n", get_cur_thread()->tid);
+  kprintf("Here 2 %x\n", get_cur_thread()->tid);
   terminate(0);
 }
 

@@ -5,6 +5,7 @@
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "lib/atomic.h"
+#include "lib/list.h"
 #include "lib/rbtree.h"
 #include "lib/string.h"
 #include <stdbool.h>
@@ -14,6 +15,7 @@
 static struct gheap_cache thread_cache;
 static atomic_t cur_tid;
 static struct rbtree thread_ids;
+static struct event destroy_event;
 CLS(struct thread *, cur_thread);
 
 // Skips over 0
@@ -33,12 +35,13 @@ void init_general_threading(void) {
   init_global_thread_queue();
   kprintf("\t[THREADS] Initialized Global Thread Queue\n");
   rb_create(&thread_ids, compare_threads);
-  init_sleep();
+  event_create(&destroy_event, true);
+  kprintf("\t[THREADS] Created destruction event\n");
+  // init_sleep();
   kprintf("\t[THREADS] Initialized Sleeping Infrastructure\n");
 }
 
 void init_threading(void *stack) {
-  init_local_thread_queue();
   struct thread *thread = gheap_cache_alloc(&thread_cache);
 
   thread->entry = NULL;
@@ -46,7 +49,8 @@ void init_threading(void *stack) {
   thread->page_tables = __null_pages();
   thread->tid = GET_TID;
   thread->stack = stack;
-  waitqueue_create(&thread->thread_dependencies);
+  thread->event_filter = 0;
+  thread->wait_queue = NULL;
   rb_insert(&thread_ids, &thread->id_node);
 
   struct thread **cpu_thread = GET_CLS(cur_thread);
@@ -71,7 +75,7 @@ void switch_tail(struct thread *old_thread, struct thread *new_thread) {
     // Requeue thread
     requeue_thread(old_thread);
   } else if (old_thread->state == THREAD_WAITING) {
-    // Do nothing
+    list_insert(&old_thread->wait_queue->list, &old_thread->wait_queue_node);
   }
 
   struct thread **cpu_thread = GET_CLS(cur_thread);
@@ -99,9 +103,9 @@ uint64_t create_thread(void (*entry)(void)) {
   thread->tid = GET_TID;
   thread->state = THREAD_READY;
   thread->page_tables = __null_pages();
+  thread->wait_queue = NULL;
+  thread->event_filter = 0;
   __create_context(thread);
-
-  waitqueue_create(&thread->thread_dependencies);
   rb_insert(&thread_ids, &thread->id_node);
 
   schedule_thread(thread);
@@ -110,16 +114,7 @@ uint64_t create_thread(void (*entry)(void)) {
 
 void destroy_thread(struct thread *thread) {
   // Awaken all child threads
-  while (true) {
-    struct list_node *node = thread->thread_dependencies.list.next;
-    list_remove(thread->thread_dependencies.list.next);
-
-    if (node == NULL)
-      break;
-
-    struct wait_queue_node *wnode = WQ_NODE(node);
-    waitqueue_awaken(&thread->thread_dependencies, wnode);
-  }
+  event_trigger(&destroy_event, thread->tid, thread->exit_code);
 
   free_pages(thread->stack, STACK_ORDER);
   gheap_cache_free(&thread_cache, thread);
@@ -138,8 +133,5 @@ struct thread *thread_id(uint64_t id) {
 }
 
 int wait_thread(uint64_t tid) {
-  struct thread *thread = thread_id(tid);
-  waitqueue_wait(&thread->thread_dependencies);
-
-  return thread->exit_code;
+  return (int)event_wait(&destroy_event, tid);
 }

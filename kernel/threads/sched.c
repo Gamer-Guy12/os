@@ -1,3 +1,4 @@
+#include "kernel/kprintf.h"
 #include "kernel/threads.h"
 
 void schedule(void) {

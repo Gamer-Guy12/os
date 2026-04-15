@@ -8,6 +8,7 @@
 #include "lib/spinlock.h"
 #include "util.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 #define STACK_ORDER 2
 
@@ -27,19 +28,18 @@ struct wait_queue {
   spinlock_t lock;
 };
 
-struct wait_queue_node {
-  struct list_node node;
-  struct thread *thread;
-};
-
 struct thread {
   // Don't put anything before the context
   struct context context;
   struct rbnode id_node;
   struct queue_node node;
-  // Threads that are waiting for it to end
-  struct wait_queue thread_dependencies;
+  struct list_node wait_queue_node;
   uint64_t tid;
+  union {
+    size_t event_filter;
+    size_t event_return;
+  };
+  struct wait_queue *wait_queue;
   // Used for freeing the stack
   void *stack;
   void (*entry)(void);
@@ -50,6 +50,19 @@ struct thread {
 
 struct thread_queue {
   struct queue queue;
+};
+
+struct event {
+  struct wait_queue queue;
+  struct list_node threads;
+  spinlock_t lock;
+  bool uses_filter;
+};
+
+struct event_node {
+  struct list_node node;
+  uint64_t tid;
+  size_t filter;
 };
 
 // Arch dependent switch
@@ -80,11 +93,11 @@ void destroy_thread(struct thread *thread);
 
 // Init
 void init_general_threading(void);
+// Used to get the cores into the threading system
 void init_threading(void *stack);
 
 // Queueing
 void init_thread_queue(struct thread_queue *queue);
-void init_local_thread_queue(void);
 void init_global_thread_queue(void);
 struct thread *pop_queue_thread(struct thread_queue *queue);
 void queue_thread(struct thread_queue *queue, struct thread *thread);
@@ -103,7 +116,8 @@ int wait_thread(uint64_t tid);
 
 // Waiting
 void waitqueue_create(struct wait_queue *queue);
-void waitqueue_awaken(struct wait_queue *queue, struct wait_queue_node *thread);
+bool waitqueue_destroy(struct wait_queue *queue, bool force);
+void waitqueue_awaken(struct wait_queue *queue, uint64_t tid);
 // Inserts current thread into waitqueue
 void waitqueue_wait(struct wait_queue *queue);
 
@@ -111,9 +125,11 @@ void waitqueue_wait(struct wait_queue *queue);
 void init_sleep(void);
 void sleep(uint32_t ms);
 
-// List node to wait queue node
-#define WQ_NODE(node)                                                          \
-  (((struct wait_queue_node *)((uintptr_t)node -                               \
-                               offsetof(struct wait_queue_node, node))))
+// Events
+void event_create(struct event *event, bool uses_filter);
+void event_destroy(struct event *event);
+void event_trigger(struct event *event, size_t filter, size_t value);
+// Returns value
+size_t event_wait(struct event *event, size_t filter);
 
 #endif
