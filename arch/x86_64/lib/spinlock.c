@@ -26,6 +26,7 @@ void spinlock_acquire(spinlock_t *spinlock) {
 bool spinlock_attempt(spinlock_t *spinlock) {
   disable_interrupts();
   if (atomic_cas(&spinlock->val, 0, 1)) {
+    enable_interrupts();
     return true;
   }
   enable_interrupts();

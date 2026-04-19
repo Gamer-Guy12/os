@@ -6,9 +6,11 @@
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "kernel/timers.h"
+#include "lib/spinlock.h"
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
+#include "interrupts.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -23,13 +25,19 @@ LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKE
     // clang-format on
 
 void thread(void) {
-  kprintf("Here %x\n", get_cur_thread()->tid);
+  kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
   kprintf("Here 2 %x\n", get_cur_thread()->tid);
   terminate(0);
 }
 
 static NORETURN void kmain(void *new_stack);
+spinlock_t lock = SPINLOCK_ZERO;
 
+void check(void) {
+  uint64_t rflags = 0;
+  __asm__ volatile("pushf; pop %%rax" : "=a"(rflags));
+  kprintf("%x rflags\n", rflags);
+}
 // clang-format off
 INIT NORETURN void kinit(void) {
   // clang-format on
@@ -43,7 +51,7 @@ INIT NORETURN void kinit(void) {
   kprintf("[INIT] Starting Memory Initialization\n");
   init_mem();
   kprintf("[INIT] Initialized Memory\n");
-
+  
   // Starting stack switch
   __switch_stacks(kmain);
 
@@ -54,6 +62,7 @@ INIT NORETURN void kinit(void) {
 static NORETURN void kmain(void *new_stack) {
   init_cls();
   kprintf("[INIT] Initialized CLS\n");
+  disable_interrupts();
 
   BSP {
     init_general_threading();
@@ -61,7 +70,7 @@ static NORETURN void kmain(void *new_stack) {
   }
 
   init_threading(new_stack);
-  kprintf("[INIT] Initialized Threading on Core %u\n", get_core_id());
+  kprintf("[INIT] Initialized Threading on Core %u with id %x\n", get_core_id(), get_cur_thread()->tid);
 
   BSP {
     init_acpi();
@@ -79,6 +88,7 @@ static NORETURN void kmain(void *new_stack) {
     kprintf("[INIT] Initialized All Cores\n");
   }
 
+  enable_interrupts();
   BSP {
     create_thread(thread);
     create_thread(thread);
@@ -93,6 +103,7 @@ static NORETURN void kmain(void *new_stack) {
 }
 
 NORETURN void core_entry(void) {
+  disable_interrupts();
   kprintf("[INIT] Starting Core %u Initialization\n", get_core_id());
   __switch_stacks(kmain);
 

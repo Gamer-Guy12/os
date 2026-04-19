@@ -25,29 +25,29 @@ void temp_int_handler(struct int_context *context) {
 
 void INIT arch_init(void) {
   init_gdt();
-  kprintf("[INIT] Initialized GDT\n");
+  // kprintf("[INIT] Initialized GDT\n");
 
   init_interrupts();
   enable_interrupts();
-  kprintf("[INIT] Initialized Interrupts\n");
+  // kprintf("[INIT] Initialized Interrupts\n");
 
   BSP { register_int_handler(14, (void (*)(void *))temp_int_handler); }
 
   enable_apic();
-  kprintf("[INIT] Enabled APIC\n");
+  // kprintf("[INIT] Enabled APIC\n");
 
   BSP {
     init_pit();
     init_tsc();
-    kprintf("[INIT] Initialized PIT and TSC\n");
+    // kprintf("[INIT] Initialized PIT and TSC\n");
   }
 
   BSP {
     init_hpet();
-    kprintf("[INIT] Enabled Main Core Timers\n");
+    // kprintf("[INIT] Enabled Main Core Timers\n");
   }
 
-  kprintf("[INIT] Initialized APIC Timer\n");
+  // kprintf("[INIT] Initialized APIC Timer\n");
   init_apic_timer();
 }
 

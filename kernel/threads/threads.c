@@ -96,6 +96,7 @@ struct thread *get_cur_thread(void) {
 }
 
 uint64_t create_thread(void (*entry)(void)) {
+  disable_interrupts();
   struct thread *thread = gheap_cache_alloc(&thread_cache);
 
   thread->entry = entry;
@@ -107,8 +108,10 @@ uint64_t create_thread(void (*entry)(void)) {
   thread->event_filter = 0;
   __create_context(thread);
   rb_insert(&thread_ids, &thread->id_node);
+  kprintf("%x Created thread\n", thread->tid);
 
   schedule_thread(thread);
+  enable_interrupts();
   return thread->tid;
 }
 

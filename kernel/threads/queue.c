@@ -35,8 +35,7 @@ void requeue_thread(struct thread *thread) {
 }
 
 struct thread *pop_thread(void) {
-  struct thread_queue *queue = &global_queue;
-  struct queue_node *node = queue_dequeue(&queue->queue);
+  struct queue_node *node = queue_dequeue(&global_queue.queue);
 
   if (node == NULL) {
     return NULL;
