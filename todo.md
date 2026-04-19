@@ -1,12 +1,12 @@
 # TODO
 
-- [-] Thread creation
+- [x] Thread creation
     - Able to create a thread or encapsulate into a new thread
     - Need a thread trampoline
     - Able to switch between threads
-- [ ] Thread Destruction
+- [x] Thread Destruction
     - a thread can be destroyed (if it is not running)
-- [ ] Thread ID handling
+- [x] Thread ID handling
     - Can search for threads by id
 - [ ] Thread queueing
     - A system to queue up threads

@@ -52,6 +52,14 @@ INIT NORETURN void kinit(void) {
   }
 }
 
+struct thread *main_thread;
+struct thread *second_thread;
+
+void entry(void) {
+  kprintf("Here\n");
+  switch_threads(second_thread, main_thread);
+}
+
 static NORETURN void kmain(void *new_stack) {
   init_cls();
   disable_interrupts();
@@ -70,6 +78,13 @@ static NORETURN void kmain(void *new_stack) {
     kprintf("[INIT] Initialized All Cores\n");
   }
   enable_interrupts();
+
+  BSP {
+    main_thread = get_cur_thread();
+    second_thread = create_thread(entry);
+    switch_threads(main_thread, second_thread);
+    destroy_thread(second_thread);
+  }
 
   // This thread will be the idle thread
   while (true) {

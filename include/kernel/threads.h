@@ -2,10 +2,17 @@
 #define _KERNEL_THREADS_H_
 
 #include "arch/threads.h"
+#include "lib/rbtree.h"
 #include <stdbool.h>
 #include <stdint.h>
 
 #define STACK_ORDER 2
+
+#ifdef _x86_64_
+typedef uint64_t tid_t;
+#else
+typedef uint32_t tid_t;
+#endif
 
 enum thread_state {
   // Currently running
@@ -21,6 +28,8 @@ enum thread_state {
 struct thread {
   // Don't put anything before the context
   struct context context;
+  struct rbnode id_node;
+  tid_t tid;
   // Used for freeing the stack
   void *stack;
   void (*entry)(void);
@@ -41,6 +50,7 @@ pt_t __null_pages(void);
 
 // Utils
 struct thread *get_cur_thread(void);
+struct thread *thread_id(tid_t tid);
 
 // Switch
 void switch_threads(struct thread *old_thread, struct thread *new_thread);
