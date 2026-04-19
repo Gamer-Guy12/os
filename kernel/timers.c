@@ -2,7 +2,6 @@
 #include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
-#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "lib/rbtree.h"

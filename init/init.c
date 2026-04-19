@@ -1,5 +1,6 @@
 #include "init.h"
 #include "acpi.h"
+#include "interrupts.h"
 #include "kernel/console.h"
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
@@ -10,7 +11,6 @@
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
-#include "interrupts.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -24,6 +24,12 @@ LIMINE_SECTION(".limine_requests_start") static volatile LIMINE_REQUESTS_START_M
 LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKER
     // clang-format on
 
+    void check(void) {
+  uint64_t rflags = 0;
+  __asm__ volatile("pushf; pop %%rax" : "=a"(rflags));
+  kprintf("%x rflags\n", rflags);
+}
+
 void thread(void) {
   kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
   kprintf("Here 2 %x\n", get_cur_thread()->tid);
@@ -32,12 +38,6 @@ void thread(void) {
 
 static NORETURN void kmain(void *new_stack);
 spinlock_t lock = SPINLOCK_ZERO;
-
-void check(void) {
-  uint64_t rflags = 0;
-  __asm__ volatile("pushf; pop %%rax" : "=a"(rflags));
-  kprintf("%x rflags\n", rflags);
-}
 // clang-format off
 INIT NORETURN void kinit(void) {
   // clang-format on
@@ -51,7 +51,7 @@ INIT NORETURN void kinit(void) {
   kprintf("[INIT] Starting Memory Initialization\n");
   init_mem();
   kprintf("[INIT] Initialized Memory\n");
-  
+
   // Starting stack switch
   __switch_stacks(kmain);
 
@@ -70,7 +70,8 @@ static NORETURN void kmain(void *new_stack) {
   }
 
   init_threading(new_stack);
-  kprintf("[INIT] Initialized Threading on Core %u with id %x\n", get_core_id(), get_cur_thread()->tid);
+  kprintf("[INIT] Initialized Threading on Core %u with id %x\n", get_core_id(),
+          get_cur_thread()->tid);
 
   BSP {
     init_acpi();
@@ -94,6 +95,7 @@ static NORETURN void kmain(void *new_stack) {
     create_thread(thread);
     create_thread(thread);
     create_thread(thread);
+    kprintf("Finished Creation\n");
   }
 
   // This thread will be the idle thread

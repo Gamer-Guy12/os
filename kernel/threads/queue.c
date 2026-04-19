@@ -1,4 +1,6 @@
 #include "lib/queue.h"
+#include "kernel/cores.h"
+#include "kernel/kprintf.h"
 #include "kernel/threads.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -31,6 +33,7 @@ void schedule_thread(struct thread *thread) {
 }
 
 void requeue_thread(struct thread *thread) {
+  kprintf("Requeue %x\n", thread->tid);
   schedule_thread(thread);
 }
 
@@ -43,8 +46,8 @@ struct thread *pop_thread(void) {
 
   uintptr_t thread = (uintptr_t)node - offsetof(struct thread, node);
 
+  kprintf("Pop %x %x\n", ((struct thread *)thread)->tid, get_core_id());
   return (struct thread *)thread;
 }
 
-void get_thread(void) {
-}
+void get_thread(void) {}
