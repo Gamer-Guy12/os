@@ -267,7 +267,7 @@ INIT void init_hpet(void) {
 
     register_timer((void *)timer);
 
-    kprintf("\t[HPET] Initialized HPET Comparator %d\n", i);
+    // kprintf("\t[HPET] Initialized HPET Comparator %d\n", i);
   }
 
   if (unmask_2) {

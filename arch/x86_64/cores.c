@@ -23,7 +23,7 @@ static struct {
 static void entry(struct limine_mp_info *info) {
   __asm__ volatile("mov %0, %%cr3" ::"r"(startup_info.cr3) : "memory");
 
-  core_entry();
+  kinit();
 
   while (1) {
   }

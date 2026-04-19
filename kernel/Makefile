@@ -5,10 +5,6 @@ kernel-src = kernel/console.c \
 	kernel/mem/buddy.c \
 	kernel/mem/page.c \
 	kernel/mem/gheap.c \
-	kernel/threads/threads.c \
 	kernel/timers.c \
-	kernel/threads/queue.c \
-	kernel/threads/sched.c \
-	kernel/threads/wait.c \
-	kernel/threads/event.c \
 	kernel/abs_time.c \
+	kernel/threads/threads.c \

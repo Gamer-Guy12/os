@@ -3,7 +3,6 @@
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
 #include "kernel/mem.h"
-#include "kernel/threads.h"
 #include "lib/rbtree.h"
 #include "lib/rlist.h"
 #include "util.h"
@@ -72,8 +71,6 @@ void increment_tick(void) {
 
   // Run anything that happens every tick
   handle_timers();
-  get_thread();
-  schedule();
 }
 
 uint64_t get_cur_tick(void) {

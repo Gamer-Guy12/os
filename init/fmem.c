@@ -1,4 +1,3 @@
-#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -14,7 +13,7 @@ struct fmem_node *freelist = NULL;
 
 void init_fmem(uintptr_t direct_offset) {
   hhdm_offset = direct_offset;
-  kprintf("\t[MEM] Initialized FMem\n");
+  // kprintf("\t[MEM] Initialized FMem\n");
 }
 
 void *fmem_palloc(void) {

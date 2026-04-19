@@ -17,7 +17,7 @@ static struct limine_memmap_entry **memmap_entries = NULL;
 static INIT void free_regions(void) {
   memmap_entry_count = memmap_request.response->entry_count;
   memmap_entries = memmap_request.response->entries;
-  kprintf("\t[MEM] Map Entry Count: %u\n", memmap_entry_count);
+  kprintf("[MEM] Map Entry Count: %u\n", memmap_entry_count);
   uint64_t usable_region_count = 0;
 
   for (uint64_t i = 0; i < memmap_entry_count; i++) {
@@ -28,7 +28,7 @@ static INIT void free_regions(void) {
       usable_region_count++;
     }
   }
-  kprintf("\t[MEM] Freed Usable Regions: %u\n", usable_region_count);
+  kprintf("[MEM] Freed Usable Regions: %u\n", usable_region_count);
 }
 
 static INIT void add_to_buddy(void) {
@@ -40,7 +40,7 @@ static INIT void add_to_buddy(void) {
     count++;
     ptr = fmem_palloc();
   }
-  kprintf("\t[MEM] Freed 0x%x Pages for Buddy\n", count);
+  kprintf("[MEM] Freed 0x%x Pages for Buddy\n", count);
 }
 
 void init_mem(void) {

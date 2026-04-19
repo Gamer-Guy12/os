@@ -83,8 +83,6 @@ void gheap_cache_create(struct gheap_cache *cache, size_t object_size,
 }
 
 void INIT init_gheap(void) {
-  kprintf("\t[MEM] Initializing Gheap\n");
-
   init_cache(&slab_cache, sizeof(struct gheap_slab), ZONE_ANY, false);
 
   for (int i = 0; i < ZONE_COUNT; i++) {
@@ -93,7 +91,7 @@ void INIT init_gheap(void) {
     }
   }
 
-  kprintf("\t[MEM] Initialized Gheap\n");
+  // kprintf("[MEM] Initialized Gheap\n");
 }
 
 static void *slab_create(struct gheap_slab *slab, struct gheap_cache *cache,

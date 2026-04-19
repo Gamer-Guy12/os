@@ -53,7 +53,7 @@ INIT void init_buddy(void) {
   }
 
   init_buddy_data();
-  kprintf("\t[MEM] Initialized Buddy Data\n");
+  kprintf("[MEM] Initialized Buddy Data\n");
 }
 
 static inline uint64_t page_to_zone_index(uint64_t page_index, int zone) {

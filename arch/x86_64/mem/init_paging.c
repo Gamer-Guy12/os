@@ -208,7 +208,7 @@ reserve_page_struct_space(size_t entry_count,
 
   memset(pages, 0, pages_needed * PAGE_SIZE);
 
-  kprintf("\t[MEM] Reserved %u Pages for Page Structs\n", pages_needed);
+  kprintf("[MEM] Reserved %u Pages for Page Structs\n", pages_needed);
 }
 
 static INIT void reserve_buddy_space(size_t entry_count,
@@ -225,7 +225,7 @@ static INIT void reserve_buddy_space(size_t entry_count,
 
   memset((void *)BUDDY_DATA_ADDR, 0, pages_needed * PAGE_SIZE);
 
-  kprintf("\t[MEM] Reserved %u Pages for Buddy Data\n", pages_needed);
+  kprintf("[MEM] Reserved %u Pages for Buddy Data\n", pages_needed);
 }
 
 uintptr_t get_max_addr(void) { return max_addr; }
@@ -272,5 +272,5 @@ INIT void init_paging(uint64_t map_entry_count,
   reserve_page_struct_space(map_entry_count, map_entries);
   reserve_buddy_space(map_entry_count, map_entries);
 
-  kprintf("\t[MEM] Initialized Paging\n");
+  kprintf("[MEM] Initialized Paging\n");
 }
