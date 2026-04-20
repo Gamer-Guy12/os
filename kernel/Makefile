@@ -8,3 +8,4 @@ kernel-src = kernel/console.c \
 	kernel/timers.c \
 	kernel/abs_time.c \
 	kernel/threads/threads.c \
+	kernel/threads/queue.c \

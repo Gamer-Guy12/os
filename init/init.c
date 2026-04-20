@@ -52,12 +52,13 @@ INIT NORETURN void kinit(void) {
   }
 }
 
-struct thread *main_thread;
-struct thread *second_thread;
-
 void entry(void) {
-  kprintf("Here\n");
-  switch_threads(second_thread, main_thread);
+  kprintf("Here %x\n", get_cur_thread()->tid);
+  switch_threads(get_cur_thread(), pop_thread());
+  kprintf("Here %x\n", get_cur_thread()->tid);
+  switch_threads(get_cur_thread(), pop_thread());
+  while (1) {
+  }
 }
 
 static NORETURN void kmain(void *new_stack) {
@@ -80,14 +81,15 @@ static NORETURN void kmain(void *new_stack) {
   enable_interrupts();
 
   BSP {
-    main_thread = get_cur_thread();
-    second_thread = create_thread(entry);
-    switch_threads(main_thread, second_thread);
-    destroy_thread(second_thread);
+    kprintf("%x\n", create_thread(entry, TP_NORMAL)->tid);
+    kprintf("%x\n", create_thread(entry, TP_INTERRUPT)->tid);
+    kprintf("%x\n", create_thread(entry, TP_INTERRUPT)->tid);
+    switch_threads(get_cur_thread(), pop_thread());
+    switch_threads(get_cur_thread(), pop_thread());
   }
 
   // This thread will be the idle thread
+  get_cur_thread()->priority = TP_IDLE;
   while (true) {
   }
 }
-

@@ -8,7 +8,7 @@
     - a thread can be destroyed (if it is not running)
 - [x] Thread ID handling
     - Can search for threads by id
-- [ ] Thread queueing
+- [-] Thread queueing
     - A system to queue up threads
     - Simple priority system
     - global queue

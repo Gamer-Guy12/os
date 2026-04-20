@@ -2,6 +2,7 @@
 #include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
+#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "lib/rbtree.h"
 #include "util.h"
@@ -28,6 +29,7 @@ INIT void init_threading(void *stack) {
   BSP {
     gheap_cache_create(&thread_cache, sizeof(struct thread), ZONE_ANY);
     rb_create(&id_tree, compare_ids);
+    init_thread_queues();
   }
 
   struct thread *thread = gheap_cache_alloc(&thread_cache);
@@ -37,12 +39,16 @@ INIT void init_threading(void *stack) {
   thread->stack = stack;
   thread->state = THREAD_RUNNING;
   thread->page_tables = __null_pages();
+  // Finish off everything that is needed in init and then it will be swapped to
+  // idle
+  thread->priority = TP_HIGH;
 
   struct thread **core_thread = GET_CLS(cpu_thread);
   *core_thread = thread;
 }
 
-struct thread *create_thread(void (*entry)(void)) {
+struct thread *create_thread(void (*entry)(void),
+                             enum thread_priority priority) {
   struct thread *thread = gheap_cache_alloc(&thread_cache);
 
   thread->tid = GET_TID;
@@ -50,7 +56,9 @@ struct thread *create_thread(void (*entry)(void)) {
   thread->stack = alloc_pages(STACK_ORDER, ZONE_ANY);
   thread->state = THREAD_READY;
   thread->page_tables = __null_pages();
+  thread->priority = priority;
   __create_context(thread);
+  schedule_thread(thread);
 
   return thread;
 }
@@ -61,28 +69,32 @@ void destroy_thread(struct thread *thread) {
 }
 
 void switch_threads(struct thread *old_thread, struct thread *new_thread) {
+  struct thread **thread = GET_CLS(cpu_thread);
+  *thread = new_thread;
+  new_thread->prev = old_thread;
   disable_interrupts();
   if (new_thread->page_tables != __cur_pages() &&
       !__pages_null(new_thread->page_tables))
     __switch_pages(new_thread->page_tables);
   __switch_context(&old_thread->context, &new_thread->context);
-  switch_tail(old_thread, new_thread);
+  switch_tail();
 }
 
-void switch_tail(struct thread *old_thread, struct thread *new_thread) {
+void switch_tail(void) {
+  struct thread *new_thread = get_cur_thread();
+  struct thread *old_thread = new_thread->prev;
   switch (old_thread->state) {
   case THREAD_RUNNING:
     old_thread->state = THREAD_READY;
+    requeue_thread(old_thread);
   default:;
   }
 
   new_thread->state = THREAD_RUNNING;
-  struct thread **thread = GET_CLS(cpu_thread);
-  *thread = new_thread;
 }
 
 void thread_trampoline(struct thread *old_thread, struct thread *new_thread) {
-  switch_tail(old_thread, new_thread);
+  switch_tail();
   new_thread->entry();
 }
 

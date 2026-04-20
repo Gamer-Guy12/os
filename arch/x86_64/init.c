@@ -21,6 +21,7 @@ void temp_int_handler(struct int_context *context) {
   uint64_t cr2;
   __asm__ volatile("mov %%cr2, %0" : "=r"(cr2));
   kprintf("Page Fault Address: %x\n", cr2);
+  panic();
 }
 
 void INIT arch_init(void) {

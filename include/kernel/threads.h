@@ -2,7 +2,9 @@
 #define _KERNEL_THREADS_H_
 
 #include "arch/threads.h"
+#include "lib/queue.h"
 #include "lib/rbtree.h"
+#include "lib/spinlock.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -25,16 +27,36 @@ enum thread_state {
   THREAD_READY
 };
 
+enum thread_priority {
+  // Used for work queues that are handling interrupts and stuff
+  TP_INTERRUPT,
+  // Used for important stuff (like handling timer interrupts)
+  TP_HIGH,
+  // Used for normal threads
+  TP_NORMAL,
+  // Used for the idle threads
+  TP_IDLE,
+  TP_COUNT
+};
+
 struct thread {
   // Don't put anything before the context
   struct context context;
   struct rbnode id_node;
+  struct queue_node queue_node;
   tid_t tid;
   // Used for freeing the stack
   void *stack;
   void (*entry)(void);
+  struct thread *prev;
   pt_t page_tables;
   enum thread_state state;
+  enum thread_priority priority;
+};
+
+struct thread_queue {
+  struct queue queues[TP_COUNT];
+  spinlock_t queue_lock;
 };
 
 // Arch dependent switch
@@ -54,14 +76,23 @@ struct thread *thread_id(tid_t tid);
 
 // Switch
 void switch_threads(struct thread *old_thread, struct thread *new_thread);
-void switch_tail(struct thread *old_thread, struct thread *new_thread);
+void switch_tail(void);
 void thread_trampoline(struct thread *old_thread, struct thread *new_thread);
 
 // Init
 void init_threading(void *stack);
+void init_thread_queues(void);
+void init_thread_queue(struct thread_queue *queue);
 
 // Creation
-struct thread *create_thread(void (*entry)(void));
+struct thread *create_thread(void (*entry)(void), enum thread_priority priority);
 void destroy_thread(struct thread *thread);
+
+// Queueing
+struct thread *pop_queue_thread(struct thread_queue *queue);
+void enqueue_thread(struct thread_queue *queue, struct thread *thread);
+struct thread *pop_thread(void);
+void schedule_thread(struct thread *thread);
+void requeue_thread(struct thread *thread);
 
 #endif
