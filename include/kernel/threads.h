@@ -52,6 +52,7 @@ struct thread {
   pt_t page_tables;
   enum thread_state state;
   enum thread_priority priority;
+  int exit_code;
 };
 
 struct thread_queue {
@@ -85,7 +86,8 @@ void init_thread_queues(void);
 void init_thread_queue(struct thread_queue *queue);
 
 // Creation
-struct thread *create_thread(void (*entry)(void), enum thread_priority priority);
+struct thread *create_thread(void (*entry)(void),
+                             enum thread_priority priority);
 void destroy_thread(struct thread *thread);
 
 // Queueing
@@ -94,5 +96,10 @@ void enqueue_thread(struct thread_queue *queue, struct thread *thread);
 struct thread *pop_thread(void);
 void schedule_thread(struct thread *thread);
 void requeue_thread(struct thread *thread);
+
+// Lifecycle
+// Guarenteed to switch (unless your an idle thread)
+void schedule(void);
+void terminate(int code);
 
 #endif

@@ -87,6 +87,10 @@ void switch_tail(void) {
   case THREAD_RUNNING:
     old_thread->state = THREAD_READY;
     requeue_thread(old_thread);
+    break;
+  case THREAD_TERMINATED:
+    destroy_thread(old_thread);
+    break;
   default:;
   }
 

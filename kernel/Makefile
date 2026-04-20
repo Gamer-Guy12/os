@@ -9,3 +9,4 @@ kernel-src = kernel/console.c \
 	kernel/abs_time.c \
 	kernel/threads/threads.c \
 	kernel/threads/queue.c \
+	kernel/threads/life.c \

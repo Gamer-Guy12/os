@@ -53,12 +53,10 @@ INIT NORETURN void kinit(void) {
 }
 
 void entry(void) {
-  kprintf("Here %x\n", get_cur_thread()->tid);
-  switch_threads(get_cur_thread(), pop_thread());
-  kprintf("Here %x\n", get_cur_thread()->tid);
-  switch_threads(get_cur_thread(), pop_thread());
-  while (1) {
-  }
+  kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
+  schedule();
+  kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
+  terminate(0);
 }
 
 static NORETURN void kmain(void *new_stack) {
@@ -84,12 +82,12 @@ static NORETURN void kmain(void *new_stack) {
     kprintf("%x\n", create_thread(entry, TP_NORMAL)->tid);
     kprintf("%x\n", create_thread(entry, TP_INTERRUPT)->tid);
     kprintf("%x\n", create_thread(entry, TP_INTERRUPT)->tid);
-    switch_threads(get_cur_thread(), pop_thread());
-    switch_threads(get_cur_thread(), pop_thread());
+    schedule();
   }
 
   // This thread will be the idle thread
   get_cur_thread()->priority = TP_IDLE;
   while (true) {
+    schedule();
   }
 }
