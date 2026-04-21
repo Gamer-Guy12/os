@@ -40,7 +40,7 @@ static void hpet_write_reg(uint16_t reg, uint64_t val) {
   *reg_addr = val;
 }
 
-spinlock_t hpet_handler_lock = SPINLOCK_ZERO;
+SPINLOCK(hpet_handler_lock);
 
 static void handle_line(uint8_t hpet) {
   hpet_write_reg(HPET_GEN_INT_STATUS, 1 << hpet);

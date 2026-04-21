@@ -8,6 +8,7 @@
 typedef struct {
 #ifdef _DEBUG_
   int current_core;
+  char name[20];
 #endif
   atomic_t val;
 } spinlock_t;
@@ -17,10 +18,16 @@ bool spinlock_attempt(spinlock_t *spinlock);
 void spinlock_release(spinlock_t *spinlock);
 
 #ifdef _DEBUG_
-#define SPINLOCK_ZERO                                                          \
-  { .current_core = -1, .val = ATOMIC_ZERO }
+#define SPINLOCK(lock_name)                                                    \
+  spinlock_t lock_name = {                                                     \
+      .current_core = -1, .val = ATOMIC_ZERO, .name = #lock_name}
+
+#define SPINLOCK_ZERO(lock_name)                                               \
+  { .current_core = -1, .val = ATOMIC_ZERO, .name = #lock_name }
 #else
-#define SPINLOCK_ZERO                                                          \
+#define SPINLOCK(lock_name) spinlock_t lock_name = {.val = ATOMIC_ZERO}
+
+#define SPINLOCK_ZERO(lock_name)                                               \
   { .val = ATOMIC_ZERO }
 #endif
 

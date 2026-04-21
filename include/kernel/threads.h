@@ -43,6 +43,7 @@ struct thread {
   // Don't put anything before the context
   struct context context;
   struct rbnode id_node;
+  struct rbnode wait_node;
   struct queue_node queue_node;
   tid_t tid;
   // Used for freeing the stack
@@ -101,5 +102,12 @@ void requeue_thread(struct thread *thread);
 // Guarenteed to switch (unless your an idle thread)
 void schedule(void);
 void terminate(int code);
+
+// Wait
+// Wait current thread
+void wait(void);
+void awaken_thread(tid_t thread);
+void __insert_wait_thread(struct thread *thread);
+void init_waiting(void);
 
 #endif

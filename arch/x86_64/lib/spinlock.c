@@ -1,8 +1,10 @@
 #include "lib/spinlock.h"
 #include "interrupts.h"
+#include "kernel/console.h"
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
 #include "lib/atomic.h"
+#include "lib/string.h"
 #include "util.h"
 #include <stdbool.h>
 
@@ -10,7 +12,11 @@ void spinlock_acquire(spinlock_t *spinlock) {
   disable_interrupts();
 #ifdef _DEBUG_
   if (spinlock->current_core == get_core_id()) {
-    kprintf("Deadlock detected\n");
+    kprintf("Deadlock detected on lock: ");
+    for (int i = 0; i < strlen(spinlock->name); i++) {
+      console_putchar(spinlock->name[i]);
+    }
+    kprintf("\n");
     panic();
   }
 #endif

@@ -9,7 +9,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-static spinlock_t print_lock = SPINLOCK_ZERO;
+static spinlock_t print_lock = SPINLOCK_ZERO(print_lock);
 
 int kprintf(const char *format, ...) {
   va_list list;

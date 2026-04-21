@@ -14,7 +14,7 @@
     - global queue
 - [x] Thread termination
     - Threads can destroy themselves
-- [ ] Thread waiting
+- [x] Thread waiting
     - A thread can wait to be awoken
 - [ ] Event
     - Events that can wake up threads

@@ -26,10 +26,10 @@ struct rlist_node *__rlist_use(struct rlist *list);
 #define RLIST_INIT(list)                                                       \
   do {                                                                         \
     (list)->cur = NULL;                                                        \
-    (list)->lock = (spinlock_t)SPINLOCK_ZERO;                                  \
+    (list)->lock = (spinlock_t)SPINLOCK_ZERO(misc_rlist);                      \
   } while (0);
 
 #define RLIST_CREATE(name)                                                     \
-  struct rlist name = {.cur = NULL, .lock = SPINLOCK_ZERO}
+  struct rlist name = {.cur = NULL, .lock = SPINLOCK_ZERO(name)}
 
 #endif

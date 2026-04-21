@@ -43,7 +43,7 @@ static INIT void init_buddy_data(void) {
 
 INIT void init_buddy(void) {
   for (int i = 0; i < ZONE_COUNT; i++) {
-    zones[i].lock = (spinlock_t)SPINLOCK_ZERO;
+    zones[i].lock = (spinlock_t)SPINLOCK_ZERO(zone_lock);
     get_zone_info(get_zone(i), &zones[i].start, &zones[i].end);
 
     for (int j = 0; j < MAX_ORDER; j++) {

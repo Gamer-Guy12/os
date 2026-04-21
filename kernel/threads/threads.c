@@ -2,7 +2,6 @@
 #include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
-#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "lib/rbtree.h"
 #include "util.h"
@@ -22,7 +21,7 @@ static int compare_ids(struct rbnode *n1, struct rbnode *n2) {
   struct thread *thread2 =
       (struct thread *)((uintptr_t)n2 - offsetof(struct thread, id_node));
 
-  return thread1 - thread2;
+  return thread1->tid - thread2->tid;
 }
 
 INIT void init_threading(void *stack) {
@@ -30,6 +29,7 @@ INIT void init_threading(void *stack) {
     gheap_cache_create(&thread_cache, sizeof(struct thread), ZONE_ANY);
     rb_create(&id_tree, compare_ids);
     init_thread_queues();
+    init_waiting();
   }
 
   struct thread *thread = gheap_cache_alloc(&thread_cache);
@@ -90,6 +90,9 @@ void switch_tail(void) {
     break;
   case THREAD_TERMINATED:
     destroy_thread(old_thread);
+    break;
+  case THREAD_WAITING:
+    __insert_wait_thread(old_thread);
     break;
   default:;
   }

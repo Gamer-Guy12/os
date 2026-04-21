@@ -11,7 +11,7 @@ void rb_create(struct rbtree *tree,
   tree->compare = compare;
   tree->root = NULL;
   tree->count = 0;
-  tree->lock = (spinlock_t)SPINLOCK_ZERO;
+  tree->lock = (spinlock_t)SPINLOCK_ZERO(misc_rbtree);
 }
 
 static void insert(struct rbtree *tree, struct rbnode *node) {
@@ -387,6 +387,7 @@ struct rbnode *rb_search(struct rbtree *tree, struct rbnode *subtree,
   }
 
   if (subtree == NULL) {
+    spinlock_release(&tree->lock);
     return NULL;
   }
 
@@ -397,12 +398,14 @@ struct rbnode *rb_search(struct rbtree *tree, struct rbnode *subtree,
       subtree = subtree->left;
 
       if (subtree == &rbnil) {
+        spinlock_release(&tree->lock);
         return NULL;
       }
     } else if (compval < 0) {
       subtree = subtree->right;
 
       if (subtree == &rbnil) {
+        spinlock_release(&tree->lock);
         return NULL;
       }
     } else {
@@ -455,6 +458,7 @@ struct rbnode *rb_delete_search(struct rbtree *tree, struct rbnode *subtree,
   }
 
   if (subtree == NULL) {
+    spinlock_release(&tree->lock);
     return NULL;
   }
 
@@ -465,12 +469,14 @@ struct rbnode *rb_delete_search(struct rbtree *tree, struct rbnode *subtree,
       subtree = subtree->left;
 
       if (subtree == &rbnil) {
+        spinlock_release(&tree->lock);
         return NULL;
       }
     } else if (compval < 0) {
       subtree = subtree->right;
 
       if (subtree == &rbnil) {
+        spinlock_release(&tree->lock);
         return NULL;
       }
     } else {

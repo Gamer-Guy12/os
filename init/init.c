@@ -7,7 +7,6 @@
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "kernel/timers.h"
-#include "lib/spinlock.h"
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
@@ -24,7 +23,6 @@ LIMINE_SECTION(".limine_requests_start") static volatile LIMINE_REQUESTS_START_M
 LIMINE_SECTION(".limine_requests_end") static volatile LIMINE_REQUESTS_END_MARKER
     // clang-format on
     static NORETURN void kmain(void *new_stack);
-spinlock_t lock = SPINLOCK_ZERO;
 // clang-format off
 INIT NORETURN void kinit(void) {
   BSP {
@@ -54,7 +52,7 @@ INIT NORETURN void kinit(void) {
 
 void entry(void) {
   kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
-  schedule();
+  wait();
   kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
   terminate(0);
 }
@@ -77,17 +75,25 @@ static NORETURN void kmain(void *new_stack) {
     kprintf("[INIT] Initialized All Cores\n");
   }
   enable_interrupts();
+  tid_t t3 = 0;
 
   BSP {
-    kprintf("%x\n", create_thread(entry, TP_NORMAL)->tid);
-    kprintf("%x\n", create_thread(entry, TP_INTERRUPT)->tid);
-    kprintf("%x\n", create_thread(entry, TP_INTERRUPT)->tid);
+    tid_t t1 = create_thread(entry, TP_NORMAL)->tid;
+    tid_t t2 = create_thread(entry, TP_INTERRUPT)->tid;
+    t3 = create_thread(entry, TP_INTERRUPT)->tid;
+    kprintf("%x\n", t1);
+    kprintf("%x\n", t2);
+    kprintf("%x\n", t3);
     schedule();
   }
 
   // This thread will be the idle thread
   get_cur_thread()->priority = TP_IDLE;
+  BSP {
+    kprintf("awaken\n");
+    awaken_thread(t3);
+  }
   while (true) {
-    schedule();
+    BSP { schedule(); }
   }
 }

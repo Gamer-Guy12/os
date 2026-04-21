@@ -4,8 +4,9 @@ void schedule(void) {
   struct thread *thread = get_cur_thread();
   struct thread *new_thread = pop_thread();
 
-  if (new_thread == NULL || new_thread == thread)
+  if (new_thread == NULL || new_thread == thread) {
     return;
+  }
 
   switch_threads(thread, new_thread);
 }
