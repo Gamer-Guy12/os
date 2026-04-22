@@ -29,7 +29,6 @@ INIT void init_threading(void *stack) {
     gheap_cache_create(&thread_cache, sizeof(struct thread), ZONE_ANY);
     rb_create(&id_tree, compare_ids);
     init_thread_queues();
-    init_waiting();
   }
 
   struct thread *thread = gheap_cache_alloc(&thread_cache);

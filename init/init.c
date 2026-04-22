@@ -52,7 +52,6 @@ INIT NORETURN void kinit(void) {
 
 void entry(void) {
   kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
-  wait();
   kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
   terminate(0);
 }
@@ -89,10 +88,6 @@ static NORETURN void kmain(void *new_stack) {
 
   // This thread will be the idle thread
   get_cur_thread()->priority = TP_IDLE;
-  BSP {
-    kprintf("awaken\n");
-    awaken_thread(t3);
-  }
   while (true) {
     BSP { schedule(); }
   }

@@ -15,6 +15,10 @@ void disable_interrupts(void) {
   }
 }
 
+void temp_disable_interrupts(void) {
+  __asm__ volatile("cli" ::: "memory");
+}
+
 // Since this only happens on one core at a time its fine to not use atomics
 void enable_interrupts(void) {
   int *this_int = GET_CLS(interrupt_count);

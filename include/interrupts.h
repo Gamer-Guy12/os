@@ -5,6 +5,7 @@
 
 void disable_interrupts(void);
 void enable_interrupts(void);
+void temp_disable_interrupts(void);
 
 // Handler takes in a pointer to the context which is arch specific
 void register_int_handler(uint16_t interrupt, void handler(void *));

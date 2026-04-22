@@ -2,6 +2,7 @@
 #define _KERNEL_THREADS_H_
 
 #include "arch/threads.h"
+#include "lib/list.h"
 #include "lib/queue.h"
 #include "lib/rbtree.h"
 #include "lib/spinlock.h"
@@ -43,13 +44,14 @@ struct thread {
   // Don't put anything before the context
   struct context context;
   struct rbnode id_node;
-  struct rbnode wait_node;
+  struct list_node wait_node;
   struct queue_node queue_node;
   tid_t tid;
   // Used for freeing the stack
   void *stack;
   void (*entry)(void);
   struct thread *prev;
+  struct wait_queue *wait_queue;
   pt_t page_tables;
   enum thread_state state;
   enum thread_priority priority;
@@ -59,6 +61,15 @@ struct thread {
 struct thread_queue {
   struct queue queues[TP_COUNT];
   spinlock_t queue_lock;
+};
+
+struct wait_queue {
+  struct list_node waiting_threads;
+  // 2 bits
+  // bit 0: 0 means continue, 1 means stop
+  // bit 1: 1 means accept, 0 means don't
+  int (*check_thread)(struct thread *thread, void *data);
+  spinlock_t wait_lock;
 };
 
 // Arch dependent switch
@@ -105,9 +116,13 @@ void terminate(int code);
 
 // Wait
 // Wait current thread
-void wait(void);
-void awaken_thread(tid_t thread);
+void waitqueue_create(struct wait_queue *queue,
+                      int (*check_thread)(struct thread *, void *));
+void waitqueue_wait(struct wait_queue *queue);
+void waitqueue_awaken(struct wait_queue *queue, void *data);
+// force means whether to return if there are still threads or awaken all
+// threads
+bool waitqueue_destroy(struct wait_queue *queue, bool force);
 void __insert_wait_thread(struct thread *thread);
-void init_waiting(void);
 
 #endif
