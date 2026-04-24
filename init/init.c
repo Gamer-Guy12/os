@@ -50,8 +50,19 @@ INIT NORETURN void kinit(void) {
   }
 }
 
+struct wait_queue queue;
+
+static int check(struct thread *thread, void *data) {
+  if (thread->tid == (tid_t)data) {
+    return 3;
+  }
+
+  return 0;
+}
+
 void entry(void) {
   kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
+  waitqueue_wait(&queue);
   kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
   terminate(0);
 }
@@ -77,13 +88,13 @@ static NORETURN void kmain(void *new_stack) {
   tid_t t3 = 0;
 
   BSP {
+    waitqueue_create(&queue, check);
     tid_t t1 = create_thread(entry, TP_NORMAL)->tid;
     tid_t t2 = create_thread(entry, TP_INTERRUPT)->tid;
     t3 = create_thread(entry, TP_INTERRUPT)->tid;
     kprintf("%x\n", t1);
     kprintf("%x\n", t2);
     kprintf("%x\n", t3);
-    schedule();
   }
 
   // This thread will be the idle thread

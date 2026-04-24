@@ -24,6 +24,7 @@ void waitqueue_wait(struct wait_queue *queue) {
 void waitqueue_awaken(struct wait_queue *queue, void *data) {
   struct list_node *pos = NULL;
   spinlock_acquire(&queue->wait_lock);
+  size_t count = 0;
   LIST_FOREACH(pos, &queue->waiting_threads) {
     struct thread *thread =
         (struct thread *)((uintptr_t)pos - offsetof(struct thread, wait_node));
@@ -35,6 +36,7 @@ void waitqueue_awaken(struct wait_queue *queue, void *data) {
     if (accept) {
       pos->next->prev = pos->prev;
       pos->prev->next = pos->next;
+      count++;
 
       schedule_thread(thread);
     }
@@ -42,6 +44,7 @@ void waitqueue_awaken(struct wait_queue *queue, void *data) {
     if (!cont)
       break;
   }
+  queue->wait_count += count;
   spinlock_release(&queue->wait_lock);
 }
 
@@ -75,5 +78,6 @@ void __insert_wait_thread(struct thread *thread) {
 
   spinlock_acquire(&queue->wait_lock);
   list_insert(&queue->waiting_threads, &thread->wait_node);
+  queue->wait_count++;
   spinlock_release(&queue->wait_lock);
 }

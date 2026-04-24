@@ -69,6 +69,7 @@ struct wait_queue {
   // bit 0: 0 means continue, 1 means stop
   // bit 1: 1 means accept, 0 means don't
   int (*check_thread)(struct thread *thread, void *data);
+  size_t wait_count;
   spinlock_t wait_lock;
 };
 
