@@ -2,6 +2,7 @@
 #define _KERNEL_THREADS_H_
 
 #include "arch/threads.h"
+#include "lib/atomic.h"
 #include "lib/list.h"
 #include "lib/queue.h"
 #include "lib/rbtree.h"
@@ -37,7 +38,8 @@ enum thread_priority {
   TP_NORMAL,
   // Used for the idle threads
   TP_IDLE,
-  TP_COUNT
+  TP_COUNT,
+  TP_NO_QUEUE
 };
 
 struct thread {
@@ -51,7 +53,11 @@ struct thread {
   void *stack;
   void (*entry)(void);
   struct thread *prev;
-  struct wait_queue *wait_queue;
+  union {
+    struct wait_queue *wait_queue;
+    // Only used on entry
+    void *data;
+  };
   size_t event_filter;
   pt_t page_tables;
   enum thread_state state;
@@ -70,13 +76,33 @@ struct wait_queue {
   // bit 0: 0 means continue, 1 means stop
   // bit 1: 1 means accept, 0 means don't
   int (*check_thread)(struct thread *thread, void *data);
-  size_t wait_count;
+  atomic_t wait_count;
   spinlock_t wait_lock;
 };
 
 struct event {
   struct wait_queue queue;
   bool uses_filter;
+};
+
+#define DEF_TASKS_THREAD 30
+
+struct work_task {
+  struct queue_node node;
+  void (*task)(void *data);
+  void *data;
+};
+
+struct work_queue {
+  enum thread_priority priority;
+  struct wait_queue workers;
+  struct queue tasks;
+  size_t task_count;
+  size_t worker_threads;
+  size_t tasks_per_thread;
+  // 0 alive, 1 dying, 2 dead
+  size_t state;
+  spinlock_t queue_lock;
 };
 
 // Arch dependent switch
@@ -130,6 +156,7 @@ void waitqueue_create(struct wait_queue *queue,
                       int (*check_thread)(struct thread *, void *));
 void waitqueue_wait(struct wait_queue *queue);
 void waitqueue_awaken(struct wait_queue *queue, void *data);
+void waitqueue_awaken_all(struct wait_queue *queue);
 // force means whether to return if there are still threads or awaken all
 // threads
 bool waitqueue_destroy(struct wait_queue *queue, bool force);
@@ -140,5 +167,14 @@ void event_create(struct event *event, bool uses_filter);
 void event_wait(struct event *event, size_t filter);
 void event_trigger(struct event *event, size_t filter);
 void event_destroy(struct event *event, bool force);
+
+// Work Queues
+// tasks_per_thread, when set to 0 defaults to DEF_TASKS_THREAD
+void work_queue_create(struct work_queue *queue, enum thread_priority priority,
+                       size_t tasks_per_thread);
+void work_queue_add(struct work_queue *queue, void (*task)(void *), void *data);
+void work_queue_destroy(struct work_queue *queue);
+bool work_queue_dead(struct work_queue *queue);
+size_t work_queue_task_count(struct work_queue *queue);
 
 #endif

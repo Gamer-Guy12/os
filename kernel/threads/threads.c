@@ -60,7 +60,8 @@ struct thread *create_thread(void (*entry)(void),
   __create_context(thread);
   rb_insert(&id_tree, &thread->id_node);
 
-  schedule_thread(thread);
+  if (priority != TP_NO_QUEUE)
+    schedule_thread(thread);
 
   return thread;
 }

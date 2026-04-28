@@ -45,7 +45,21 @@ void waitqueue_awaken(struct wait_queue *queue, void *data) {
     if (!cont)
       break;
   }
-  queue->wait_count += count;
+  atomic_sub(&queue->wait_count, count);
+  spinlock_release(&queue->wait_lock);
+}
+
+void waitqueue_awaken_all(struct wait_queue *queue) {
+  struct list_node *pos = NULL;
+  spinlock_acquire(&queue->wait_lock);
+  LIST_FOREACH(pos, &queue->waiting_threads) {
+    struct thread *thread =
+        (struct thread *)((uintptr_t)pos - offsetof(struct thread, wait_node));
+
+    schedule_thread(thread);
+  }
+
+  atomic_store(&queue->wait_count, 0);
   spinlock_release(&queue->wait_lock);
 }
 
@@ -79,7 +93,7 @@ void __insert_wait_thread(struct thread *thread) {
 
   spinlock_acquire(&queue->wait_lock);
   list_insert(&queue->waiting_threads, &thread->wait_node);
-  queue->wait_count++;
+  atomic_add(&queue->wait_count, 1);
   spinlock_release(&queue->wait_lock);
 }
 

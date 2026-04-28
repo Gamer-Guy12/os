@@ -20,7 +20,7 @@
     - Events that can wake up threads
     - Threads can wait for another to die
 - [x] Thread timer interrupts
-- [ ] Work Queues
+- [-] Work Queues
     - Queues of functions to be run by worker threads
     - Different priorities of queue
 - [ ] Timer system overhaul
