@@ -1,5 +1,9 @@
 #include "kernel/threads.h"
 
+struct event death_event;
+
+void init_thread_lifecycle(void) { event_create(&death_event, true); }
+
 void schedule(void) {
   struct thread *thread = get_cur_thread();
   struct thread *new_thread = pop_thread();
@@ -18,4 +22,13 @@ void terminate(int code) {
 
   while (1)
     schedule();
+}
+
+int wait_thread(tid_t thread) {
+  event_wait(&death_event, thread);
+  return thread_id(thread)->exit_code;
+}
+
+void __trigger_death_event(tid_t thread, int code) {
+  event_trigger(&death_event, thread);
 }

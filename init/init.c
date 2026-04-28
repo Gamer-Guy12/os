@@ -60,9 +60,16 @@ static int check(struct thread *thread, void *data) {
   return 0;
 }
 
-void entry(void) {
+tid_t t3 = 0;
+
+void entry2(void) {
   kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
-  waitqueue_wait(&queue);
+  wait_thread(t3);
+  kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
+  terminate(0);
+}
+
+void entry(void) {
   kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
   terminate(0);
 }
@@ -85,16 +92,13 @@ static NORETURN void kmain(void *new_stack) {
     kprintf("[INIT] Initialized All Cores\n");
   }
   enable_interrupts();
-  tid_t t3 = 0;
 
   BSP {
     waitqueue_create(&queue, check);
-    tid_t t1 = create_thread(entry, TP_NORMAL)->tid;
-    tid_t t2 = create_thread(entry, TP_INTERRUPT)->tid;
-    t3 = create_thread(entry, TP_INTERRUPT)->tid;
-    kprintf("%x\n", t1);
-    kprintf("%x\n", t2);
+    t3 = create_thread(entry, TP_HIGH)->tid;
+    tid_t t4 = create_thread(entry2, TP_INTERRUPT)->tid;
     kprintf("%x\n", t3);
+    kprintf("%x\n", t4);
   }
 
   // This thread will be the idle thread

@@ -29,6 +29,7 @@ INIT void init_threading(void *stack) {
     gheap_cache_create(&thread_cache, sizeof(struct thread), ZONE_ANY);
     rb_create(&id_tree, compare_ids);
     init_thread_queues();
+    init_thread_lifecycle();
   }
 
   struct thread *thread = gheap_cache_alloc(&thread_cache);
@@ -57,14 +58,18 @@ struct thread *create_thread(void (*entry)(void),
   thread->page_tables = __null_pages();
   thread->priority = priority;
   __create_context(thread);
+  rb_insert(&id_tree, &thread->id_node);
+
   schedule_thread(thread);
 
   return thread;
 }
 
 void destroy_thread(struct thread *thread) {
+  __trigger_death_event(thread->tid, thread->exit_code);
   free_pages(thread->stack, STACK_ORDER);
-  gheap_cache_free(&thread_cache, thread);
+  // Don't free the thread, keep it for later
+  // gheap_cache_free(&thread_cache, thread);
 }
 
 void switch_threads(struct thread *old_thread, struct thread *new_thread) {
@@ -102,6 +107,7 @@ void switch_tail(void) {
 void thread_trampoline(struct thread *old_thread, struct thread *new_thread) {
   switch_tail();
   new_thread->entry();
+  terminate(0);
 }
 
 struct thread *get_cur_thread(void) {

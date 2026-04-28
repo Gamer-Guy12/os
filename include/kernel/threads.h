@@ -52,6 +52,7 @@ struct thread {
   void (*entry)(void);
   struct thread *prev;
   struct wait_queue *wait_queue;
+  size_t event_filter;
   pt_t page_tables;
   enum thread_state state;
   enum thread_priority priority;
@@ -71,6 +72,11 @@ struct wait_queue {
   int (*check_thread)(struct thread *thread, void *data);
   size_t wait_count;
   spinlock_t wait_lock;
+};
+
+struct event {
+  struct wait_queue queue;
+  bool uses_filter;
 };
 
 // Arch dependent switch
@@ -112,8 +118,11 @@ void requeue_thread(struct thread *thread);
 
 // Lifecycle
 // Guarenteed to switch (unless your an idle thread)
+void init_thread_lifecycle(void);
 void schedule(void);
 void terminate(int code);
+int wait_thread(tid_t thread);
+void __trigger_death_event(tid_t thread, int code);
 
 // Wait
 // Wait current thread
@@ -125,5 +134,11 @@ void waitqueue_awaken(struct wait_queue *queue, void *data);
 // threads
 bool waitqueue_destroy(struct wait_queue *queue, bool force);
 void __insert_wait_thread(struct thread *thread);
+
+// Event
+void event_create(struct event *event, bool uses_filter);
+void event_wait(struct event *event, size_t filter);
+void event_trigger(struct event *event, size_t filter);
+void event_destroy(struct event *event, bool force);
 
 #endif

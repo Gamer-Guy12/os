@@ -2,6 +2,7 @@
 #include "kernel/threads.h"
 #include "lib/list.h"
 #include "lib/spinlock.h"
+#include <stddef.h>
 #include <stdint.h>
 
 void waitqueue_create(struct wait_queue *queue,
@@ -80,4 +81,46 @@ void __insert_wait_thread(struct thread *thread) {
   list_insert(&queue->waiting_threads, &thread->wait_node);
   queue->wait_count++;
   spinlock_release(&queue->wait_lock);
+}
+
+// 2 bits
+// bit 0: 0 means continue, 1 means stop
+// bit 1: 1 means accept, 0 means don't
+static int check_event(struct thread *thread, void *data) {
+  size_t filter = (size_t)data;
+
+  if (thread->event_filter == filter) {
+    return 2;
+  }
+
+  return 0;
+}
+
+void event_create(struct event *event, bool uses_filter) {
+  event->uses_filter = uses_filter;
+  waitqueue_create(&event->queue, check_event);
+}
+
+void event_wait(struct event *event, size_t filter) {
+  struct thread *thread = get_cur_thread();
+
+  if (event->uses_filter) {
+    thread->event_filter = filter;
+  } else {
+    thread->event_filter = 0;
+  }
+
+  waitqueue_wait(&event->queue);
+}
+
+void event_trigger(struct event *event, size_t filter) {
+  if (!event->uses_filter) {
+    filter = 0;
+  }
+
+  waitqueue_awaken(&event->queue, (void *)filter);
+}
+
+void event_destroy(struct event *event, bool force) {
+  waitqueue_destroy(&event->queue, force);
 }

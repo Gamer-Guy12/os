@@ -16,8 +16,9 @@
     - Threads can destroy themselves
 - [x] Thread waiting
     - A thread can wait to be awoken
-- [-] Event
+- [x] Event
     - Events that can wake up threads
+    - Threads can wait for another to die
 - [ ] Thread timer interrupts
 - [ ] Work Queues
     - Queues of functions to be run by worker threads
