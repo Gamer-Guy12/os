@@ -7,6 +7,7 @@
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "kernel/timers.h"
+#include "lib/atomic.h"
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
@@ -61,16 +62,19 @@ static int check(struct thread *thread, void *data) {
 }
 
 tid_t t3 = 0;
+atomic_t value = ATOMIC_ZERO;
 
 void entry2(void) {
-  kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
-  wait_thread(t3);
-  kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
+  while (true) {
+    atomic_add(&value, 1);
+  }
   terminate(0);
 }
 
 void entry(void) {
-  kprintf("Here %x %x\n", get_cur_thread()->tid, get_core_id());
+  while (true) {
+    kprintf("Here %x %x %x\n", get_cur_thread()->tid, get_core_id(), value);
+  }
   terminate(0);
 }
 
@@ -95,8 +99,8 @@ static NORETURN void kmain(void *new_stack) {
 
   BSP {
     waitqueue_create(&queue, check);
-    t3 = create_thread(entry, TP_HIGH)->tid;
-    tid_t t4 = create_thread(entry2, TP_INTERRUPT)->tid;
+    t3 = create_thread(entry, TP_NORMAL)->tid;
+    tid_t t4 = create_thread(entry2, TP_NORMAL)->tid;
     kprintf("%x\n", t3);
     kprintf("%x\n", t4);
   }
@@ -104,6 +108,6 @@ static NORETURN void kmain(void *new_stack) {
   // This thread will be the idle thread
   get_cur_thread()->priority = TP_IDLE;
   while (true) {
-    BSP { schedule(); }
+    schedule();
   }
 }

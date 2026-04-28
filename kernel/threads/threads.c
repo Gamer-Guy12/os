@@ -102,6 +102,7 @@ void switch_tail(void) {
   }
 
   new_thread->state = THREAD_RUNNING;
+  enable_interrupts();
 }
 
 void thread_trampoline(struct thread *old_thread, struct thread *new_thread) {
