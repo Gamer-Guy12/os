@@ -1,4 +1,4 @@
-# TODO
+#TODO
 
 - [x] Thread creation
     - Able to create a thread or encapsulate into a new thread
@@ -19,11 +19,10 @@
 - [x] Event
     - Events that can wake up threads
     - Threads can wait for another to die
-- [-] Thread timer interrupts
+- [x] Thread timer interrupts
 - [ ] Work Queues
     - Queues of functions to be run by worker threads
     - Different priorities of queue
 - [ ] Timer system overhaul
     - Not the apic but main timer system that is for interrupting at specific times
     - Use existing framework to utilize work queues
-

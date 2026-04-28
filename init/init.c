@@ -51,33 +51,6 @@ INIT NORETURN void kinit(void) {
   }
 }
 
-struct wait_queue queue;
-
-static int check(struct thread *thread, void *data) {
-  if (thread->tid == (tid_t)data) {
-    return 3;
-  }
-
-  return 0;
-}
-
-tid_t t3 = 0;
-atomic_t value = ATOMIC_ZERO;
-
-void entry2(void) {
-  while (true) {
-    atomic_add(&value, 1);
-  }
-  terminate(0);
-}
-
-void entry(void) {
-  while (true) {
-    kprintf("Here %x %x %x\n", get_cur_thread()->tid, get_core_id(), value);
-  }
-  terminate(0);
-}
-
 static NORETURN void kmain(void *new_stack) {
   init_cls();
   disable_interrupts();
@@ -96,14 +69,6 @@ static NORETURN void kmain(void *new_stack) {
     kprintf("[INIT] Initialized All Cores\n");
   }
   enable_interrupts();
-
-  BSP {
-    waitqueue_create(&queue, check);
-    t3 = create_thread(entry, TP_NORMAL)->tid;
-    tid_t t4 = create_thread(entry2, TP_NORMAL)->tid;
-    kprintf("%x\n", t3);
-    kprintf("%x\n", t4);
-  }
 
   // This thread will be the idle thread
   get_cur_thread()->priority = TP_IDLE;
