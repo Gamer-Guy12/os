@@ -7,7 +7,6 @@
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "kernel/timers.h"
-#include "lib/atomic.h"
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
@@ -51,6 +50,10 @@ INIT NORETURN void kinit(void) {
   }
 }
 
+struct work_queue queue;
+
+void task(void *_) { kprintf("%x here\n"); }
+
 static NORETURN void kmain(void *new_stack) {
   init_cls();
   disable_interrupts();
@@ -69,6 +72,15 @@ static NORETURN void kmain(void *new_stack) {
     kprintf("[INIT] Initialized All Cores\n");
   }
   enable_interrupts();
+
+  BSP {
+    work_queue_create(&queue, TP_NORMAL, 10);
+    kprintf("e\n");
+    for (int i = 0; i < 20; i++) {
+      work_queue_add(&queue, task, NULL);
+    }
+    kprintf("%x count\n", queue.worker_threads);
+  }
 
   // This thread will be the idle thread
   get_cur_thread()->priority = TP_IDLE;

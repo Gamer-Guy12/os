@@ -11,3 +11,4 @@ kernel-src = kernel/console.c \
 	kernel/threads/queue.c \
 	kernel/threads/life.c \
 	kernel/threads/wait.c \
+	kernel/threads/work_queue.c \

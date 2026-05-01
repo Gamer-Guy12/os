@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 void temp_int_handler(struct int_context *context) {
-  kprintf("Page Fault Detected!\n");
+  kprintf("Page Fault Detected at: %p!\n", context->rip);
   kprintf("P: %x, W: %x, U: %x, I: %x\n", context->error_code & (1 << 0),
           context->error_code & (1 << 1), context->error_code & (1 << 2),
           context->error_code & (1 << 4));

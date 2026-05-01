@@ -1,7 +1,6 @@
 #ifndef _KERNEL_GHEAP_H_
 #define _KERNEL_GHEAP_H_
 
-#include "kernel/mem.h"
 #include "lib/freelist.h"
 #include "lib/list.h"
 #include "lib/rw_lock.h"

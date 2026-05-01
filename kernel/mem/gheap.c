@@ -114,7 +114,8 @@ static void *slab_create(struct gheap_slab *slab, struct gheap_cache *cache,
   FREELIST_INIT(&slab->freelist);
 
   // Mark which slab each page is in
-  page_ptr_t base_ptr = ((uintptr_t)start_addr - IDENTITY_MAP_OFFSET) / PAGE_SIZE;
+  page_ptr_t base_ptr =
+      ((uintptr_t)start_addr - IDENTITY_MAP_OFFSET) / PAGE_SIZE;
 
   for (size_t i = 0; i < (1 << cache->alloc_order); i++) {
     get_page(base_ptr + i)->slab = slab;
@@ -258,6 +259,9 @@ void *gheap_cache_alloc(struct gheap_cache *cache) {
 void gheap_cache_free(struct gheap_cache *cache, void *ptr) {
   struct page *page = addr_page(ptr);
   struct gheap_slab *slab = page->slab;
+  uintptr_t page_addr = ((uintptr_t)ptr - (uintptr_t)ptr % PAGE_SIZE);
+  size_t index = (page_addr - IDENTITY_MAP_OFFSET) / PAGE_SIZE;
+  kprintf("%p %p flags\n", page, &pages[index]);
   int count = 0;
 
   rw_read_acquire(&cache->lock);
@@ -284,7 +288,6 @@ void gheap_cache_free(struct gheap_cache *cache, void *ptr) {
   if (count == cache->object_count) {
     list_insert(&cache->empty_list, &slab->node);
   }
-
   rw_write_release(&cache->lock);
 }
 

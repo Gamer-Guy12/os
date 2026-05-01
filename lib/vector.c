@@ -1,5 +1,6 @@
 #include "lib/vector.h"
 #include "kernel/gheap.h"
+#include "kernel/mem.h"
 #include "lib/string.h"
 #include <stddef.h>
 #include <stdint.h>

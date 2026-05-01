@@ -1,5 +1,6 @@
 #include "interrupts.h"
 #include "kernel/gheap.h"
+#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "lib/atomic.h"
@@ -53,6 +54,10 @@ static void __handle_task(struct work_queue *queue) {
 
   spinlock_acquire(&queue->queue_lock);
   struct queue_node *node = queue_dequeue(&queue->tasks);
+  if (node == NULL) {
+    spinlock_release(&queue->queue_lock);
+    return;
+  }
   queue->task_count--;
   spinlock_release(&queue->queue_lock);
 
@@ -60,7 +65,10 @@ static void __handle_task(struct work_queue *queue) {
       (struct work_task *)((uintptr_t)node - offsetof(struct work_task, node));
   task_func = work_node->task;
   data = work_node->data;
+  kprintf("%p\n", work_node);
   gheap_cache_free(&task_cache, work_node);
+  while (1) {
+  }
 
   if (task_func)
     task_func(data);
@@ -128,20 +136,15 @@ void work_queue_create(struct work_queue *queue, enum thread_priority priority,
   spinlock_acquire(&queue->queue_lock);
   queue->priority = priority;
   queue->state = 0;
-  queue->worker_threads = 1;
+  queue->worker_threads = 0;
   queue->task_count = 0;
   queue->tasks_per_thread =
       tasks_per_thread == 0 ? DEF_TASKS_THREAD : tasks_per_thread;
   QUEUE_INIT(&queue->tasks);
   waitqueue_create(&queue->workers, check_thread);
 
-  struct thread *thread = create_thread(__wait_entry, TP_NO_QUEUE);
-  thread->data = queue;
-  thread->priority = TP_HIGH;
-  schedule_thread(thread);
-  spinlock_release(&queue->queue_lock);
-
   __create_worker(queue);
+  spinlock_release(&queue->queue_lock);
 }
 
 void work_queue_add(struct work_queue *queue, void (*task)(void *),
