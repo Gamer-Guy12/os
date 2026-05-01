@@ -13,6 +13,9 @@ __do_stack_switch:
   add r8, rdx
   ; Load rsp with the new stack pointer
   mov rsp, r8
+  mov rbp, rsp
+  ; Save a blank rbp to the stack to keep track of stack frames
+  push 0
 
   jmp rcx
 
