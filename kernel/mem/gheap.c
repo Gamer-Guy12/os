@@ -153,7 +153,7 @@ static void *slab_alloc(struct gheap_slab *slab, int *count) {
   return freelist_get(&slab->freelist);
 }
 
-void slab_free(struct gheap_slab *slab, void *ptr, int *count) {
+void slab_free(struct gheap_slab *slab, void *ptr) {
   freelist_insert(&slab->freelist, ptr);
   atomic_add(&slab->count_left, 1);
 }
@@ -259,33 +259,22 @@ void *gheap_cache_alloc(struct gheap_cache *cache) {
 void gheap_cache_free(struct gheap_cache *cache, void *ptr) {
   struct page *page = addr_page(ptr);
   struct gheap_slab *slab = page->slab;
-  uintptr_t page_addr = ((uintptr_t)ptr - (uintptr_t)ptr % PAGE_SIZE);
-  size_t index = (page_addr - IDENTITY_MAP_OFFSET) / PAGE_SIZE;
-  kprintf("%p %p flags\n", page, &pages[index]);
-  int count = 0;
 
   rw_read_acquire(&cache->lock);
-  slab_free(slab, ptr, &count);
+  slab_free(slab, ptr);
   rw_read_release(&cache->lock);
 
-  // If the doesn't need to be moved anywhere
-  if (count != 1 && count != cache->object_count) {
-    return;
-  }
-
   rw_write_acquire(&cache->lock);
-  count = atomic_load(&slab->count_left);
+  int count = atomic_load(&slab->count_left);
   if (count != 1 && count != cache->object_count) {
-    rw_read_release(&cache->lock);
+    rw_write_release(&cache->lock);
     return;
   }
 
   list_remove(&slab->node);
   if (count == 1) {
     list_insert(&cache->partial_list, &slab->node);
-  }
-
-  if (count == cache->object_count) {
+  } else if (count == cache->object_count) {
     list_insert(&cache->empty_list, &slab->node);
   }
   rw_write_release(&cache->lock);

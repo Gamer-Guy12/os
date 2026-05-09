@@ -66,9 +66,8 @@ static void __handle_task(struct work_queue *queue) {
   task_func = work_node->task;
   data = work_node->data;
   kprintf("%p\n", work_node);
-  gheap_cache_free(&task_cache, work_node);
-  while (1) {
-  }
+//   gheap_cache_free(&task_cache, work_node);
+  gfree(work_node);
 
   if (task_func)
     task_func(data);
@@ -149,7 +148,7 @@ void work_queue_create(struct work_queue *queue, enum thread_priority priority,
 
 void work_queue_add(struct work_queue *queue, void (*task)(void *),
                     void *data) {
-  struct work_task *work_task = gheap_cache_alloc(&task_cache);
+  struct work_task *work_task = gmalloc(sizeof(struct work_task), ZONE_ANY);
 
   work_task->data = data;
   work_task->task = task;

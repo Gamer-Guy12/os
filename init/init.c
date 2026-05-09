@@ -52,7 +52,10 @@ INIT NORETURN void kinit(void) {
 
 struct work_queue queue;
 
-void task(void *_) { kprintf("%x here\n"); }
+void task(void *_) {
+  kprintf("here\n");
+  kprintf("here2\n");
+}
 
 static NORETURN void kmain(void *new_stack) {
   init_cls();
