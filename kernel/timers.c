@@ -72,7 +72,7 @@ void increment_tick(void) {
 
   // Run anything that happens every tick
   handle_timers();
-  schedule();
+  BSP { schedule(); }
 }
 
 uint64_t get_cur_tick(void) {

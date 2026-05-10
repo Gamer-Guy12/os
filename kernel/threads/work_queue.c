@@ -6,6 +6,7 @@
 #include "lib/atomic.h"
 #include "lib/queue.h"
 #include "lib/spinlock.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #define ROUND_UP(value, to) ((((value) + ((to) - 1)) / (to)) * (to))
@@ -48,15 +49,16 @@ die:
   terminate(0);
 }
 
-static void __handle_task(struct work_queue *queue) {
+static bool __handle_task(struct work_queue *queue) {
   void *data = NULL;
   void (*task_func)(void *) = NULL;
 
+  disable_interrupts();
   spinlock_acquire(&queue->queue_lock);
   struct queue_node *node = queue_dequeue(&queue->tasks);
   if (node == NULL) {
     spinlock_release(&queue->queue_lock);
-    return;
+    return false;
   }
   queue->task_count--;
   spinlock_release(&queue->queue_lock);
@@ -65,12 +67,15 @@ static void __handle_task(struct work_queue *queue) {
       (struct work_task *)((uintptr_t)node - offsetof(struct work_task, node));
   task_func = work_node->task;
   data = work_node->data;
-  kprintf("%p\n", work_node);
-//   gheap_cache_free(&task_cache, work_node);
+  // kprintf("Thread: %x\n", get_cur_thread()->tid);
+  //   gheap_cache_free(&task_cache, work_node);
   gfree(work_node);
 
   if (task_func)
     task_func(data);
+  enable_interrupts();
+
+  return true;
 }
 
 // Entry-point for all worker threads
@@ -82,7 +87,12 @@ static void __wait_entry(void) {
   enable_interrupts();
 
   while (true) {
-    __handle_task(queue);
+    //    kprintf("%x\n", get_cur_thread()->tid);
+    bool found = __handle_task(queue);
+    if (!found) {
+      waitqueue_wait(&queue->workers);
+    }
+
     __handle_death(queue);
   }
 }

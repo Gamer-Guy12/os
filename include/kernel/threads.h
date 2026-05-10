@@ -97,8 +97,12 @@ struct work_queue {
   enum thread_priority priority;
   struct wait_queue workers;
   struct queue tasks;
+  // How many tasks left to run
   size_t task_count;
+  // How many worker threads there are (check workers field for how many are
+  // running)
   size_t worker_threads;
+  // Ratio of tasks to threads
   size_t tasks_per_thread;
   // 0 alive, 1 dying, 2 dead
   size_t state;
@@ -106,8 +110,6 @@ struct work_queue {
 };
 
 // Arch dependent switch
-// The parameter registers at the end should contain the old and new threads
-// Ex: (on x86_64) rdi: old thread, rsi: new thread
 void __switch_context(struct context *old_ctx, struct context *new_ctx);
 void __switch_pages(pt_t tables);
 int __pages_null(pt_t tables);

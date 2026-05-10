@@ -7,6 +7,7 @@
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "kernel/timers.h"
+#include "lib/atomic.h"
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
@@ -51,10 +52,10 @@ INIT NORETURN void kinit(void) {
 }
 
 struct work_queue queue;
+static atomic_t value = ATOMIC_ZERO;
 
 void task(void *_) {
-  kprintf("here\n");
-  kprintf("here2\n");
+  kprintf("here %d %x\n", atomic_add(&value, 1), get_cur_thread()->tid);
 }
 
 static NORETURN void kmain(void *new_stack) {
@@ -88,6 +89,6 @@ static NORETURN void kmain(void *new_stack) {
   // This thread will be the idle thread
   get_cur_thread()->priority = TP_IDLE;
   while (true) {
-    schedule();
+    BSP { schedule(); }
   }
 }
