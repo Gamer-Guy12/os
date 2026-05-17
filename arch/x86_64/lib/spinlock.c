@@ -37,14 +37,17 @@ void spinlock_acquire(spinlock_t *spinlock) {
 #ifdef _DEBUG_
   spinlock->current_core = get_core_id();
 #endif
+  WMEMB();
 }
 
 bool spinlock_attempt(spinlock_t *spinlock) {
+  RMEMB();
   disable_interrupts();
   // You get to skip the line!
   if (atomic_cas(&spinlock->value, 0, 1)) {
     return true;
   }
+  WMEMB();
   enable_interrupts();
   return false;
 }
@@ -55,5 +58,6 @@ void spinlock_release(spinlock_t *spinlock) {
 #endif
   __atomic_fetch_add(&spinlock->running_index, 1, __ATOMIC_RELEASE);
   atomic_store(&spinlock->value, 0);
+  WMEMB();
   enable_interrupts();
 }

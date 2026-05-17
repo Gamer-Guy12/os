@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 typedef struct {
-  int num;
+  volatile int num;
 } atomic_t;
 
 int atomic_add(atomic_t *atomic, int num);

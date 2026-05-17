@@ -1,10 +1,15 @@
 #include "kernel/threads.h"
+#include "util.h"
 
 struct event death_event;
 
 void init_thread_lifecycle(void) { event_create(&death_event, true); }
 
 void schedule(void) {
+  // AP {
+  //   return;
+  // }
+
   struct thread *thread = get_cur_thread();
   struct thread *new_thread = pop_thread();
 

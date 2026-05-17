@@ -78,6 +78,8 @@ void switch_threads(struct thread *old_thread, struct thread *new_thread) {
   *thread = new_thread;
   new_thread->prev = old_thread;
   disable_interrupts();
+  // Make sure all data is updated
+  RMEMB();
   if (new_thread->page_tables != __cur_pages() &&
       !__pages_null(new_thread->page_tables))
     __switch_pages(new_thread->page_tables);
@@ -103,6 +105,7 @@ void switch_tail(void) {
   }
 
   new_thread->state = THREAD_RUNNING;
+  WMEMB();
   enable_interrupts();
 }
 

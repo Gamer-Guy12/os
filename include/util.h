@@ -24,6 +24,10 @@
 #define BSP if (is_bsp())
 #define AP if (!is_bsp())
 
+#define MEMB() __atomic_thread_fence(__ATOMIC_ACQ_REL)
+#define WMEMB() __atomic_thread_fence(__ATOMIC_RELEASE)
+#define RMEMB() __atomic_thread_fence(__ATOMIC_ACQUIRE)
+
 #ifdef _x86_64_
 
 #define HLT __asm__ volatile("hlt");

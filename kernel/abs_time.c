@@ -16,7 +16,9 @@ void register_abs_timer(uint64_t (*read_time)(void),
   read_freq_cb = read_freq;
 }
 
-uint64_t abs_time(void) { return read_time_cb(); }
+uint64_t abs_time(void) {
+  return read_time_cb();
+}
 
 uint64_t abs_ms_deadline(uint64_t ms) {
   return read_time_cb() + read_freq_cb() * ms / 1000;

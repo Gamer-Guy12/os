@@ -89,6 +89,6 @@ static NORETURN void kmain(void *new_stack) {
   // This thread will be the idle thread
   get_cur_thread()->priority = TP_IDLE;
   while (true) {
-    BSP { schedule(); }
+    schedule();
   }
 }
