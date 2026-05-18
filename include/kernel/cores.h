@@ -17,7 +17,6 @@ uint32_t get_core_id(void);
   __attribute__((section(".cls"))) size_t name = sizeof(type)
 
 // Must be called from every core
-void init_cls(void);
 bool is_bsp(void);
 
 #ifdef _x86_64_

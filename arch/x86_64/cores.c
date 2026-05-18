@@ -1,11 +1,6 @@
 #include "kernel/cores.h"
-#include "asm.h"
-#include "kernel/gheap.h"
-#include "kernel/mem.h"
-#include "lib/string.h"
 #include "limine.h"
 #include "util.h"
-#include "x86_64.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -53,40 +48,6 @@ uint32_t get_core_id(void) {
   uint32_t coreid = 0;
   __asm__ volatile("mov $1, %%eax; cpuid; shrl $24, %%ebx;" : "=b"(coreid));
   return coreid;
-}
-
-extern char _start_cls[];
-extern char _end_cls[];
-
-static INIT_DATA size_t full_size = 0;
-static INIT_DATA spinlock_t calculate = SPINLOCK_ZERO(cls_calc);
-
-void init_cls(void) {
-  if (spinlock_attempt(&calculate)) {
-    uintptr_t start_cls = (uintptr_t)_start_cls;
-    uintptr_t end_cls = (uintptr_t)_end_cls;
-    size_t len = end_cls - start_cls;
-    size_t count = len / sizeof(size_t);
-
-    size_t cur_size = 0;
-
-    for (size_t i = 0; i < count; i++) {
-      size_t *entry = (void *)(start_cls + i * sizeof(size_t));
-
-      cur_size += *entry;
-      *entry = cur_size - *entry;
-    }
-
-    full_size = cur_size;
-  }
-
-  if (full_size == 0) {
-    return;
-  }
-
-  void *data = gmalloc(full_size, ZONE_ANY);
-  memset(data, 0, full_size);
-  WRMSR(GS_BASE_MSR, data);
 }
 
 bool is_bsp(void) {
