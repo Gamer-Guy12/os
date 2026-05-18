@@ -2,6 +2,7 @@
 #include "kernel/threads.h"
 #include "lib/list.h"
 #include "lib/spinlock.h"
+#include "util.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -19,7 +20,10 @@ void waitqueue_wait(struct wait_queue *queue) {
   thread->wait_queue = queue;
   thread->state = THREAD_WAITING;
 
-  schedule();
+  do {
+    schedule();
+    RMEMB();
+  } while (thread->state == THREAD_WAITING);
 }
 
 void waitqueue_awaken(struct wait_queue *queue, void *data) {

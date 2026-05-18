@@ -1,3 +1,4 @@
+#include "kernel/kprintf.h"
 #include "kernel/threads.h"
 #include "util.h"
 
@@ -14,6 +15,7 @@ void schedule(void) {
   struct thread *new_thread = pop_thread();
 
   if (new_thread == NULL || new_thread == thread) {
+    // kprintf("quit\n");
     return;
   }
 
@@ -21,9 +23,11 @@ void schedule(void) {
 }
 
 void terminate(int code) {
+  RMEMB();
   struct thread *thread = get_cur_thread();
   thread->exit_code = code;
   thread->state = THREAD_TERMINATED;
+  WMEMB();
 
   while (1)
     schedule();

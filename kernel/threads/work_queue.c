@@ -14,6 +14,8 @@
 static struct gheap_cache task_cache;
 static atomic_t cache_init = ATOMIC_ZERO;
 
+static void __run_queue(struct work_queue *queue);
+
 // 2 bits
 // bit 0: 0 means continue, 1 means stop
 // bit 1: 1 means accept, 0 means don't
@@ -62,6 +64,7 @@ static bool __handle_task(struct work_queue *queue) {
   }
   queue->task_count--;
   spinlock_release(&queue->queue_lock);
+  kprintf("found %x\n", get_cur_thread()->tid);
 
   struct work_task *work_node =
       (struct work_task *)((uintptr_t)node - offsetof(struct work_task, node));
@@ -81,18 +84,20 @@ static bool __handle_task(struct work_queue *queue) {
 // Entry-point for all worker threads
 static void __wait_entry(void) {
   disable_interrupts();
+  kprintf("entered %x\n", get_cur_thread()->tid);
   struct thread *thread = get_cur_thread();
   struct work_queue *queue = thread->data;
   thread->priority = queue->priority;
   enable_interrupts();
 
   while (true) {
-    //    kprintf("%x\n", get_cur_thread()->tid);
     bool found = __handle_task(queue);
     if (!found) {
+      kprintf("sleep %x\n", thread->tid);
       waitqueue_wait(&queue->workers);
     }
 
+    __run_queue(queue);
     __handle_death(queue);
   }
 }
@@ -117,11 +122,18 @@ static void __run_queue(struct work_queue *queue) {
   // Workers don't get destroyed because it is assumed that if x workers were
   // needed now, they will be needed sometime in the future
   while (needed_threads > queue->worker_threads) {
+    kprintf("Create\n");
     __create_worker(queue);
   }
+  //
 
   const size_t running_threads =
       queue->worker_threads - queue->workers.wait_count.num;
+  if (needed_threads < running_threads) {
+    spinlock_release(&queue->queue_lock);
+    return;
+  }
+
   const size_t awaken_count = needed_threads - running_threads;
   for (size_t i = 0; i < awaken_count; i++) {
     waitqueue_awaken(&queue->workers, NULL);

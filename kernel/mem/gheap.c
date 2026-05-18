@@ -319,6 +319,7 @@ void gheap_cache_destroy(struct gheap_cache *cache) {
 }
 
 void gfree(void *ptr) {
+  RMEMB();
   struct page *page = addr_page(ptr);
   struct gheap_slab *slab = page->slab;
   struct gheap_cache *cache = slab->cache;

@@ -49,6 +49,7 @@ INIT void init_threading(void *stack) {
 
 struct thread *create_thread(void (*entry)(void),
                              enum thread_priority priority) {
+  RMEMB();
   struct thread *thread = gheap_cache_alloc(&thread_cache);
 
   thread->tid = GET_TID;
@@ -60,6 +61,7 @@ struct thread *create_thread(void (*entry)(void),
   __create_context(thread);
   rb_insert(&id_tree, &thread->id_node);
 
+  WMEMB();
   if (priority != TP_NO_QUEUE)
     schedule_thread(thread);
 
@@ -67,8 +69,10 @@ struct thread *create_thread(void (*entry)(void),
 }
 
 void destroy_thread(struct thread *thread) {
+  RMEMB();
   __trigger_death_event(thread->tid, thread->exit_code);
   free_pages(thread->stack, STACK_ORDER);
+  WMEMB();
   // Don't free the thread, keep it for later
   // gheap_cache_free(&thread_cache, thread);
 }
@@ -116,11 +120,13 @@ void thread_trampoline(struct thread *old_thread, struct thread *new_thread) {
 }
 
 struct thread *get_cur_thread(void) {
+  RMEMB();
   struct thread **thread = GET_CLS(cpu_thread);
   return *thread;
 }
 
 struct thread *thread_id(tid_t tid) {
+  RMEMB();
   struct thread dummy = {.tid = tid};
   struct rbnode *node = rb_search(&id_tree, NULL, &dummy.id_node);
 

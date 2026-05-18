@@ -24,7 +24,7 @@
 #define BSP if (is_bsp())
 #define AP if (!is_bsp())
 
-#define MEMB() __atomic_thread_fence(__ATOMIC_ACQ_REL)
+#define MEMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
 #define WMEMB() __atomic_thread_fence(__ATOMIC_RELEASE)
 #define RMEMB() __atomic_thread_fence(__ATOMIC_ACQUIRE)
 
