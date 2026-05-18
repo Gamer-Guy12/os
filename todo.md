@@ -1,0 +1,33 @@
+#TODO
+
+- Boot cores (done)
+- Create basic interrupt disabling (not core local)
+    - Update spinlocks
+- Create memory manager
+    - Create fmem manager
+    - Create page tables for new structures
+    - Create buddy manager for pages
+    - Create basic mapping system for new physical pages
+    - Create gheap heap allocator
+- Create CLS
+    - Create second interrupt disabling (core local)
+- Create GDT and IDT
+- Get APIC working
+- Create Threading
+    - Thread switching
+    - Thread Creation
+    - Running thread encapsulation
+        - Make your own stack
+    - Automatic Thread switching
+        - Use apic timer
+    - Thread waiting
+        - Maybe create secondary versions of things that can then utilize this
+    - Events
+    - Work Queues
+- Start utilizing hardware
+    - PS/2
+    - HPET
+        - Sleeping
+    - PCI
+    - Disk
+        - Ext2 Driver
