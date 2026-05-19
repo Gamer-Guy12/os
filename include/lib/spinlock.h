@@ -20,9 +20,8 @@ typedef struct {
   atomic_t value;
 } spinlock_t;
 
-void spinlock_acquire(spinlock_t *spinlock);
-bool spinlock_attempt(spinlock_t *spinlock);
-void spinlock_release(spinlock_t *spinlock);
+void _spinlock_acquire(spinlock_t *spinlock);
+void _spinlock_release(spinlock_t *spinlock);
 
 #ifdef _DEBUG_
 #define SPINLOCK(lock_name)                                                    \

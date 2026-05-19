@@ -9,7 +9,7 @@
 #include "lib/string.h"
 #endif
 
-void spinlock_acquire(spinlock_t *spinlock) {
+void _spinlock_acquire(spinlock_t *spinlock) {
 #ifdef _DEBUG_
   if (spinlock->current_core == get_core_id()) {
     kprintf("Deadlock detected on lock: ");
@@ -35,24 +35,12 @@ void spinlock_acquire(spinlock_t *spinlock) {
 #ifdef _DEBUG_
   spinlock->current_core = get_core_id();
 #endif
-  MEMB();
 }
 
-bool spinlock_attempt(spinlock_t *spinlock) {
-  // You get to skip the line!
-  if (atomic_cas(&spinlock->value, 0, 1)) {
-    MEMB();
-    return true;
-  }
-  MEMB();
-  return false;
-}
-
-void spinlock_release(spinlock_t *spinlock) {
+void _spinlock_release(spinlock_t *spinlock) {
 #ifdef _DEBUG_
   spinlock->current_core = -1;
 #endif
   __atomic_fetch_add(&spinlock->running_index, 1, __ATOMIC_RELEASE);
   atomic_store(&spinlock->value, 0);
-  MEMB();
 }
