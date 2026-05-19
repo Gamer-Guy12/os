@@ -1,13 +1,13 @@
 #include "kernel/console.h"
 #include "lib/string.h"
-#include "util.h"
 #include "limine.h"
+#include "util.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 LIMINE_REQUEST static volatile struct limine_framebuffer_request
-    framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST, .revision = 0};
+    framebuffer_request = {.id = LIMINE_FRAMEBUFFER_REQUEST_ID, .revision = 0};
 
 uint8_t red_bits;
 uint8_t red_shift;

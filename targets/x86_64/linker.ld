@@ -11,7 +11,8 @@ PHDRS {
 }
 
 SECTIONS {
-  . = 0xFFFFFFFF80000000;
+  /* + 0x1000000 is added to skip over the DMA region */
+  . = 0xFFFFFFFF81000000;
 
   _start_kernel = .;
 

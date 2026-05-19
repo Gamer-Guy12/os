@@ -21,7 +21,7 @@ Requirements:
 - Limine v10.2.0
 
 ## Function Prefixes
-- "_" - Earlier version of function that doesn't require as much
+- "_" - Earlier version of function that doesn't require as much/Old function only used in init
 - "__" - Internal function
 
 # Memory Management

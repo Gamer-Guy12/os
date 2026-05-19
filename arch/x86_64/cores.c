@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 LIMINE_REQUEST static volatile struct limine_mp_request mp_request = {
-    .id = LIMINE_MP_REQUEST, .flags = 0, .revision = 0};
+    .id = LIMINE_MP_REQUEST_ID, .flags = 0, .revision = 0};
 
 static uint32_t bsp_id = 0;
 static uint64_t cpu_count = 0;

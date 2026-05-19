@@ -36,7 +36,7 @@ build/obj/%.c.o: %.c
 	@mkdir -p $(dir $@)
 	@mkdir -p $(patsubst build/obj/%,build/deps/%,$(dir $@))
 	@# I'll figure out a better way of including limine.h later
-	$(CC) $(CFLAGS) -c -o $@ $< -MF $(patsubst build/obj/%.o,build/deps/%.d,$@) -I tools/limine
+	$(CC) $(CFLAGS) -c -o $@ $< -MF $(patsubst build/obj/%.o,build/deps/%.d,$@) -I tools/limine-protocol/include
 
 include arch/$(ARCH)/Makefile
 
@@ -49,7 +49,7 @@ debug: build/bin/kernel.bin
 include $(filter-out arch/%, $(wildcard **/Makefile))
 include $(wildcard arch/$(ARCH)/**/Makefile)
 
-build/bin/kernel.bin: tools/limine/limine $(mods)
+build/bin/kernel.bin: tools/limine/limine tools/limine-protocol $(mods)
 	$(LD) $(LDFLAGS) $(mods) -o $@
 	@echo "Kernel Build Complete!"
 
@@ -69,12 +69,6 @@ clean:
 .PHONY: todo
 todo:
 	@grep -Ri "TODO:" kernel init arch include lib
-
-build/obj/%.c.o: %.c
-	@mkdir -p $(dir $@)
-	@mkdir -p $(patsubst build/obj/%,build/deps/%,$(dir $@))
-	@# I'll figure out a better way of including limine.h later
-	$(CC) $(CFLAGS) -c -o $@ $< -MF $(patsubst build/obj/%.o,build/deps/%.d,$@) -I tools/limine
 
 .PHONY: clean-tools
 clean-tools:

@@ -1,7 +1,7 @@
 #TODO
 
 - Boot cores (done)
-- Create basic interrupt disabling (not core local)
+- Create basic interrupt disabling (not core local) (done)
     - Update spinlocks
 - Create memory manager
     - Create fmem manager
