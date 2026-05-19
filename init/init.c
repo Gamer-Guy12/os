@@ -29,10 +29,10 @@ INIT NORETURN void kinit(void) {
 
   BSP {
     console_init();
-    kprintf("[INIT] Initialized Console\n");
+    _kprintf("[INIT] Initialized Console\n");
   }
 
-  AP { kprintf("[INIT] Starting Core %u Initialization\n", get_core_id()); }
+  AP { _kprintf("[INIT] Starting Core %u Initialization\n", get_core_id()); }
   kmain();
 
   while (1) {
@@ -44,7 +44,7 @@ static NORETURN void kmain(void) {
 
   BSP {
     init_cores();
-    kprintf("[INIT] Initialized All Cores\n");
+    _kprintf("[INIT] Initialized All Cores\n");
   }
 
   while (true) {

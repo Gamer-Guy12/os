@@ -1,5 +1,4 @@
 #include "lib/rbtree.h"
-#include "lib/spinlock.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -11,7 +10,6 @@ void rb_create(struct rbtree *tree,
   tree->compare = compare;
   tree->root = NULL;
   tree->count = 0;
-  tree->lock = (spinlock_t)SPINLOCK_ZERO(misc_rbtree);
 }
 
 static void insert(struct rbtree *tree, struct rbnode *node) {
@@ -112,9 +110,7 @@ void rb_insert(struct rbtree *tree, struct rbnode *node) {
   if (node == NULL)
     return;
 
-  spinlock_acquire(&tree->lock);
   __rb_insert(tree, node);
-  spinlock_release(&tree->lock);
 }
 
 static void swap_nodes(struct rbtree *tree, struct rbnode *n1,
@@ -367,9 +363,7 @@ void rb_delete(struct rbtree *tree, struct rbnode *node) {
   if (node == NULL)
     return;
 
-  spinlock_acquire(&tree->lock);
   __rb_delete(tree, node);
-  spinlock_release(&tree->lock);
 
   node->left = NULL;
   node->right = NULL;
@@ -380,14 +374,11 @@ void rb_delete(struct rbtree *tree, struct rbnode *node) {
 // Passing in NULL defaults to the root
 struct rbnode *rb_search(struct rbtree *tree, struct rbnode *subtree,
                          struct rbnode *target) {
-  spinlock_acquire(&tree->lock);
-
   if (subtree == NULL) {
     subtree = tree->root;
   }
 
   if (subtree == NULL) {
-    spinlock_release(&tree->lock);
     return NULL;
   }
 
@@ -398,18 +389,15 @@ struct rbnode *rb_search(struct rbtree *tree, struct rbnode *subtree,
       subtree = subtree->left;
 
       if (subtree == &rbnil) {
-        spinlock_release(&tree->lock);
         return NULL;
       }
     } else if (compval < 0) {
       subtree = subtree->right;
 
       if (subtree == &rbnil) {
-        spinlock_release(&tree->lock);
         return NULL;
       }
     } else {
-      spinlock_release(&tree->lock);
       return subtree;
     }
   }
@@ -421,13 +409,9 @@ struct rbnode *rb_find_min(struct rbtree *tree, struct rbnode *subtree) {
   if (subtree == NULL)
     return NULL;
 
-  spinlock_acquire(&tree->lock);
-
   while (subtree->left != &rbnil) {
     subtree = subtree->left;
   }
-
-  spinlock_release(&tree->lock);
 
   return subtree;
 }
@@ -438,27 +422,20 @@ struct rbnode *rb_find_max(struct rbtree *tree, struct rbnode *subtree) {
   if (subtree == NULL)
     return NULL;
 
-  spinlock_acquire(&tree->lock);
-
   while (subtree->right != &rbnil) {
     subtree = subtree->right;
   }
-
-  spinlock_release(&tree->lock);
 
   return subtree;
 }
 
 struct rbnode *rb_delete_search(struct rbtree *tree, struct rbnode *subtree,
                                 struct rbnode *target) {
-  spinlock_acquire(&tree->lock);
-
   if (subtree == NULL) {
     subtree = tree->root;
   }
 
   if (subtree == NULL) {
-    spinlock_release(&tree->lock);
     return NULL;
   }
 
@@ -469,19 +446,16 @@ struct rbnode *rb_delete_search(struct rbtree *tree, struct rbnode *subtree,
       subtree = subtree->left;
 
       if (subtree == &rbnil) {
-        spinlock_release(&tree->lock);
         return NULL;
       }
     } else if (compval < 0) {
       subtree = subtree->right;
 
       if (subtree == &rbnil) {
-        spinlock_release(&tree->lock);
         return NULL;
       }
     } else {
       __rb_delete(tree, subtree);
-      spinlock_release(&tree->lock);
       return subtree;
     }
   }
@@ -493,14 +467,11 @@ struct rbnode *rb_delete_min(struct rbtree *tree, struct rbnode *subtree) {
   if (subtree == NULL)
     return NULL;
 
-  spinlock_acquire(&tree->lock);
-
   while (subtree->left != &rbnil) {
     subtree = subtree->left;
   }
 
   __rb_delete(tree, subtree);
-  spinlock_release(&tree->lock);
 
   return subtree;
 }
@@ -511,14 +482,11 @@ struct rbnode *rb_delete_max(struct rbtree *tree, struct rbnode *subtree) {
   if (subtree == NULL)
     return NULL;
 
-  spinlock_acquire(&tree->lock);
-
   while (subtree->right != &rbnil) {
     subtree = subtree->right;
   }
 
   __rb_delete(tree, subtree);
-  spinlock_release(&tree->lock);
 
   return subtree;
 }

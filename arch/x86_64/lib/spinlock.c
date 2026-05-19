@@ -12,11 +12,11 @@
 void _spinlock_acquire(spinlock_t *spinlock) {
 #ifdef _DEBUG_
   if (spinlock->current_core == get_core_id()) {
-    kprintf("Deadlock detected on lock: ");
+    _kprintf("Deadlock detected on lock: ");
     for (int i = 0; i < strlen(spinlock->name); i++) {
       console_putchar(spinlock->name[i]);
     }
-    kprintf("\n");
+    _kprintf("\n");
     panic();
   }
 #endif

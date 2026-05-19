@@ -20,9 +20,9 @@ Requirements:
 - Binutils x86_64-elf Tools (2.45)
 - Limine v10.2.0
 
-Function Naming:
-__ prefix: internal function
-_ prefix: early version that is used in init
+## Function Prefixes
+- "_" - Earlier version of function that doesn't require as much
+- "__" - Internal function
 
 # Memory Management
 

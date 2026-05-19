@@ -1,7 +1,6 @@
 #ifndef _LIB_RBTREE_H_
 #define _LIB_RBTREE_H_
 
-#include "lib/spinlock.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -38,7 +37,6 @@ struct rbtree {
   int (*compare)(struct rbnode *n1, struct rbnode *n2);
   struct rbnode *root;
   size_t count;
-  spinlock_t lock;
 };
 
 void rb_create(struct rbtree *tree,
