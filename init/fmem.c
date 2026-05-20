@@ -75,9 +75,9 @@ void _fmem_free(void *addr) {
 void _fmem_add_range(void *start, void *end) {
   size_t size = (uintptr_t)end - (uintptr_t)start;
   uintptr_t cur_ptr = (uintptr_t) start;
-  size_t current_size = (PAGE_SIZE * (1 << (MAX_ORDER - 1)));
 
   for (int i = MAX_ORDER; i >= 0; i--) {
+    size_t current_size = (PAGE_SIZE * (1 << i));
     while (size > current_size) {
       size -= current_size;
       struct fmem_entry *entry = (struct fmem_entry*)cur_ptr;

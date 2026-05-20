@@ -6,16 +6,15 @@
 #include <stdint.h>
 
 LIMINE_REQUEST static volatile struct limine_memmap_request memmap_request = {
-  .id = LIMINE_MEMMAP_REQUEST_ID,
-  .revision = 0
-};
+    .id = LIMINE_MEMMAP_REQUEST_ID, .revision = 0};
 
 void read_memmap(void) {
   struct limine_memmap_response *memmap_response = memmap_request.response;
 
   for (size_t i = 0; i < memmap_response->entry_count; i++) {
     struct limine_memmap_entry *entry = memmap_response->entries[i];
-    if (entry->type != LIMINE_MEMMAP_USABLE) continue;
+    if (entry->type != LIMINE_MEMMAP_USABLE)
+      continue;
 
     uintptr_t start = entry->base + IDENTITY_OFFSET;
     uintptr_t end = entry->base + entry->length + IDENTITY_OFFSET;
@@ -23,6 +22,4 @@ void read_memmap(void) {
   }
 }
 
-void init_mem(void) {
-  read_memmap();
-}
+void init_mem(void) { read_memmap(); }
