@@ -4,8 +4,9 @@
 - Create basic interrupt disabling (not core local) (done)
     - Update spinlocks
 - Create memory manager
-    - Create fmem manager
-    - Create page tables for new structures
+    - Create fmem manager (done)
+    - Create page tables for new structures (done)
+        - Copy old page tables
     - Create buddy manager for pages
     - Create basic mapping system for new physical pages
     - Create gheap heap allocator

@@ -1,6 +1,8 @@
 #include "kernel/fmem.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "lib/string.h"
+#include "util.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -50,20 +52,26 @@ static struct fmem_entry *__split_large(struct fmem_entry *entry) {
 
 void *_fmem_alloc(void) {
   struct fmem_entry *entry = normal_pages;
+  void *ret = NULL;
 
   if (entry) {
     normal_pages = entry->next;
-    return (void *)entry;
+    ret = (void *)entry;
   } else {
     if (large_pages) {
       entry = large_pages;
       large_pages = entry->next;
 
-      return (void *)__split_large(entry);
+      ret = (void *)__split_large(entry);
     } else {
-      return NULL;
+      // Cannot return NULL
+      _kprintf("FMEM Failed to alloc\n");
+      panic();
     }
   }
+
+  memset(ret, 0, PAGE_SIZE);
+  return ret;
 }
 
 void _fmem_free(void *addr) {
@@ -74,13 +82,13 @@ void _fmem_free(void *addr) {
 
 void _fmem_add_range(void *start, void *end) {
   size_t size = (uintptr_t)end - (uintptr_t)start;
-  uintptr_t cur_ptr = (uintptr_t) start;
+  uintptr_t cur_ptr = (uintptr_t)start;
 
   for (int i = MAX_ORDER; i >= 0; i--) {
     size_t current_size = (PAGE_SIZE * (1 << i));
     while (size > current_size) {
       size -= current_size;
-      struct fmem_entry *entry = (struct fmem_entry*)cur_ptr;
+      struct fmem_entry *entry = (struct fmem_entry *)cur_ptr;
       entry->page_order = i;
       entry->next = i == 0 ? normal_pages : large_pages;
       if (i == 0) {

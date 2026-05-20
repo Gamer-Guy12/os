@@ -1,4 +1,5 @@
 #include "lib/spinlock.h"
+#include "interrupts.h"
 #include "kernel/console.h"
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
@@ -10,6 +11,7 @@
 #endif
 
 void _spinlock_acquire(spinlock_t *spinlock) {
+  _disable_interrupts();
 #ifdef _DEBUG_
   if (spinlock->current_core == get_core_id()) {
     _kprintf("Deadlock detected on lock: ");
@@ -43,4 +45,5 @@ void _spinlock_release(spinlock_t *spinlock) {
 #endif
   __atomic_fetch_add(&spinlock->running_index, 1, __ATOMIC_RELEASE);
   atomic_store(&spinlock->value, 0);
+  _enable_interrupts();
 }
