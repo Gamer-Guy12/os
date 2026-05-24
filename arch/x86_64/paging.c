@@ -9,6 +9,88 @@
 
 #define ROUND_UP(num, to) ((((num) + (to) - 1) / (to)) * (to))
 
+struct page *__map_phys_page(void *vaddr, void *paddr, int flags,
+                             void *(get_virt_page)(void)) {
+  uint64_t cr3 = 0;
+  __asm__ volatile("mov %%cr3, %0" : "=r"(cr3));
+  struct page_entry *pml4 = (struct page_entry *)(cr3 + IDENTITY_OFFSET);
+
+  const uintptr_t phys = (uintptr_t)paddr;
+  const uintptr_t virt = (uintptr_t)vaddr;
+
+  int nx = 0;
+  if (flags & MAP_NX)
+    nx = 1;
+
+  int page_flags = PAGE_ENTRY_PRESENT;
+  if (flags & MAP_RW)
+    page_flags |= PAGE_ENTRY_RW;
+  if (flags & MAP_WT)
+    page_flags |= PAGE_ENTRY_WRITE_THROUGH;
+  if (flags & MAP_UC)
+    page_flags |= PAGE_ENTRY_UC;
+  if (flags & MAP_PINNED)
+    page_flags |= PAGE_ENTRY_GLOBAL;
+  if (flags & MAP_USER)
+    page_flags |= PAGE_ENTRY_USER;
+
+  const size_t page_index = (virt >> 12) & 0x1FF;
+  const size_t pt_index = (virt >> 21) & 0x1FF;
+  const size_t pdt_index = (virt >> 30) & 0x1FF;
+  const size_t pdpt_index = (virt >> 39) & 0x1FF;
+
+  struct page_entry *pdpt = PTV(pml4[pdpt_index].addr & ADDR_MASK);
+  struct page_entry *pdt = NULL;
+  struct page_entry *pt = NULL;
+  struct page_entry *entry = NULL;
+  void *entry_addr = NULL;
+
+  if (pdpt[pdt_index].flags & PAGE_ENTRY_PRESENT) {
+    pdt = PTV(pdpt[pdt_index].addr & ADDR_MASK);
+    goto make_pt;
+  }
+
+  // Create entry
+  entry_addr = get_virt_page();
+  if (entry_addr == NULL)
+    return NULL;
+  pdpt[pdt_index].addr = (uintptr_t)VTP(entry_addr);
+  pdpt[pdt_index].nx = 0;
+  pdpt[pdt_index].flags = PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW;
+  pdt = PTV(pdpt[pdt_index].addr & ADDR_MASK);
+
+make_pt:
+  if (pdt[pt_index].flags & PAGE_ENTRY_PRESENT) {
+    pt = PTV(pdt[pt_index].addr & ADDR_MASK);
+    entry = &pt[page_index];
+    goto map_page;
+  }
+
+  // Create entry
+  entry_addr = get_virt_page();
+  if (entry_addr == NULL)
+    return NULL;
+  pdt[pt_index].addr = (uintptr_t)VTP(entry_addr);
+  pdt[pt_index].nx = 0;
+  pdt[pt_index].flags = PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW;
+  pt = PTV(pdt[pt_index].addr & ADDR_MASK);
+  entry = &pt[page_index];
+
+map_page:
+  entry->addr = (uintptr_t)phys;
+  entry->flags = page_flags;
+  entry->nx = nx;
+
+  return __paddr_page_struct(paddr);
+}
+
+struct page *__map_page(void *vaddr, int flags, void *(get_virt_page)(void)) {
+  void *addr = get_virt_page();
+  if (addr == NULL)
+    return NULL;
+  return __map_phys_page(vaddr, VTP(addr), flags, get_virt_page);
+}
+
 // Maps a physical address to virtual and returns physical address
 //
 // Level:
@@ -19,8 +101,8 @@
 // PAGE_ENTRY_GLOBAL by default (can't be changed)
 //
 // Assumes nx
-static void *__map_page(void *phys, uint16_t flags, int level,
-                        struct page_entry *pml4) {
+static void *__imap_page(void *phys, uint16_t flags, int level,
+                         struct page_entry *pml4) {
   // Start traversal
   // Check if pdpt has a pointer to the pdt
   // Check if pdt has pointer to pt
@@ -28,6 +110,7 @@ static void *__map_page(void *phys, uint16_t flags, int level,
   const uintptr_t virt = (uintptr_t)phys + IDENTITY_OFFSET;
   if (level != PAGE_LEVEL_PAGE)
     flags |= PAGE_ENTRY_HUGE;
+  void *entry_addr = NULL;
 
   // Index into pt
   const size_t page_index = (virt >> 12) & 0x1FF;
@@ -50,7 +133,11 @@ static void *__map_page(void *phys, uint16_t flags, int level,
   }
 
   // Create entry
-  pdpt[pdt_index].addr = (uintptr_t)VTP(_fmem_alloc());
+  // Technically redundant since _fmem_alloc can't return NULL
+  entry_addr = _fmem_alloc();
+  if (entry_addr == NULL)
+    return NULL;
+  pdpt[pdt_index].addr = (uintptr_t)VTP(entry_addr);
   pdpt[pdt_index].nx = 1;
   pdpt[pdt_index].flags =
       PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW | PAGE_ENTRY_GLOBAL;
@@ -68,7 +155,10 @@ make_pt:
   }
 
   // Create entry
-  pdt[pt_index].addr = (uintptr_t)VTP(_fmem_alloc());
+  entry_addr = _fmem_alloc();
+  if (entry_addr == NULL)
+    return NULL;
+  pdt[pt_index].addr = (uintptr_t)VTP(entry_addr);
   pdt[pt_index].nx = 1;
   pdt[pt_index].flags = PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW | PAGE_ENTRY_GLOBAL;
   pt = PTV(pdt[pt_index].addr & ADDR_MASK);
@@ -89,11 +179,11 @@ map_page:
 // should be copied Pointer to (virtual) page that contains the table that
 // should be copied to
 static void __clone_mappings(struct page_entry *src, struct page_entry *dst,
-                             const int level) {
+                             const int level, int start) {
   // If the table contains raw data (e.g. either level = PAGE_LEVEL_PT or
   // PAGE_ENTRY_HUGE) then the data should be copied elsewise the table should
   // be remade
-  for (int i = 0; i < 512; i++) {
+  for (int i = start; i < 512; i++) {
     if (level == PAGE_LEVEL_PT || src[i].flags & PAGE_ENTRY_HUGE) {
       dst[i] = src[i];
     } else {
@@ -103,14 +193,19 @@ static void __clone_mappings(struct page_entry *src, struct page_entry *dst,
       dst[i].flags = src[i].flags;
 
       __clone_mappings(PTV(src[i].addr & ADDR_MASK),
-                       PTV(dst[i].addr & ADDR_MASK), level - 1);
+                       PTV(dst[i].addr & ADDR_MASK), level - 1, 0);
     }
   }
 }
 
 static void __create_top_pages(struct page_entry *pml4) {
   for (int i = 256; i < 512; i++) {
-    pml4[i].addr = (uintptr_t)VTP(_fmem_alloc());
+    void *entry_addr = _fmem_alloc();
+    if (entry_addr == NULL) {
+      _kprintf("Failed to alloc page for pdpt: 0x%x\n", i);
+      panic();
+    }
+    pml4[i].addr = (uintptr_t)VTP(entry_addr);
     pml4[i].flags = PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW | PAGE_ENTRY_GLOBAL;
     if (i == 511)
       pml4[i].nx = 0;
@@ -129,8 +224,9 @@ static void __clone_kernel_mappings(const uintptr_t new_cr3) {
   __create_top_pages(new_pml4);
 
   // The pointer is pointing to a page of the PDPT
+  // Only copy the last 2 gigabytes
   __clone_mappings(PTV(old_pml4[511].addr & ADDR_MASK),
-                   PTV(new_pml4[511].addr & ADDR_MASK), PAGE_LEVEL_PDPT);
+                   PTV(new_pml4[511].addr & ADDR_MASK), PAGE_LEVEL_PDPT, 510);
 }
 
 // Checks how many bits are unset at the bottom
@@ -156,7 +252,15 @@ static size_t __do_identity_map(uintptr_t base, size_t page_count,
     size_t shift_count =
         level == PAGE_LEVEL_PAGE ? 1 : (level == PAGE_LEVEL_PT ? 512 : 262144);
     page_count -= shift_count;
-    __map_page((void *)base, PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW, level, pml4);
+    if (!__imap_page((void *)base, PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW, level,
+                     pml4)) {
+      if (shift_count == 1)
+        _kprintf("Failed to identity map page: %p", (void *)base);
+      else
+        _kprintf("Failed to identity map 0x%x pages: %p", shift_count,
+                 (void *)base);
+      panic();
+    }
     base += shift_count * PAGE_SIZE;
     count += shift_count;
   }
@@ -194,9 +298,11 @@ static void __create_identity_map(const uintptr_t new_cr3, size_t entry_count,
 // 0xFFFFC10000000000 - 0xFFFFFF7FFFFFFFFF -> Unused (62.5 TB)
 // 0xFFFFFF8000000000 - 0xFFFFFFFF7FFFFFFF -> Unused (510 GB)
 // 0xFFFFFFFF80000000 - 0xFFFFFFFFFFFFFFFF -> Kernel (2 GB)
-void init_page_tables(size_t entry_count,
-                      struct limine_memmap_entry **entries) {
+void __init_page_tables(size_t entry_count,
+                        struct limine_memmap_entry **entries) {
   uintptr_t new_cr3 = (uintptr_t)VTP(_fmem_alloc());
   __clone_kernel_mappings(new_cr3);
   __create_identity_map(new_cr3, entry_count, entries);
+
+  __asm__ volatile("mov %0, %%cr3" ::"r"(new_cr3) : "memory");
 }
