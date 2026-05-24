@@ -72,8 +72,8 @@ enum map_flags {
 struct zone *__get_zone(int zone);
 // get_virt_page returns an identity mapped virtual page
 // return value will be null if get_virt_page returns null
-struct page *__map_phys_page(void *vaddr, void *paddr, int flags, void *(get_virt_page)(void));
-struct page *__map_page(void *vaddr, int flags, void *(get_virt_page)(void));
+struct page *__map_phys_pages(void *vaddr, void *paddr, int flags, void *(get_phys_page)(void), size_t count);
+struct page *__map_page(void *vaddr, int flags, void *(get_phys_page)(void));
 
 // Internal
 struct page *__get_page_struct(pageptr_t ptr, int zone);
@@ -87,7 +87,5 @@ void read_memmap(void);
 void __init_page_tables(size_t entry_count, struct limine_memmap_entry **entries);
 // Creates zones and buddy data
 void calculate_mem_sizes(void);
-
-// Buddy
 
 #endif

@@ -67,7 +67,7 @@ void calculate_mem_sizes(void) {
       for (size_t j = 0; j < page_count; j++) {
         const uintptr_t addr = BUDDY_OFFSET + PAGE_SIZE * (page_index + j);
         if (!__map_page((void *)addr, MAP_RW | MAP_NX | MAP_PINNED,
-                        _fmem_alloc)) {
+                        _fmem_phys)) {
           _kprintf("Failed to alloc page for buddy\n");
           panic();
         }
@@ -79,9 +79,19 @@ void calculate_mem_sizes(void) {
   }
 }
 
+static void clean_buddy_memory(void) {
+  for (int i = 0; i < ZONE_COUNT; i++) {
+    struct zone *zone = __get_zone(i);
+    for (int i = 0; i < MAX_ORDER; i++) {
+      zone->buddy[i].freelist = NULL;
+    }
+  }
+}
+
 void init_mem(void) {
   read_memmap();
   __init_page_tables(memmap_request.response->entry_count,
                      memmap_request.response->entries);
   calculate_mem_sizes();
+  clean_buddy_memory();
 }

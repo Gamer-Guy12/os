@@ -74,6 +74,11 @@ void *_fmem_alloc(void) {
   return ret;
 }
 
+void *_fmem_phys(void) {
+  // _fmem_alloc can't return null
+  return VTP(_fmem_alloc());
+}
+
 void _fmem_free(void *addr) {
   struct fmem_entry *entry = addr;
   entry->next = normal_pages;

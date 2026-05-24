@@ -10,7 +10,7 @@
 #define ROUND_UP(num, to) ((((num) + (to) - 1) / (to)) * (to))
 
 struct page *__map_phys_page(void *vaddr, void *paddr, int flags,
-                             void *(get_virt_page)(void)) {
+                             void *(get_phys_page)(void), int level) {
   uint64_t cr3 = 0;
   __asm__ volatile("mov %%cr3, %0" : "=r"(cr3));
   struct page_entry *pml4 = (struct page_entry *)(cr3 + IDENTITY_OFFSET);
@@ -34,6 +34,9 @@ struct page *__map_phys_page(void *vaddr, void *paddr, int flags,
   if (flags & MAP_USER)
     page_flags |= PAGE_ENTRY_USER;
 
+  if (level != PAGE_LEVEL_PAGE)
+    page_flags |= PAGE_ENTRY_HUGE;
+
   const size_t page_index = (virt >> 12) & 0x1FF;
   const size_t pt_index = (virt >> 21) & 0x1FF;
   const size_t pdt_index = (virt >> 30) & 0x1FF;
@@ -44,6 +47,10 @@ struct page *__map_phys_page(void *vaddr, void *paddr, int flags,
   struct page_entry *pt = NULL;
   struct page_entry *entry = NULL;
   void *entry_addr = NULL;
+  if (level == PAGE_LEVEL_PDT) {
+    entry = &pdpt[pdt_index];
+    goto map_page;
+  }
 
   if (pdpt[pdt_index].flags & PAGE_ENTRY_PRESENT) {
     pdt = PTV(pdpt[pdt_index].addr & ADDR_MASK);
@@ -51,14 +58,18 @@ struct page *__map_phys_page(void *vaddr, void *paddr, int flags,
   }
 
   // Create entry
-  entry_addr = get_virt_page();
+  entry_addr = get_phys_page();
   if (entry_addr == NULL)
     return NULL;
-  pdpt[pdt_index].addr = (uintptr_t)VTP(entry_addr);
+  pdpt[pdt_index].addr = (uintptr_t)entry_addr;
   pdpt[pdt_index].nx = 0;
   pdpt[pdt_index].flags = PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW;
   pdt = PTV(pdpt[pdt_index].addr & ADDR_MASK);
 
+  if (level == PAGE_LEVEL_PT) {
+    entry = &pdt[pt_index];
+    goto map_page;
+  }
 make_pt:
   if (pdt[pt_index].flags & PAGE_ENTRY_PRESENT) {
     pt = PTV(pdt[pt_index].addr & ADDR_MASK);
@@ -67,10 +78,10 @@ make_pt:
   }
 
   // Create entry
-  entry_addr = get_virt_page();
+  entry_addr = get_phys_page();
   if (entry_addr == NULL)
     return NULL;
-  pdt[pt_index].addr = (uintptr_t)VTP(entry_addr);
+  pdt[pt_index].addr = (uintptr_t)entry_addr;
   pdt[pt_index].nx = 0;
   pdt[pt_index].flags = PAGE_ENTRY_PRESENT | PAGE_ENTRY_RW;
   pt = PTV(pdt[pt_index].addr & ADDR_MASK);
@@ -84,11 +95,27 @@ map_page:
   return __paddr_page_struct(paddr);
 }
 
-struct page *__map_page(void *vaddr, int flags, void *(get_virt_page)(void)) {
-  void *addr = get_virt_page();
+struct page *__map_phys_pages(void *vaddr, void *paddr, int flags,
+                              void *(get_phys_page)(void), size_t count) {
+  // Change this later to work with huge pages
+  // Change this later to do rollback on failure
+  struct page *page = NULL;
+  for (size_t i = count - 1; i >= 0; i--) {
+    const uintptr_t virt = (uintptr_t)vaddr + PAGE_SIZE * i;
+    const uintptr_t phys = (uintptr_t)paddr + PAGE_SIZE * i;
+    if (!__map_phys_page((void *)virt, (void *)phys, flags, get_phys_page,
+                         PAGE_LEVEL_PAGE)) {
+      return NULL;
+    }
+  }
+  return page;
+}
+
+struct page *__map_pages(void *vaddr, int flags, void *(get_phys_page)(void)) {
+  void *addr = get_phys_page();
   if (addr == NULL)
     return NULL;
-  return __map_phys_page(vaddr, VTP(addr), flags, get_virt_page);
+  return __map_phys_pages(vaddr, addr, flags, get_phys_page, 1);
 }
 
 // Maps a physical address to virtual and returns physical address
