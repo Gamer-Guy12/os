@@ -98,24 +98,28 @@ static void clean_buddy_memory(void) {
 
     // Create lock
     switch (i) {
-      case ZONE_DMA:
-        zone->lock = (spinlock_t)SPINLOCK_ZERO(dma_lock);
-        break;
-      case ZONE_NORMAL:
-        zone->lock = (spinlock_t)SPINLOCK_ZERO(normal_lock);
-        break;
-      default:
-        break;
+    case ZONE_DMA:
+      zone->lock = (spinlock_t)SPINLOCK_ZERO(dma_lock);
+      break;
+    case ZONE_NORMAL:
+      zone->lock = (spinlock_t)SPINLOCK_ZERO(normal_lock);
+      break;
+    default:
+      break;
     }
   }
 }
 
 static void free_fmem(void) {
+  size_t count = 0;
   while (true) {
     void *ptr = _fmem_alloc();
-    if (!ptr)break;
+    if (!ptr)
+      break;
     _free_page(ptr, 0);
+    count++;
   }
+  _kprintf("Freed 0x%x\n", count);
 }
 
 static void allocate_page_structs(size_t count) {

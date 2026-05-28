@@ -8,3 +8,4 @@ compile_commands.json
 *.img
 *.EFI
 *.fd
+*.log

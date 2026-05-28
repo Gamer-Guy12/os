@@ -1,5 +1,5 @@
-#include "kernel/mem.h"
 #include "kernel/kprintf.h"
+#include "kernel/mem.h"
 #include "lib/bit.h"
 #include "lib/spinlock.h"
 #include <stdbool.h>
@@ -18,7 +18,8 @@ static pageptr_t __split_page(struct page *page, int zone, int order) {
   return partner_ptr;
 }
 
-static void free_into_layer(struct zone *zone, struct page *page, pageptr_t ptr, int order) {
+static void free_into_layer(struct zone *zone, struct page *page, pageptr_t ptr,
+                            int order) {
   // Add page to freelist and set bit
   struct buddy_layer *free_layer = &zone->buddy[order];
   page->next = free_layer->freelist.next;
@@ -31,8 +32,17 @@ static void free_into_layer(struct zone *zone, struct page *page, pageptr_t ptr,
 }
 
 static void freelist_remove(struct page *page) {
+  if (page->next == NULL) {
+    _kprintf("Here\n");
+    while (1) {
+    }
+  }
+
   page->next->prev = page->prev;
   page->prev->next = page->next;
+
+  page->next = NULL;
+  page->prev = NULL;
 }
 
 // Can fail (returns null)
@@ -47,12 +57,14 @@ void *_alloc_page(int flags) {
   for (int i = desired_order; i < MAX_ORDER; i++) {
     struct buddy_layer *layer = &zone->buddy[i];
     // Attempt free
-    // Since the list is circular the list is empty if the freelist->next is the freelist itself
+    // Since the list is circular the list is empty if the freelist->next is the
+    // freelist itself
     if (layer->freelist.next != &layer->freelist) {
       page = layer->freelist.next;
+      //  _kprintf("Found %p\n", page);
       freelist_remove(layer->freelist.next);
       order = i;
-  
+
       // Alloc page in bit mask
       pageptr_t ptr = __get_page_pointer(page, flags & ZONE_MASK);
       size_t index = ptr / (1 << (i + 1));
@@ -73,7 +85,8 @@ void *_alloc_page(int flags) {
   for (int i = order; i > desired_order; i--) {
     pageptr_t partner_ptr = __split_page(page, flags & ZONE_MASK, i);
 
-    free_into_layer(zone, __get_page_struct(partner_ptr, flags & ZONE_MASK), partner_ptr, i - 1);
+    free_into_layer(zone, __get_page_struct(partner_ptr, flags & ZONE_MASK),
+                    partner_ptr, i - 1);
   }
 
   _spinlock_release(&zone->lock);
@@ -112,7 +125,8 @@ void _free_page(void *addr, int flags) {
   // Nodes in the top layer should not be merged so we are doing MAX_ORDER - 1
   for (int i = order; i < MAX_ORDER - 1; i++) {
     struct buddy_layer *layer = &zone->buddy[i];
-    if (check_bit_in_ptr(layer->data, page_ptr / (1 << (i + 1)))) break;
+    if (check_bit_in_ptr(layer->data, page_ptr / (1 << (i + 1))))
+      break;
 
     pageptr_t partner_ptr = page_ptr ^ (1 << i);
     struct page *partner = __get_page_struct(partner_ptr, flags & ZONE_MASK);
@@ -123,7 +137,8 @@ void _free_page(void *addr, int flags) {
     // called older because it is the "older" sibling
     bool older = page_ptr > partner_ptr;
     // Free into layer above
-    free_into_layer(zone, older ? page : partner, older ? page_ptr : partner_ptr, i + 1);
+    free_into_layer(zone, older ? page : partner,
+                    older ? page_ptr : partner_ptr, i + 1);
 
     if (!older) {
       page_ptr = partner_ptr;
