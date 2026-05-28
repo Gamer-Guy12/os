@@ -53,6 +53,13 @@ static NORETURN void kmain(void) {
     _kprintf("[INIT] Initialized All Cores\n");
   }
 
+  BSP {
+    void *ptr = _alloc_page(ZONE_ANY);
+    void *dma_ptr = _alloc_page(ZONE_DMA);
+
+    _kprintf("Normal: %p, DMA: %p\n", ptr, dma_ptr);
+  }
+
   while (true) {
   }
 }

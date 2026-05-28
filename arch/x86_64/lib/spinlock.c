@@ -25,13 +25,7 @@ void _spinlock_acquire(spinlock_t *spinlock) {
   size_t index = __atomic_fetch_add(&spinlock->cur_index, 1, __ATOMIC_RELEASE);
 
   while (__atomic_load_n(&spinlock->running_index, __ATOMIC_ACQUIRE) != index) {
-    __asm__ volatile("pause" ::: "memory");
-  }
-
-  // Just incase someone has acquired it through attempt instead of acquire
-  // Will always succeed first tree if the lock never uses attempt
-  while (!atomic_cas(&spinlock->value, 0, 1)) {
-    __asm__ volatile("pause" ::: "memory");
+    __builtin_ia32_pause();
   }
 
 #ifdef _DEBUG_
@@ -44,6 +38,5 @@ void _spinlock_release(spinlock_t *spinlock) {
   spinlock->current_core = -1;
 #endif
   __atomic_fetch_add(&spinlock->running_index, 1, __ATOMIC_RELEASE);
-  atomic_store(&spinlock->value, 0);
   _enable_interrupts();
 }

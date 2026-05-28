@@ -16,8 +16,6 @@ typedef struct {
   size_t cur_index;
   // The index that is currently running
   size_t running_index;
-  // Only used to support spinlock_attempt (should probably move a way from it)
-  atomic_t value;
 } spinlock_t;
 
 void _spinlock_acquire(spinlock_t *spinlock);
@@ -28,21 +26,16 @@ void _spinlock_release(spinlock_t *spinlock);
   spinlock_t lock_name = {.current_core = -1,                                  \
                           .name = #lock_name,                                  \
                           .cur_index = 0,                                      \
-                          .running_index = 0,                                  \
-                          .value = ATOMIC_ZERO}
+                          .running_index = 0}
 
 #define SPINLOCK_ZERO(lock_name)                                               \
-  {                                                                            \
-    .current_core = -1, .name = #lock_name, .cur_index = 0,                    \
-    .running_index = 0, .value = ATOMIC_ZERO                                   \
-  }
+  { .current_core = -1, .name = #lock_name, .cur_index = 0, .running_index = 0 }
 #else
 #define SPINLOCK(lock_name)                                                    \
-  spinlock_t lock_name = {                                                     \
-      .cur_index = 0, .running_index = 0, .value = ATOMIC_ZERO}
+  spinlock_t lock_name = {.cur_index = 0, .running_index = 0}
 
 #define SPINLOCK_ZERO(lock_name)                                               \
-  { .cur_index = 0, .running_index = 0, .value = ATOMIC_ZERO }
+  { .cur_index = 0, .running_index = 0 }
 #endif
 
 #endif

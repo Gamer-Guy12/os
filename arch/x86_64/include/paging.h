@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define ADDR_MASK 0x0007FFFFFFFFF000ull
+#define ADDR_MASK 0x00007FFFFFFFF000ull
 
 enum page_levels {
   PAGE_LEVEL_PAGE = 0,
@@ -43,8 +43,8 @@ struct page_entry {
       uint64_t ignored : 7;
       uint64_t mpk : 4;
       uint64_t nx : 1;
-    };
-  };
-};
+    } __attribute__((packed));
+  } __attribute__((packed));
+} __attribute__((packed));
 
 #endif

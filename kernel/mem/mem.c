@@ -1,6 +1,6 @@
 #include "kernel/mem.h"
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 struct page *__get_page_struct(pageptr_t ptr, int zone) {
   // Zone struct
@@ -13,7 +13,8 @@ struct page *__get_page_struct(pageptr_t ptr, int zone) {
 
 pageptr_t __get_page_pointer(struct page *page, int zone) {
   const uintptr_t addr = (uintptr_t)page;
-  return (addr - PAGE_STRUCT_OFFSET) / sizeof(struct page);
+  size_t global_index = (addr - PAGE_STRUCT_OFFSET) / sizeof(struct page);
+  return global_index - (uintptr_t)__get_zone(zone)->base / PAGE_SIZE;
 }
 
 struct page *__paddr_page_struct(void *addr) {

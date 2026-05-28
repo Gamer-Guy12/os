@@ -64,7 +64,9 @@ void *_fmem_alloc(void) {
 
       ret = (void *)__split_large(entry);
     } else {
+      return NULL;
       // Cannot return NULL
+      // Sike
       _kprintf("FMEM Failed to alloc\n");
       panic();
     }

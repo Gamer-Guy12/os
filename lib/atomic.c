@@ -18,5 +18,5 @@ void atomic_store(atomic_t *atomic, int num) {
 
 bool atomic_cas(atomic_t *atomic, int old_val, int new_val) {
   return __atomic_compare_exchange_n(&atomic->num, &old_val, new_val, false,
-                                     __ATOMIC_RELEASE, __ATOMIC_ACQUIRE);
+                                     __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE);
 }

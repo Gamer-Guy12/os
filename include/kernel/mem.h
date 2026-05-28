@@ -1,6 +1,7 @@
 #ifndef _KERNEL_MEM_H_
 #define _KERNEL_MEM_H_
 
+#include "lib/spinlock.h"
 #include "limine.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -21,7 +22,8 @@ typedef uint64_t pageptr_t;
 #error "Could not define memory constants"
 #endif
 
-__attribute__((unused)) static struct page *pages = (struct page *)PAGE_STRUCT_OFFSET;
+__attribute__((unused)) static struct page *pages =
+    (struct page *)PAGE_STRUCT_OFFSET;
 
 // Virtual to physical
 #define VTP(addr) (void *)((uintptr_t)(addr) - IDENTITY_OFFSET)
@@ -35,15 +37,15 @@ struct page {
 
 // One layer in the buddy table
 struct buddy_layer {
-  struct page *freelist;
+  // Using dummy page so that there will always be a previous page
+  struct page freelist;
   void *data;
 };
 
-enum zone_type {
-  ZONE_DMA,
-  ZONE_NORMAL,
-  ZONE_COUNT
-};
+enum zone_type { ZONE_DMA, ZONE_NORMAL, ZONE_COUNT };
+
+#define ZONE_MASK (0xF)
+#define ZONE_ANY ZONE_NORMAL
 
 // Zone of length zero will be sized during init
 struct zone {
@@ -51,6 +53,7 @@ struct zone {
   void *base;
   uintptr_t length;
   int type;
+  spinlock_t lock;
 };
 
 enum map_flags {
@@ -72,7 +75,8 @@ enum map_flags {
 struct zone *__get_zone(int zone);
 // get_virt_page returns an identity mapped virtual page
 // return value will be null if get_virt_page returns null
-struct page *__map_phys_pages(void *vaddr, void *paddr, int flags, void *(get_phys_page)(void), size_t count);
+struct page *__map_phys_pages(void *vaddr, void *paddr, int flags,
+                              void *(get_phys_page)(void), size_t count);
 struct page *__map_page(void *vaddr, int flags, void *(get_phys_page)(void));
 
 // Internal
@@ -84,8 +88,23 @@ void init_mem(void);
 // Reads memory map and moves it to fmem
 void read_memmap(void);
 // Copies old page tables and creates new ones as needed
-void __init_page_tables(size_t entry_count, struct limine_memmap_entry **entries);
+void __init_page_tables(size_t entry_count,
+                        struct limine_memmap_entry **entries);
 // Creates zones and buddy data
-void calculate_mem_sizes(void);
+size_t calculate_mem_sizes(void);
+
+// Buddy
+// Allocs virtual identity mapped page
+void *_alloc_page(int flags);
+// Frees virtual identity mapped page
+void _free_page(void *addr, int flags);
+// Allocs physical page
+void *__alloc_pages(int order, int flags);
+// Frees physical page
+void __free_pages(void *addr, int order, int flags);
+// Allocs virtual identity mapped page
+void *alloc_pages(int order, int flags);
+// Frees virtual identity mapped page
+void free_pages(int order, int flags);
 
 #endif
