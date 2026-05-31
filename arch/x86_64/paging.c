@@ -10,6 +10,21 @@
 
 #define ROUND_UP(num, to) ((((num) + (to) - 1) / (to)) * (to))
 
+// Checks how many bits are unset at the bottom
+// Depending on the amount it tells the alignment
+// Then checks if there are enough pages left
+static int __calculate_level(size_t base, size_t page_count) {
+  // Checking if the bottom 30 bits are set
+  if ((base & 0x3FFFFFFF) == 0 && page_count >= 262144) {
+    return PAGE_LEVEL_PDT;
+    // Checks if bottom 21 bits are set
+  } else if ((base & 0x1FFFFF) == 0 && page_count >= 512) {
+    return PAGE_LEVEL_PT;
+  }
+
+  return PAGE_LEVEL_PAGE;
+}
+
 struct page *__do_phys_map(void *vaddr, void *paddr, int flags,
                            void *(get_phys_page)(void), int level,
                            struct page_entry *pml4, int nx) {
@@ -102,11 +117,26 @@ struct page *__map_phys_pages(void *vaddr, void *paddr, int flags,
   if (flags & MAP_USER)
     page_flags |= PAGE_ENTRY_USER;
 
-  // Fix to have failure methods and rollback and huge pages
-  for (size_t i = 0; i < count; i++) {
-    if (!__do_phys_map(vaddr, paddr, page_flags, get_phys_page, 0, pml4, nx)) {
+  // Fix to have failure methods and rollback
+  size_t index = 0;
+  while (count > 0) {
+    uintptr_t virt_addr = (uintptr_t)vaddr + PAGE_SIZE * index;
+    uintptr_t phys_addr = (uintptr_t)paddr + PAGE_SIZE * index;
+
+    // Both virtual and physical addresses have to be aligned
+    int virt_level = __calculate_level(virt_addr, count);
+    int phys_level = __calculate_level(phys_addr, count);
+    int level = virt_level > phys_level ? phys_level : virt_level;
+
+    size_t step = level == 0 ? 1 : (level == 1 ? 512 : 262144);
+
+    if (!__do_phys_map((void *)virt_addr, (void *)phys_addr, page_flags,
+                       get_phys_page, level, pml4, nx)) {
       return NULL;
     }
+
+    index += step;
+    count -= step;
   }
 
   return __paddr_page_struct(paddr);
@@ -193,21 +223,6 @@ static void __clone_kernel_mappings(const uintptr_t new_cr3) {
   // Only copy the last 2 gigabytes
   __clone_mappings(PTV(old_pml4[511].addr & ADDR_MASK),
                    PTV(new_pml4[511].addr & ADDR_MASK), PAGE_LEVEL_PDPT, 510);
-}
-
-// Checks how many bits are unset at the bottom
-// Depending on the amount it tells the alignment
-// Then checks if there are enough pages left
-static int __calculate_level(size_t base, size_t page_count) {
-  // Checking if the bottom 30 bits are set
-  if ((base & 0x3FFFFFFF) == 0 && page_count >= 262144) {
-    return PAGE_LEVEL_PDT;
-    // Checks if bottom 21 bits are set
-  } else if ((base & 0x1FFFFF) == 0 && page_count >= 512) {
-    return PAGE_LEVEL_PT;
-  }
-
-  return PAGE_LEVEL_PAGE;
 }
 
 // Returns pages mapped

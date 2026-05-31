@@ -7,8 +7,8 @@
     - Create fmem manager (done)
     - Create page tables for new structures (done)
         - Copy old page tables
-    - Create buddy manager for pages
-    - Create basic mapping system for new physical pages
+    - Create buddy manager for pages (done)
+    - Create basic mapping system for new physical pages (done)
     - Create gheap heap allocator
 - Create CLS
     - Create second interrupt disabling (core local)

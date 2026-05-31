@@ -85,6 +85,10 @@ void *_alloc_pages(int order, int flags) {
 }
 
 void _free_pages(void *addr, int order, int flags) {
+  if (addr == NULL) {
+    return;
+  }
+
   struct zone *zone = NULL;
   int zone_index = 0;
   addr = VTP(addr);

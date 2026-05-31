@@ -73,11 +73,14 @@ enum map_flags {
 
 // Arch specific
 struct zone *__get_zone(int zone);
-// get_virt_page returns an identity mapped virtual page
 // return value will be null if get_virt_page returns null
+// If get_phys_page fails then things will be in an inconsistent state that needs to be fixed by freeing everything using __unmap_pages and then a physical manager
 struct page *__map_phys_pages(void *vaddr, void *paddr, int flags,
                               void *(get_phys_page)(void), size_t count);
 struct page *__map_page(void *vaddr, int flags, void *(get_phys_page)(void));
+// Returns the page to be freed (cannot fail)
+// Not implemented yet
+void *__unmap_pages(void *vaddr, size_t count);
 
 // Internal
 struct page *__get_page_struct(pageptr_t ptr, int zone);
@@ -92,6 +95,7 @@ void __init_page_tables(size_t entry_count,
                         struct limine_memmap_entry **entries);
 // Creates zones and buddy data
 size_t calculate_mem_sizes(void);
+void free_fmem(void);
 
 // Buddy
 // Allocs virtual identity mapped page

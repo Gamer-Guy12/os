@@ -111,15 +111,6 @@ static void clean_buddy_memory(void) {
   }
 }
 
-static void free_fmem(void) {
-  while (true) {
-    void *ptr = _fmem_alloc();
-    if (!ptr)
-      break;
-    _free_pages(ptr, 0, 0);
-  }
-}
-
 static void allocate_page_structs(size_t count) {
   size_t total_size = sizeof(struct page) * count;
   size_t page_count = ROUND_UP(total_size, PAGE_SIZE) / PAGE_SIZE;

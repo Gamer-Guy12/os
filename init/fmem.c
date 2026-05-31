@@ -16,6 +16,9 @@ static struct fmem_entry *normal_pages = NULL;
 // Large multi page chunks
 static struct fmem_entry *large_pages = NULL;
 
+// The order is allowed to be bigger because it can be broken up later
+#define UNBOUNDED_ORDER 32
+
 static struct fmem_entry *__do_split(struct fmem_entry *entry) {
   if (entry->page_order == 0) {
     return entry;
@@ -87,24 +90,79 @@ void _fmem_free(void *addr) {
   normal_pages = entry;
 }
 
+static int determine_order(size_t page_count, size_t ptr) {
+  // We aren't checking order 0 because that one is just the default if nothing
+  // else works
+  for (int i = UNBOUNDED_ORDER - 1; i > 0; i--) {
+    size_t addr_mask = PAGE_SIZE * (1 << i) - 1;
+    size_t count = 1 << i;
+    // If this one won't work, move on (it won't work because the ptr isn't
+    // aligned)
+    if (ptr & addr_mask)
+      continue;
+    // If there aren't enough pages keep going
+    if (page_count < count)
+      continue;
+
+    return i;
+  }
+
+  return 0;
+}
+
 void _fmem_add_range(void *start, void *end) {
   size_t size = (uintptr_t)end - (uintptr_t)start;
   uintptr_t cur_ptr = (uintptr_t)start;
+  size_t cur_page_count = size / PAGE_SIZE;
 
-  for (int i = MAX_ORDER; i >= 0; i--) {
-    size_t current_size = (PAGE_SIZE * (1 << i));
-    while (size > current_size) {
-      size -= current_size;
-      struct fmem_entry *entry = (struct fmem_entry *)cur_ptr;
-      entry->page_order = i;
-      entry->next = i == 0 ? normal_pages : large_pages;
-      if (i == 0) {
-        normal_pages = entry;
-      } else {
-        large_pages = entry;
-      }
+  while (cur_page_count > 0) {
+    int order = determine_order(cur_page_count, cur_ptr);
+    struct fmem_entry *entry = (struct fmem_entry *)cur_ptr;
+    entry->page_order = order;
 
-      cur_ptr += current_size;
+    if (order == 0) {
+      entry->next = normal_pages;
+      normal_pages = entry;
+    } else {
+      entry->next = large_pages;
+      large_pages = entry;
     }
+
+    cur_page_count -= 1 << order;
+    cur_ptr += (1 << order) * PAGE_SIZE;
+  }
+}
+
+static void free_large_entry(struct fmem_entry *entry) {
+  if (entry->page_order < MAX_ORDER) {
+    _free_pages(entry, entry->page_order, 0);
+    return;
+  }
+
+  // Split page
+  // If the order is 10 that means there are 2 portions so entry->page_order -
+  // MAX_ORDER + 1 = 1 and then 1 << 1 = 2
+  size_t portions = 1 << (entry->page_order - MAX_ORDER + 1);
+  size_t step = PAGE_SIZE * (1 << (MAX_ORDER - 1));
+  uintptr_t addr = (uintptr_t)entry;
+  const int order = MAX_ORDER - 1;
+
+  for (size_t i = 0; i < portions; i++) {
+    _free_pages((void *)addr, order, 0);
+    addr += step;
+  }
+}
+
+void free_fmem(void) {
+  while (normal_pages) {
+    struct fmem_entry *entry = normal_pages;
+    normal_pages = entry->next;
+    _free_pages(entry, 0, 0);
+  }
+
+  while (large_pages) {
+    struct fmem_entry *entry = large_pages;
+    large_pages = entry->next;
+    free_large_entry(entry);
   }
 }
