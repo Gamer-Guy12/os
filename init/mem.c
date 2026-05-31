@@ -105,21 +105,19 @@ static void clean_buddy_memory(void) {
       zone->lock = (spinlock_t)SPINLOCK_ZERO(normal_lock);
       break;
     default:
+      zone->lock = (spinlock_t)SPINLOCK_ZERO(zone_lock);
       break;
     }
   }
 }
 
 static void free_fmem(void) {
-  size_t count = 0;
   while (true) {
     void *ptr = _fmem_alloc();
     if (!ptr)
       break;
-    _free_page(ptr, 0);
-    count++;
+    _free_pages(ptr, 0, 0);
   }
-  _kprintf("Freed 0x%x\n", count);
 }
 
 static void allocate_page_structs(size_t count) {

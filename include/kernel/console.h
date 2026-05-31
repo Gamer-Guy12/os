@@ -9,5 +9,10 @@ void console_putchar(char c);
 void console_clear(void);
 void console_scroll(void);
 
+// Doesn't have to do anything
+void serial_init(void);
+void serial_writechar(char c);
+void serial_clear(void);
+
 #endif
 

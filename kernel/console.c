@@ -85,7 +85,10 @@ static void clear_scaled_pixel(uint64_t x, uint64_t y, size_t scale) {
   }
 }
 
-void console_clear(void) { memset(framebuffer->address, 0, pitch * height); }
+void console_clear(void) {
+  memset(framebuffer->address, 0, pitch * height);
+  serial_clear();
+}
 
 static void print_glyph(uint64_t x, uint64_t y, uint64_t glyph, size_t scale) {
   for (size_t i = 0; i < 8; i++) {
@@ -182,6 +185,7 @@ void console_putchar(char c) {
     increment_cursor(false);
     break;
   }
+  serial_writechar(c);
 }
 
 INIT void console_init(void) {
@@ -206,6 +210,8 @@ INIT void console_init(void) {
   // 8 pixels are used per glyph and then font scale
   text_width = width / FONT_SCALE / 8;
   text_height = height / FONT_SCALE / 8;
+
+  serial_init();
 
   font['A'] = 0x33333F33331E0C;
   font['B'] = 0xF33330F33330F;

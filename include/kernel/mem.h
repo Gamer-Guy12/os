@@ -95,9 +95,9 @@ size_t calculate_mem_sizes(void);
 
 // Buddy
 // Allocs virtual identity mapped page
-void *_alloc_page(int flags);
+void *_alloc_pages(int order, int flags);
 // Frees virtual identity mapped page
-void _free_page(void *addr, int flags);
+void _free_pages(void *addr, int order, int flags);
 // Allocs physical page
 void *__alloc_pages(int order, int flags);
 // Frees physical page

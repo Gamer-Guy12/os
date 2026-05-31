@@ -30,6 +30,7 @@ INIT NORETURN void kinit(void) {
 
   BSP {
     console_init();
+    console_clear();
     _kprintf("[INIT] Initialized Console\n");
   }
 
@@ -51,31 +52,6 @@ static NORETURN void kmain(void) {
   BSP {
     init_cores();
     _kprintf("[INIT] Initialized All Cores\n");
-  }
-
-  BSP {
-    size_t count = 0;
-    void *value = NULL;
-    void *prev = NULL;
-    while ((value = _alloc_page(ZONE_NORMAL))) {
-      if (value == prev) {
-        _kprintf("Same\n");
-      }
-      prev = value;
-      count++;
-      if (count % 0x400 == 0) {
-        _kprintf("Count: %x, %p\n", count, value);
-      }
-    }
-
-    while (_alloc_page(ZONE_DMA)) {
-      count++;
-      if (count % 0x400 == 0) {
-        _kprintf("Count: %x\n", count);
-      }
-    }
-
-    _kprintf("0x%x\n", count);
   }
 
   while (true) {
