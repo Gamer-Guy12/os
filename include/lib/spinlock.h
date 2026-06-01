@@ -21,6 +21,9 @@ typedef struct {
 void _spinlock_acquire(spinlock_t *spinlock);
 void _spinlock_release(spinlock_t *spinlock);
 
+void spinlock_acquire(spinlock_t *spinlock);
+void spinlock_release(spinlock_t *spinlock);
+
 #ifdef _DEBUG_
 #define SPINLOCK(lock_name)                                                    \
   spinlock_t lock_name = {.current_core = -1,                                  \

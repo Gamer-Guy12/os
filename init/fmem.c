@@ -17,6 +17,8 @@ static struct fmem_entry *normal_pages = NULL;
 static struct fmem_entry *large_pages = NULL;
 
 // The order is allowed to be bigger because it can be broken up later
+// The way it works is we make big chunks and then just quickly split them up through some basic math
+// This is better than repetitivly checking the size of entries even when not needed
 #define UNBOUNDED_ORDER 32
 
 static struct fmem_entry *__do_split(struct fmem_entry *entry) {

@@ -40,3 +40,34 @@ void _spinlock_release(spinlock_t *spinlock) {
   __atomic_fetch_add(&spinlock->running_index, 1, __ATOMIC_RELEASE);
   _enable_interrupts();
 }
+
+void spinlock_acquire(spinlock_t *spinlock) {
+  disable_interrupts();
+#ifdef _DEBUG_
+  if (spinlock->current_core == get_core_id()) {
+    _kprintf("Deadlock detected on lock: ");
+    for (int i = 0; i < strlen(spinlock->name); i++) {
+      console_putchar(spinlock->name[i]);
+    }
+    _kprintf("\n");
+    panic();
+  }
+#endif
+  size_t index = __atomic_fetch_add(&spinlock->cur_index, 1, __ATOMIC_RELEASE);
+
+  while (__atomic_load_n(&spinlock->running_index, __ATOMIC_ACQUIRE) != index) {
+    __builtin_ia32_pause();
+  }
+
+#ifdef _DEBUG_
+  spinlock->current_core = get_core_id();
+#endif
+}
+
+void spinlock_release(spinlock_t *spinlock) {
+#ifdef _DEBUG_
+  spinlock->current_core = -1;
+#endif
+  __atomic_fetch_add(&spinlock->running_index, 1, __ATOMIC_RELEASE);
+  enable_interrupts();
+}

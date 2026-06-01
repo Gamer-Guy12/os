@@ -1,6 +1,11 @@
 #include "kernel/cores.h"
+#include "kernel/kprintf.h"
+#include "kernel/mem.h"
+#include "lib/atomic.h"
+#include "lib/string.h"
 #include "limine.h"
 #include "util.h"
+#include "x86_64.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -56,4 +61,52 @@ bool is_bsp(void) {
   }
 
   return false;
+}
+
+extern char _start_cls[];
+extern char _end_cls[];
+static atomic_t init_state;
+
+// Calculates sizes and offsets for each field
+static void calculate_size(void) {
+  if (!atomic_cas(&init_state, 0, 1)) {
+    while (atomic_load(&init_state) != 2)
+      ;
+    return;
+  }
+
+  size_t *entries = (void *)_start_cls;
+  size_t count = ((uintptr_t)_end_cls - (uintptr_t)_start_cls) / sizeof(size_t);
+
+  size_t cur_size = 0;
+  for (size_t i = 0; i < count; i++) {
+    size_t entry_size = entries[i];
+    entries[i] = cur_size;
+    cur_size += entry_size;
+  }
+
+  atomic_store(&init_state, 2);
+}
+
+void init_cls(void) {
+  calculate_size();
+
+  size_t size = (uintptr_t)_end_cls - (uintptr_t)_start_cls;
+  int order = -1;
+  for (int i = 0; i < MAX_ORDER; i++) {
+    size_t calculated_size = PAGE_SIZE * (1 << i);
+    if (calculated_size >= size) {
+      order = i;
+      break;
+    }
+  }
+
+  if (order == -1) {
+    _kprintf("CLS to big!\n");
+    panic();
+  }
+
+  void *ptr = _alloc_pages(order, ZONE_ANY);
+  memset(ptr, 0, size);
+  WRMSR(GS_BASE_MSR, ptr);
 }

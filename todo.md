@@ -9,9 +9,10 @@
         - Copy old page tables
     - Create buddy manager for pages (done)
     - Create basic mapping system for new physical pages (done)
-    - Create gheap heap allocator
 - Create CLS
     - Create second interrupt disabling (core local)
+- Create buddy manager updated
+- Create gheap heap allocator
 - Create GDT and IDT
 - Get APIC working
 - Create Threading

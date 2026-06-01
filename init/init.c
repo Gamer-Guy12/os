@@ -1,4 +1,3 @@
-#include "init.h"
 #include "kernel/console.h"
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
@@ -47,7 +46,9 @@ INIT NORETURN void kinit(void) {
 }
 
 static NORETURN void kmain(void) {
-  arch_init();
+  init_cls();
+  _kprintf("[INIT] Initialized CLS on core %u\n", get_core_id());
+  // Memory allocator can't be used again until threading is set up
 
   BSP {
     init_cores();

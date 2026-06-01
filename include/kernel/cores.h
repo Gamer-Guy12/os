@@ -7,6 +7,8 @@
 
 void init_cores(void);
 void kinit(void);
+// Initializes it on each core
+void init_cls(void);
 
 uint64_t get_core_count(void);
 uint32_t get_core_id(void);
