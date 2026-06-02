@@ -2,6 +2,7 @@
 #define _KERNEL_KPRINTF_H_
 
 int _kprintf(const char* format, ...);
+int kprintf(const char* format, ...);
 
 #endif
 

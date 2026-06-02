@@ -109,6 +109,6 @@ void __free_pages(void *addr, int order, int flags);
 // Allocs virtual identity mapped page
 void *alloc_pages(int order, int flags);
 // Frees virtual identity mapped page
-void free_pages(int order, int flags);
+void free_pages(void *addr, int order, int flags);
 
 #endif

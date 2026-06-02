@@ -47,12 +47,12 @@ INIT NORETURN void kinit(void) {
 
 static NORETURN void kmain(void) {
   init_cls();
-  _kprintf("[INIT] Initialized CLS on core %u\n", get_core_id());
+  kprintf("[INIT] Initialized CLS on core %u\n", get_core_id());
   // Memory allocator can't be used again until threading is set up
 
   BSP {
     init_cores();
-    _kprintf("[INIT] Initialized All Cores\n");
+    kprintf("[INIT] Initialized All Cores\n");
   }
 
   while (true) {
