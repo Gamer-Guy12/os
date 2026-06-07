@@ -137,7 +137,7 @@ void _fmem_add_range(void *start, void *end) {
 
 static void free_large_entry(struct fmem_entry *entry) {
   if (entry->page_order < MAX_ORDER) {
-    _free_pages(entry, entry->page_order, 0);
+    _free_pages(entry, entry->page_order);
     return;
   }
 
@@ -150,7 +150,7 @@ static void free_large_entry(struct fmem_entry *entry) {
   const int order = MAX_ORDER - 1;
 
   for (size_t i = 0; i < portions; i++) {
-    _free_pages((void *)addr, order, 0);
+    _free_pages((void *)addr, order);
     addr += step;
   }
 }
@@ -159,7 +159,7 @@ void free_fmem(void) {
   while (normal_pages) {
     struct fmem_entry *entry = normal_pages;
     normal_pages = entry->next;
-    _free_pages(entry, 0, 0);
+    _free_pages(entry, 0);
   }
 
   while (large_pages) {

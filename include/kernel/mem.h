@@ -101,14 +101,14 @@ void free_fmem(void);
 // Allocs virtual identity mapped page
 void *_alloc_pages(int order, int flags);
 // Frees virtual identity mapped page
-void _free_pages(void *addr, int order, int flags);
+void _free_pages(void *addr, int order);
 // Allocs physical page
 void *__alloc_pages(int order, int flags);
 // Frees physical page
-void __free_pages(void *addr, int order, int flags);
+void __free_pages(void *addr, int order);
 // Allocs virtual identity mapped page
 void *alloc_pages(int order, int flags);
 // Frees virtual identity mapped page
-void free_pages(void *addr, int order, int flags);
+void free_pages(void *addr, int order);
 
 #endif

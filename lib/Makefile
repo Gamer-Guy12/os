@@ -7,4 +7,5 @@ lib-src = lib/string.c \
 	lib/list.c \
 	lib/queue.c \
 	lib/rbtree.c \
+	lib/freelist.c \
 

@@ -84,7 +84,7 @@ void *_alloc_pages(int order, int flags) {
   return (void *)(paddr + IDENTITY_OFFSET);
 }
 
-void _free_pages(void *addr, int order, int flags) {
+void _free_pages(void *addr, int order) {
   if (addr == NULL) {
     return;
   }
@@ -152,9 +152,7 @@ void *__alloc_pages(int order, int flags) {
 }
 
 // Frees physical page
-void __free_pages(void *addr, int order, int flags) {
-  free_pages(PTV(addr), order, flags);
-}
+void __free_pages(void *addr, int order) { free_pages(PTV(addr), order); }
 
 // Allocs virtual identity mapped page
 void *alloc_pages(int order, int flags) {
@@ -212,7 +210,7 @@ void *alloc_pages(int order, int flags) {
 }
 
 // Frees virtual identity mapped page
-void free_pages(void *addr, int order, int flags) {
+void free_pages(void *addr, int order) {
   if (addr == NULL) {
     return;
   }

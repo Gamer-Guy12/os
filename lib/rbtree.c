@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+static struct rbnode rbnil = {0};
+
 void __rb_delete(struct rbtree *tree, struct rbnode *node);
 
 void rb_create(struct rbtree *tree,

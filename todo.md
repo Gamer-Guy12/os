@@ -11,7 +11,7 @@
     - Create basic mapping system for new physical pages (done)
 - Create CLS (done)
     - Create second interrupt disabling (core local) (done)
-- Create buddy manager updated
+- Create buddy manager updated (done)
 - Create gheap heap allocator
 - Create GDT and IDT
 - Get APIC working

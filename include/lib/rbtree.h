@@ -28,12 +28,12 @@ struct rbnode {
 #endif
 };
 
-__attribute__((unused)) static struct rbnode rbnil = {0};
-
 struct rbtree {
   // Return < 0 if n1 is less than n2
   // Return 0 if they are equal
   // Return > 0 if n1 is greater than n2
+  //
+  // When doing searches n2 is always the target dummy node passed in
   int (*compare)(struct rbnode *n1, struct rbnode *n2);
   struct rbnode *root;
   size_t count;
