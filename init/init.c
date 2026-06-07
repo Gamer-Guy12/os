@@ -50,9 +50,6 @@ static NORETURN void kmain(void) {
   kprintf("[INIT] Initialized CLS on core %u\n", get_core_id());
   // Memory allocator can't be used again until threading is set up
 
-  void *ptr = gmalloc(32);
-  kprintf("Value: %p %x\n", ptr, get_core_id());
-
   BSP {
     init_cores();
     kprintf("[INIT] Initialized All Cores\n");

@@ -163,7 +163,7 @@ void gheap_cache_create(struct gheap_cache *cache, size_t object_size,
 static struct gheap_slab *__gheap_slab_get(struct gheap_cache *cache) {
   // First check the partial list
   if (!LIST_EMPTY(&cache->partial_list)) {
-    struct list_node *partial_node = cache->empty_list.next;
+    struct list_node *partial_node = cache->partial_list.next;
     list_remove(partial_node);
 
     return (struct gheap_slab *)((uintptr_t)partial_node -
@@ -213,7 +213,6 @@ static struct gheap_slab *__gheap_slab_create(struct gheap_cache *cache) {
 
   slab->cache = cache;
   FREELIST_INIT(&slab->freelist);
-  kprintf("%p tf %p\n", slab->freelist.next, &slab->freelist);
   slab->count_left = cache->objects_per_slab;
 
   // Create freelist
@@ -248,15 +247,15 @@ void *gheap_cache_alloc(struct gheap_cache *cache) {
       break;
   }
 
-  if (!slab)
+  if (!slab) {
     slab = __gheap_slab_create(cache);
+  }
   if (!slab) {
     spinlock_release(&cache->lock);
     return NULL;
   }
 
   // Allocate within it
-  kprintf("Count: %x\n", slab->freelist.count);
   void *addr = freelist_remove(&slab->freelist);
   slab->count_left--;
 

@@ -12,7 +12,7 @@
 - Create CLS (done)
     - Create second interrupt disabling (core local) (done)
 - Create buddy manager updated (done)
-- Create gheap heap allocator
+- Create gheap heap allocator (done)
 - Create GDT and IDT
 - Get APIC working
 - Create Threading
