@@ -3,20 +3,30 @@
 
 #include "lib/freelist.h"
 #include "lib/list.h"
-#include "lib/rbtree.h"
 #include "lib/spinlock.h"
 #include <stddef.h>
 #include <stdint.h>
 
 #define GHEAP_RETRY_COUNT 3
 #define GHEAP_MIN_SIZE 32
+// This means that when there is less than or equal to 75% of the slab being
+// used, try putting the slab descriptor within it
+#define GHEAP_USAGE_THRESHOLD 750
 
-// This is 64 bytes (at least rn) :)
+__attribute__((unused)) static size_t gheap_cache_sizes[] = {
+#ifdef _x86_64_
+#define GHEAP_CACHE_COUNT 19
+    0x20,    0x40,    0x60,    0x80,     0xC0,    0x100,  0x200,
+    0x400,   0x800,   0x1000,  0x2000,   0x4000,  0x8000, 0x10000,
+    0x20000, 0x40000, 0x80000, 0x100000, 0x200000
+#else
+#error "Cannot calculate gheap default cache sizes"
+#endif
+};
+
+// This is 48 bytes (at least rn) :| (its no longer 64)
 struct gheap_slab {
-  union {
-    struct list_node list_node;
-    struct rbnode tree_node;
-  };
+  struct list_node node;
   struct freelist_node freelist;
   struct gheap_cache *cache;
   void *addr;
@@ -26,14 +36,12 @@ struct gheap_slab {
 struct gheap_cache {
   // When searching for a slab that contains an address set slab->addr to be the
   // address that is within the slab
-  struct rbtree full_list;
-  struct rbtree partial_list;
+  struct list_node full_list;
+  struct list_node partial_list;
   // This is only a list because we don't need to search pages within here
   struct list_node empty_list;
   // When 0 this means the cache is uninitialized
   size_t object_size;
-  // How many are unallocated
-  uint32_t object_count;
   uint32_t objects_per_slab;
   int alloc_order;
   int flags;
@@ -61,7 +69,7 @@ void gheap_cache_free(struct gheap_cache *cache, void *ptr);
 void gheap_cache_destroy(struct gheap_cache *cache);
 
 #define GHEAP_CACHE(name)                                                      \
-  struct gheap_cache name = {                                                  \
-      .object_size = 0, .lock = SPINLOCK_ZERO(name##_lock), .object_count = 0}
+  struct gheap_cache name = {.object_size = 0,                                 \
+                             .lock = SPINLOCK_ZERO(name##_lock)}
 
 #endif

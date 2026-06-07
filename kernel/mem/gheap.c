@@ -1,46 +1,61 @@
 #include "kernel/gheap.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "lib/atomic.h"
 #include "lib/freelist.h"
 #include "lib/list.h"
-#include "lib/rbtree.h"
 #include "lib/spinlock.h"
 #include "util.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-// This means that when there is less than or equal to 75% of the slab being
-// used, try putting the slab descriptor within it
-#define USAGE_THRESH 750
-
 static GHEAP_CACHE(slab_cache);
+// Since these aren't initialized with GHEAP_CACHE, you have to manually clear
+// them with like SPINLOCK_ZERO
+static atomic_t initialized = ATOMIC_ZERO;
+// Allocates only from zone normal
+static struct gheap_cache default_caches[GHEAP_CACHE_COUNT] = {0};
 
-static int sort_addresses(struct rbnode *n1, struct rbnode *n2) {
-  struct gheap_slab *slab1 =
-      (struct gheap_slab *)((uintptr_t)n1 -
-                            offsetof(struct gheap_slab, tree_node));
-  struct gheap_slab *slab2 =
-      (struct gheap_slab *)((uintptr_t)n2 -
-                            offsetof(struct gheap_slab, tree_node));
-
-  uintptr_t addr = (uintptr_t)slab1->addr;
-  uintptr_t target_addr = (uintptr_t)slab2->addr;
-  size_t size = (1 << slab1->cache->alloc_order) * PAGE_SIZE;
-
-  if (addr <= target_addr && addr + size > target_addr) {
-    return 0;
+// This is a bit slower than the caches and less granular
+void *gmalloc(size_t size) {
+  int cache = -1;
+  for (int i = GHEAP_CACHE_COUNT - 1; i >= 0; i--) {
+    if (size <= gheap_cache_sizes[i])
+      cache = i;
+    else
+      break;
   }
 
-  if (addr > target_addr) {
-    return 1;
+  if (cache == -1)
+    return NULL;
+
+  // Check if initialized
+  if (atomic_cas(&initialized, 0, 1)) {
+    for (int i = 0; i < GHEAP_CACHE_COUNT; i++) {
+      default_caches[i].object_size = 0;
+      default_caches[i].lock = (spinlock_t)SPINLOCK_ZERO(gheap_cache_lock);
+      gheap_cache_create(&default_caches[i], gheap_cache_sizes[i], ZONE_ANY);
+    }
+    atomic_store(&initialized, 2);
+  } else {
+    while (atomic_load(&initialized) != 2)
+      ;
   }
 
-  return -1;
+  // Allocate
+  struct gheap_cache *cache_desc = &default_caches[cache];
+  return gheap_cache_alloc(cache_desc);
 }
 
-void *gmalloc(size_t size);
-void gfree(void *ptr);
+void gfree(void *ptr) {
+  // Get the page
+  struct page *page = __paddr_page_struct(VTP(ptr));
+  struct gheap_slab *slab = page->slab;
+  struct gheap_cache *cache = slab->cache;
+
+  gheap_cache_free(cache, ptr);
+}
 
 static bool calculate_sizes(size_t object_size, int *order,
                             uint32_t *objects_per_slab, bool slab_in) {
@@ -68,7 +83,7 @@ static bool calculate_sizes(size_t object_size, int *order,
     }
   }
 
-  if (cur_usage > USAGE_THRESH && cur_order != -1) {
+  if (cur_usage > GHEAP_USAGE_THRESHOLD && cur_order != -1) {
     *order = cur_order;
     *objects_per_slab = cur_count;
     return do_slab_in;
@@ -109,8 +124,8 @@ static void __gheap_cache_create(struct gheap_cache *cache, size_t object_size,
     return;
   }
 
-  rb_create(&cache->full_list, sort_addresses);
-  rb_create(&cache->partial_list, sort_addresses);
+  LIST_INIT(&cache->full_list);
+  LIST_INIT(&cache->partial_list);
   LIST_INIT(&cache->empty_list);
 
   cache->object_size = object_size;
@@ -141,16 +156,18 @@ void gheap_cache_create(struct gheap_cache *cache, size_t object_size,
 
   // If the flags don't allow the allocation to fail you should probably set the
   // slab_in to be true but that flag doesn't exist yet so idgaf
-  __gheap_cache_create(&slab_cache, object_size, flags, false);
+  __gheap_cache_create(cache, object_size, flags, false);
 }
 
 // Will remove the slab from its list
 static struct gheap_slab *__gheap_slab_get(struct gheap_cache *cache) {
   // First check the partial list
-  struct rbnode *partial_node = rb_delete_min(&cache->partial_list, NULL);
-  if (partial_node) {
+  if (!LIST_EMPTY(&cache->partial_list)) {
+    struct list_node *partial_node = cache->empty_list.next;
+    list_remove(partial_node);
+
     return (struct gheap_slab *)((uintptr_t)partial_node -
-                                 offsetof(struct gheap_slab, tree_node));
+                                 offsetof(struct gheap_slab, node));
   }
 
   if (LIST_EMPTY(&cache->empty_list)) {
@@ -161,7 +178,7 @@ static struct gheap_slab *__gheap_slab_get(struct gheap_cache *cache) {
   list_remove(empty_node);
 
   return (struct gheap_slab *)((uintptr_t)empty_node -
-                               offsetof(struct gheap_slab, list_node));
+                               offsetof(struct gheap_slab, node));
 }
 
 static struct gheap_slab *__gheap_slab_create(struct gheap_cache *cache) {
@@ -185,16 +202,18 @@ static struct gheap_slab *__gheap_slab_create(struct gheap_cache *cache) {
     addr = (uintptr_t)slab->addr;
   } else {
     addr = (uintptr_t)alloc_pages(cache->alloc_order, cache->flags);
-    if (!addr) {
+    if (addr == 0) {
       return NULL;
     }
 
     slab = (struct gheap_slab *)addr;
+    slab->addr = (void *)addr;
     addr += sizeof(struct gheap_slab);
   }
 
   slab->cache = cache;
   FREELIST_INIT(&slab->freelist);
+  kprintf("%p tf %p\n", slab->freelist.next, &slab->freelist);
   slab->count_left = cache->objects_per_slab;
 
   // Create freelist
@@ -202,6 +221,12 @@ static struct gheap_slab *__gheap_slab_create(struct gheap_cache *cache) {
     freelist_insert(&slab->freelist, (void *)addr);
 
     addr += cache->object_size;
+  }
+
+  // Tell the pages what the slab is
+  struct page *page = __paddr_page_struct(VTP(slab->addr));
+  for (int i = 0; i < (1 << cache->alloc_order); i++) {
+    page[i].slab = slab;
   }
 
   return slab;
@@ -231,14 +256,15 @@ void *gheap_cache_alloc(struct gheap_cache *cache) {
   }
 
   // Allocate within it
+  kprintf("Count: %x\n", slab->freelist.count);
   void *addr = freelist_remove(&slab->freelist);
   slab->count_left--;
 
   // Add it back to the list
   // If the slab doesn't have any more objects then put it in the full list
   // otherwise in the partial list
-  rb_insert(slab->count_left == 0 ? &cache->full_list : &cache->partial_list,
-            &slab->tree_node);
+  list_insert(slab->count_left == 0 ? &cache->full_list : &cache->partial_list,
+              &slab->node);
   spinlock_release(&cache->lock);
 
   return addr;
@@ -251,29 +277,17 @@ void gheap_cache_free(struct gheap_cache *cache, void *ptr) {
 
   spinlock_acquire(&cache->lock);
   // Get slab
-  struct gheap_slab dummy = {.addr = ptr};
-  struct rbnode *node =
-      rb_delete_search(&cache->full_list, NULL, &dummy.tree_node);
-  if (!node)
-    node = rb_delete_search(&cache->partial_list, NULL, &dummy.tree_node);
-  if (!node) {
-    spinlock_release(&cache->lock);
-    return;
-  }
-
-  struct gheap_slab *slab =
-      (struct gheap_slab *)((uintptr_t)node -
-                            offsetof(struct gheap_slab, tree_node));
+  struct page *page = __paddr_page_struct(VTP(ptr));
+  struct gheap_slab *slab = page->slab;
 
   freelist_insert(&slab->freelist, ptr);
   slab->count_left--;
 
   // Reinsert into the cache
-  if (slab->count_left == cache->objects_per_slab) {
-    list_insert(&cache->empty_list, &slab->list_node);
-  } else {
-    rb_insert(&cache->partial_list, &slab->tree_node);
-  }
+  list_insert(slab->count_left == cache->objects_per_slab
+                  ? &cache->empty_list
+                  : &cache->partial_list,
+              &slab->node);
 
   spinlock_release(&cache->lock);
 }
@@ -287,24 +301,20 @@ static void __slab_destroy(struct gheap_cache *cache, struct gheap_slab *slab) {
 
 // This frees all slabs (even if there is stuff allocated within)
 void gheap_cache_destroy(struct gheap_cache *cache) {
-  while (true) {
-    struct rbnode *node = rb_delete_max(&cache->full_list, NULL);
-    if (!node)
-      break;
+  while (!LIST_EMPTY(&cache->full_list)) {
+    struct list_node *node = cache->full_list.next;
     struct gheap_slab *slab =
         (struct gheap_slab *)((uintptr_t)node -
-                              offsetof(struct gheap_slab, tree_node));
+                              offsetof(struct gheap_slab, node));
 
     __slab_destroy(cache, slab);
   }
 
-  while (true) {
-    struct rbnode *node = rb_delete_max(&cache->partial_list, NULL);
-    if (!node)
-      break;
+  while (!LIST_EMPTY(&cache->partial_list)) {
+    struct list_node *node = cache->partial_list.next;
     struct gheap_slab *slab =
         (struct gheap_slab *)((uintptr_t)node -
-                              offsetof(struct gheap_slab, tree_node));
+                              offsetof(struct gheap_slab, node));
 
     __slab_destroy(cache, slab);
   }
@@ -313,7 +323,7 @@ void gheap_cache_destroy(struct gheap_cache *cache) {
     struct list_node *node = cache->empty_list.next;
     struct gheap_slab *slab =
         (struct gheap_slab *)((uintptr_t)node -
-                              offsetof(struct gheap_slab, list_node));
+                              offsetof(struct gheap_slab, node));
 
     __slab_destroy(cache, slab);
   }

@@ -1,6 +1,7 @@
 #ifndef _KERNEL_MEM_H_
 #define _KERNEL_MEM_H_
 
+#include "kernel/gheap.h"
 #include "lib/spinlock.h"
 #include "limine.h"
 #include <stddef.h>
@@ -33,6 +34,9 @@ __attribute__((unused)) static struct page *pages =
 struct page {
   struct page *next;
   struct page *prev;
+  union {
+    struct gheap_slab *slab;
+  };
 };
 
 // One layer in the buddy table
@@ -74,7 +78,9 @@ enum map_flags {
 // Arch specific
 struct zone *__get_zone(int zone);
 // return value will be null if get_virt_page returns null
-// If get_phys_page fails then things will be in an inconsistent state that needs to be fixed by freeing everything using __unmap_pages and then a physical manager
+// If get_phys_page fails then things will be in an inconsistent state that
+// needs to be fixed by freeing everything using __unmap_pages and then a
+// physical manager
 struct page *__map_phys_pages(void *vaddr, void *paddr, int flags,
                               void *(get_phys_page)(void), size_t count);
 struct page *__map_page(void *vaddr, int flags, void *(get_phys_page)(void));

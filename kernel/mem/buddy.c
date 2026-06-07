@@ -10,7 +10,7 @@ static struct zone *get_zone(int flags) {
   return __get_zone(zone_portion);
 }
 
-static void freelist_remove(struct page *page) {
+static void pagelist_remove(struct page *page) {
   page->next->prev = page->prev;
   page->prev->next = page->next;
 
@@ -45,7 +45,7 @@ void *_alloc_pages(int order, int flags) {
     if (layer->freelist.next != &layer->freelist) {
       page = layer->freelist.next;
       order = i;
-      freelist_remove(page);
+      pagelist_remove(page);
 
       // Get page out of bitmap
       ptr = __get_page_pointer(page, flags & ZONE_MASK);
@@ -128,7 +128,7 @@ void _free_pages(void *addr, int order) {
       struct page *partner = __get_page_struct(partner_ptr, zone_index);
 
       // Allocate partner
-      freelist_remove(partner);
+      pagelist_remove(partner);
       flip_bit_in_ptr(layer->data, index);
 
       bool older = partner_ptr < ptr;
@@ -170,7 +170,7 @@ void *alloc_pages(int order, int flags) {
     if (layer->freelist.next != &layer->freelist) {
       page = layer->freelist.next;
       order = i;
-      freelist_remove(page);
+      pagelist_remove(page);
 
       // Get page out of bitmap
       ptr = __get_page_pointer(page, flags & ZONE_MASK);
@@ -254,7 +254,7 @@ void free_pages(void *addr, int order) {
       struct page *partner = __get_page_struct(partner_ptr, zone_index);
 
       // Allocate partner
-      freelist_remove(partner);
+      pagelist_remove(partner);
       flip_bit_in_ptr(layer->data, index);
 
       bool older = partner_ptr < ptr;
