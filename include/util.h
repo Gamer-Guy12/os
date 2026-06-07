@@ -16,8 +16,6 @@
 #define NORETURN __attribute__((noreturn))
 
 #define LIMINE_REQUEST __attribute__((used, section(".limine_requests")))
-#define INIT __attribute__((section(".init.text")))
-#define INIT_DATA __attribute__((section(".init.data")))
 
 #define SASSERT _Static_assert
 

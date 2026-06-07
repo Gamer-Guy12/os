@@ -3,8 +3,6 @@ OUTPUT_FORMAT(elf64-x86-64)
 
 PHDRS {
   limine_requests PT_LOAD;
-  init_text PT_LOAD;
-  init_data PT_LOAD;
   text PT_LOAD;
   rodata PT_LOAD;
   data PT_LOAD;
@@ -21,43 +19,6 @@ SECTIONS {
     KEEP(*(.limine_requests))
     KEEP(*(.limine_requests_end))
   } :limine_requests
-
-  .init.text ALIGN(4k) : {
-    _start_init_text = .;
-
-    *(.init.text)
-
-    _end_init_text = .;
-  } :init_text
-
-  .init.rodata ALIGN(4k) : {
-    _start_init_rodata = .;
-
-    *(.init.rodata)
-
-    _end_init_rodata = .;
-  } :init_data
-
-  .init.data ALIGN(4k) : {
-    _start_init_data = .;
-
-    *(.init.data)
-    
-    . = ALIGN(4K);
-    _start_cls = .;
-    KEEP(*(.cls));
-    _end_cls = .;
-
-    _end_init_data = .;
-  } :init_data
-
-  .init.bss ALIGN(4k) : {
-    _start_init_bss = .;
-
-    *(.init.bss)
-
-    _end_init_bss = .;
-  } :init_data
 
   .text ALIGN(4k) : {
     _start_text = .;
@@ -78,6 +39,11 @@ SECTIONS {
 
   .data ALIGN(4k) : {
     _start_data = .;
+    
+    . = ALIGN(4K);
+    _start_cls = .;
+    KEEP(*(.cls));
+    _end_cls = .;
 
     *(.data)
 

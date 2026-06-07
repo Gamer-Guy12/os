@@ -188,7 +188,7 @@ void console_putchar(char c) {
   serial_writechar(c);
 }
 
-INIT void console_init(void) {
+void console_init(void) {
   if (framebuffer_request.response->framebuffer_count < 1) {
     panic();
   }

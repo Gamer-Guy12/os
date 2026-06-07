@@ -19,7 +19,7 @@ LIMINE_SECTION(".limine_requests_end") static volatile uint64_t limine_requests_
 // clang-format on
 static NORETURN void kmain(void);
 // clang-format off
-INIT NORETURN void kinit(void) {
+NORETURN void kinit(void) {
   BSP {
     // clang-format on
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {

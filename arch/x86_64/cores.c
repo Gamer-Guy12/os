@@ -29,7 +29,7 @@ static void entry(struct limine_mp_info *info) {
   }
 }
 
-INIT void init_cores(void) {
+void init_cores(void) {
   bsp_id = mp_request.response->bsp_lapic_id;
   cpu_count = mp_request.response->cpu_count;
   cpus = mp_request.response->cpus;
