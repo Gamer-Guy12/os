@@ -33,6 +33,10 @@ SECTIONS {
     _start_rodata = .;
 
     *(.rodata)
+    . = ALIGN(16);
+    _start_init_func = .;
+    KEEP(*(.init_func))
+    _end_init_func = .;
 
     _end_rodata = .;
   } :rodata

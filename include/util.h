@@ -14,6 +14,7 @@
 #define MAX_64 0xFFFFFFFFFFFFFFFFull
 
 #define NORETURN __attribute__((noreturn))
+#define USED __attribute((used))
 
 #define LIMINE_REQUEST __attribute__((used, section(".limine_requests")))
 
@@ -25,6 +26,31 @@
 #define MEMB() __atomic_thread_fence(__ATOMIC_SEQ_CST)
 #define WMEMB() __atomic_thread_fence(__ATOMIC_RELEASE)
 #define RMEMB() __atomic_thread_fence(__ATOMIC_ACQUIRE)
+
+enum init_type {
+  // Called as soon as the memory manager goes up (run only on bsp)
+  CALL_MEM,
+  // Run after threading is set up (run on all cores)
+  CALL_THREADS,
+  // Run after all initialization is done (run on all cores)
+  CALL_LATE
+};
+
+struct init_entry {
+  void (*ptr)(void);
+  uint32_t type;
+#ifdef _x86_64_
+  uint32_t padding;
+#endif
+};
+
+// If the function is static declare it as USED
+#define INITFUNC(func, call_type)                                              \
+  __attribute__((used,                                                         \
+                 section(".init_func"))) struct init_entry func##_call = {     \
+      .ptr = func, .type = call_type}
+
+void do_calls(uint32_t type);
 
 #ifdef _x86_64_
 

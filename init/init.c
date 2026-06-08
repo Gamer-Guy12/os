@@ -36,12 +36,14 @@ NORETURN void kinit(void) {
   BSP {
     init_mem();
     _kprintf("[INIT] Initialized Memory\n");
+
+    do_calls(CALL_MEM);
   }
 
   AP { _kprintf("[INIT] Starting Core %u Initialization\n", get_core_id()); }
   kmain();
 
-  while (1) {
+  while (true) {
   }
 }
 
@@ -54,6 +56,8 @@ static NORETURN void kmain(void) {
     init_cores();
     kprintf("[INIT] Initialized All Cores\n");
   }
+
+  do_calls(CALL_LATE);
 
   while (true) {
   }
