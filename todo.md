@@ -13,7 +13,7 @@
     - Create second interrupt disabling (core local) (done)
 - Create buddy manager updated (done)
 - Create gheap heap allocator (done)
-- Create init funcs
+- Create init funcs (done)
 - Create GDT and IDT
 - Get APIC working
 - Create Threading

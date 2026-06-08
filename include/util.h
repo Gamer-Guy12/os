@@ -29,11 +29,19 @@
 
 enum init_type {
   // Called as soon as the memory manager goes up (run only on bsp)
+  // Use stuff like _kprintf
   CALL_MEM,
+  // Called as sson as CLS is set up (run on all threads)
+  // still use the early versions
+  CALL_CLS,
   // Run after threading is set up (run on all cores)
+  // Later versions are allowed
   CALL_THREADS,
-  // Run after all initialization is done (run on all cores)
-  CALL_LATE
+  // Run after all initialization is done (run on all cores) (no interrupts
+  // though)
+  CALL_LATE,
+  // This is run when everything is like the system is running
+  CALL_FINAL
 };
 
 struct init_entry {
@@ -53,15 +61,11 @@ struct init_entry {
 void do_calls(uint32_t type);
 
 #ifdef _x86_64_
-
 #define HLT __asm__ volatile("hlt");
-
 #else
-
 #define HLT                                                                    \
   while (1) {                                                                  \
   }
-
 #endif
 
 NORETURN static inline void panic(void) {

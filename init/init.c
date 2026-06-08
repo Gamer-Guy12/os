@@ -1,3 +1,4 @@
+#include "interrupts.h"
 #include "kernel/console.h"
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
@@ -26,6 +27,7 @@ NORETURN void kinit(void) {
       panic();
     }
   }
+  _disable_interrupts();
 
   BSP {
     console_init();
@@ -50,7 +52,7 @@ NORETURN void kinit(void) {
 static NORETURN void kmain(void) {
   init_cls();
   kprintf("[INIT] Initialized CLS on core %u\n", get_core_id());
-  // Memory allocator can't be used again until threading is set up
+  do_calls(CALL_CLS);
 
   BSP {
     init_cores();
@@ -58,6 +60,9 @@ static NORETURN void kmain(void) {
   }
 
   do_calls(CALL_LATE);
+  _enable_interrupts();
+
+  do_calls(CALL_FINAL);
 
   while (true) {
   }
