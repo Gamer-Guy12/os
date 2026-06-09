@@ -14,7 +14,7 @@
 - Create buddy manager updated (done)
 - Create gheap heap allocator (done)
 - Create init funcs (done)
-- Create GDT and IDT
+- Create GDT and IDT (done)
 - Get APIC working
 - Create Threading
     - Thread switching

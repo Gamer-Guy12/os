@@ -52,6 +52,7 @@ NORETURN void kinit(void) {
 static NORETURN void kmain(void) {
   init_cls();
   kprintf("[INIT] Initialized CLS on core %u\n", get_core_id());
+  // Most normal functions can be used here but continue using _alloc_pages
   do_calls(CALL_CLS);
 
   BSP {
@@ -60,7 +61,7 @@ static NORETURN void kmain(void) {
   }
 
   do_calls(CALL_LATE);
-  _enable_interrupts();
+  enable_interrupts();
 
   do_calls(CALL_FINAL);
 

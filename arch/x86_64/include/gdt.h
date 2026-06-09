@@ -3,6 +3,15 @@
 
 #include <stdint.h>
 
+// Segment 1 | DPL 0
+#define GDT_CODE0 (0x8 | 0x0)
+// Segment 2 | DPL 0
+#define GDT_DATA0 (0x10 | 0x0)
+// Segment 3 | DPL 3
+#define GDT_DATA3 (0x18 | 0x3)
+// Segment 4 | DPL 3
+#define GDT_CODE3 (0x20 | 0x3)
+
 typedef struct {
   // Size - 1
   uint16_t size;
