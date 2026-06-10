@@ -20,6 +20,7 @@ uint32_t get_core_id(void);
 
 // Must be called from every core
 bool is_bsp(void);
+uint32_t get_bsp_id(void);
 
 #ifdef _x86_64_
 #include "asm.h"

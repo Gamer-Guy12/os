@@ -88,6 +88,11 @@ struct page *__do_phys_map(void *vaddr, void *paddr, int flags,
   entry = &pt[pt_index];
 
 map_page:
+  // If the page is already mapped
+  if (entry->flags & PAGE_ENTRY_PRESENT) {
+    return __paddr_page_struct(paddr);
+  }
+
   entry->addr = (uintptr_t)paddr;
   entry->flags = flags;
   entry->nx = nx;

@@ -10,11 +10,20 @@
 #include <stdint.h>
 
 LIMINE_REQUEST static volatile struct limine_mp_request mp_request = {
-    .id = LIMINE_MP_REQUEST_ID, .flags = 0, .revision = 0};
+    .id = LIMINE_MP_REQUEST_ID,
+    .flags = LIMINE_MP_REQUEST_X86_64_X2APIC,
+    .revision = 0};
 
 static uint32_t bsp_id = 0;
 static uint64_t cpu_count = 0;
 static struct limine_mp_info **cpus;
+
+void check_apic(void) {
+  if (!(mp_request.response->flags & LIMINE_MP_RESPONSE_X86_64_X2APIC)) {
+    kprintf("No x2APIC onboard on core %u\n", get_core_id());
+    panic();
+  }
+}
 
 static struct {
   uintptr_t cr3;
@@ -61,6 +70,10 @@ bool is_bsp(void) {
   }
 
   return false;
+}
+
+uint32_t get_bsp_id(void) {
+  return bsp_id;
 }
 
 extern char _start_cls[];

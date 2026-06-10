@@ -1,5 +1,7 @@
 # OS
 
+## NOTE: This requires kvm to work because it relies on the x2apic and doesn't support anything lower
+
 Makefile Usage:
 
 Build Kernel:
