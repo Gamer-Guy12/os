@@ -51,8 +51,12 @@ NORETURN void kinit(void) {
 
 static NORETURN void kmain(void) {
   init_cls();
+  // Interrupts are disabled just so it is registered in core local storage and
+  // so that they don't run enabled
+  disable_interrupts();
   kprintf("[INIT] Initialized CLS on core %u\n", get_core_id());
   // Most normal functions can be used here but continue using _alloc_pages
+  // Up until here don't use nested interrupts
   do_calls(CALL_CLS);
 
   BSP {

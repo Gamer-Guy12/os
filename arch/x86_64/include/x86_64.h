@@ -4,5 +4,8 @@
 #define FS_BASE_MSR 0xC0000100
 #define GS_BASE_MSR 0xC0000101
 
+#define PANIC_IPI 0xFE
+void panic_handler(void *);
+
 #endif
 

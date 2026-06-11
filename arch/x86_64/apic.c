@@ -13,6 +13,8 @@ void enable_apic(void) {
   apic_write(LAPIC_SVR_REG, 0xFF | (1 << 8));
 }
 
+bool apic_up(void) { return apic_read(LAPIC_SVR_REG) & (1 << 8); }
+
 void apic_write(uint16_t reg, uint64_t value) {
   WRMSR(APIC_MSR_BASE + reg, value);
 }
@@ -34,6 +36,7 @@ void apic_ipi(int type, uint32_t dest, uint8_t interrupt) {
     break;
   case IPI_ALL:
     data |= (0x2 << 18);
+    break;
   default:
     kprintf("Invalid IPI type 0x%x\n", type);
     break;

@@ -61,17 +61,14 @@ struct init_entry {
 void do_calls(uint32_t type);
 
 #ifdef _x86_64_
-#define HLT __asm__ volatile("hlt");
+#define HLT __asm__ volatile("cli; hlt")
 #else
 #define HLT                                                                    \
   while (1) {                                                                  \
   }
 #endif
 
-NORETURN static inline void panic(void) {
-  HLT;
-  while (1) {
-  }
-}
+// Architecture dependent
+NORETURN void panic(void);
 
 #endif

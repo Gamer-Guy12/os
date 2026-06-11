@@ -15,7 +15,7 @@
 - Create gheap heap allocator (done)
 - Create init funcs (done)
 - Create GDT and IDT (done)
-- Get APIC working
+- Get APIC working (done)
 - Create Threading
     - Thread switching
     - Thread Creation

@@ -68,6 +68,8 @@ enum ipi_type {
 void check_apic(void);
 void enable_apic(void);
 void init_apic(void);
+// Checks if the apic has been initialized
+bool apic_up(void);
 
 // Usage
 void apic_write(uint16_t reg, uint64_t value);

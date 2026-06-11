@@ -3,6 +3,7 @@
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
 #include "util.h"
+#include "x86_64.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -12,7 +13,8 @@ typedef void (*handler_t)(void *);
 // There are 256 entries in the idt
 struct int_descriptor idt[IDT_ENTRIES];
 extern uint64_t idt_funcs[IDT_ENTRIES];
-static handler_t handlers[IDT_ENTRIES];
+// Certain handlers can be hard coded in
+static handler_t handlers[IDT_ENTRIES] = {[PANIC_IPI] = panic_handler};
 
 void register_interrupt(void (*handler)(void *), int interrupt) {
   // This prevents things from being reordered before the handler they need is
