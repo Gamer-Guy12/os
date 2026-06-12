@@ -58,6 +58,8 @@ __do_stack_switch:
   ; Add the size to the address to get the rsp value
   add rsi, rdx
   mov rsp, rsi
+  ; For alignment
+  push 0
   ; Set the beginning of the stack frame
   push 0
   ; Go to the entry point
