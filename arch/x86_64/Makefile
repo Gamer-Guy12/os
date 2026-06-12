@@ -12,7 +12,8 @@ x86_64-src = arch/x86_64/cores.c \
 	arch/x86_64/idt.asm \
 	arch/x86_64/apic.c \
 	arch/x86_64/panic.c \
-	arch/x86_64/switch.asm
+	arch/x86_64/switch.asm \
+	arch/x86_64/threads.c
 
 build/obj/arch/x86_64/idt.asm.o: arch/x86_64/idt.asm
 	@mkdir -p $(dir $@)

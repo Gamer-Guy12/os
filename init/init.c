@@ -3,6 +3,7 @@
 #include "kernel/cores.h"
 #include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "kernel/threads.h"
 #include "limine.h"
 #include "util.h"
 #include <stdbool.h>
@@ -58,6 +59,10 @@ static NORETURN void kmain(void) {
   // Most normal functions can be used here but continue using _alloc_pages
   // Up until here don't use nested interrupts
   do_calls(CALL_CLS);
+
+  init_threading();
+  kprintf("[INIT] Initialized Threading on core %u\n", get_core_id());
+  do_calls(CALL_THREADS);
 
   BSP {
     init_cores();

@@ -17,8 +17,8 @@
 - Create GDT and IDT (done)
 - Get APIC working (done)
 - Create Threading
-    - Thread switching
-    - Thread Creation
+    - Thread switching (done)
+    - Thread Creation (done)
     - Running thread encapsulation
         - Make your own stack
     - Automatic Thread switching
