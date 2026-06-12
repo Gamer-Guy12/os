@@ -13,6 +13,12 @@ typedef uint32_t tid_t;
 // How big the stack is
 #define STACK_ORDER 1
 
+enum thread_state {
+  THREAD_RUNNING,
+  THREAD_READY,
+  THREAD_TERMINATED
+};
+
 struct thread {
   struct context context;
   tid_t tid;
@@ -24,6 +30,7 @@ struct thread {
   void *stack;
   // Page tables
   pt_t pages;
+  enum thread_state state;
 };
 
 void init_threading(void *stack);
@@ -45,6 +52,8 @@ void switch_tail(void);
 
 // Lifecycle
 struct thread *create_thread(void (*entry)(void *), void *param);
+// Can not be in any queues or running
+void destroy_thread(struct thread *thread);
 void thread_trampoline(void);
 
 // Util

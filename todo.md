@@ -21,12 +21,13 @@
     - Thread Creation (done)
     - Running thread encapsulation (done)
         - Make your own stack (done)
-    - Thread lifecycle
+    - Thread lifecycle (done)
         - Destruction
         - States
     - Thread queues
         - Priority
         - Global queue
+    - terminate + schedule func
     - Automatic Thread switching
         - Use apic timer
     - Thread waiting

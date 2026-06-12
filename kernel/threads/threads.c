@@ -2,6 +2,7 @@
 #include "interrupts.h"
 #include "kernel/cores.h"
 #include "kernel/gheap.h"
+#include "kernel/kprintf.h"
 #include "kernel/mem.h"
 #include "util.h"
 #include <stdint.h>
@@ -21,6 +22,7 @@ void init_threading(void *stack) {
   thread->tid = GET_TID;
   thread->pages = __pages_null();
   thread->stack = stack;
+  thread->state = THREAD_RUNNING;
 
   struct thread **cur_thread = GET_CLS(cpu_thread);
   *cur_thread = thread;
@@ -40,6 +42,25 @@ void switch_threads(struct thread *old, struct thread *new) {
 }
 
 void switch_tail(void) {
+  struct thread *new = get_cur_thread();
+  struct thread *old = new->prev;
+  switch (old->state) {
+  case THREAD_RUNNING:
+    old->state = THREAD_READY;
+    break;
+  case THREAD_READY:
+    kprintf("Invalid thread readiness after running\n");
+    panic();
+  case THREAD_TERMINATED:
+    // Handle death
+    destroy_thread(old);
+    break;
+  default:
+    kprintf("Invalid thread state: 0x%x\n", old->state);
+    panic();
+  }
+
+  new->state = THREAD_RUNNING;
   WMEMB();
   enable_interrupts();
 }
@@ -54,9 +75,16 @@ struct thread *create_thread(void (*entry)(void *), void *param) {
   thread->entry = entry;
   thread->param = param;
   thread->stack = alloc_pages(STACK_ORDER, ZONE_ANY);
+  thread->state = THREAD_READY;
   __create_context(thread);
 
   return thread;
+}
+
+void destroy_thread(struct thread *thread) {
+  RMEMB();
+  free_pages(thread->stack, STACK_ORDER);
+  WMEMB();
 }
 
 void thread_trampoline(void) {
