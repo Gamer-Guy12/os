@@ -2,6 +2,8 @@
 #define _KERNEL_THREADS_H_
 
 #include "arch/threads.h"
+#include "lib/list.h"
+#include "util.h"
 #include <stdint.h>
 
 #ifdef _x86_64_
@@ -13,14 +15,23 @@ typedef uint32_t tid_t;
 // How big the stack is
 #define STACK_ORDER 1
 
-enum thread_state {
-  THREAD_RUNNING,
-  THREAD_READY,
-  THREAD_TERMINATED
+enum thread_priority {
+  // Will not run unless there is nothing else left (used for idle threads)
+  THREAD_IDLE,
+  // What a thread normally needs
+  THREAD_NORMAL,
+  // The highest priority
+  THREAD_HIGH,
+  PRIORITY_COUNT,
+  // Don't schedule this thread (used during creation)
+  THREAD_NO_SCHED
 };
+
+enum thread_state { THREAD_RUNNING, THREAD_READY, THREAD_TERMINATED };
 
 struct thread {
   struct context context;
+  struct list_node node;
   tid_t tid;
   struct thread *prev;
   void (*entry)(void *);
@@ -30,7 +41,12 @@ struct thread {
   void *stack;
   // Page tables
   pt_t pages;
-  enum thread_state state;
+  int state;
+  int priority;
+};
+
+struct thread_queue {
+  struct list_node queues[PRIORITY_COUNT];
 };
 
 void init_threading(void *stack);
@@ -51,12 +67,29 @@ void switch_threads(struct thread *old, struct thread *new);
 void switch_tail(void);
 
 // Lifecycle
-struct thread *create_thread(void (*entry)(void *), void *param);
+struct thread *create_thread(void (*entry)(void *), void *param, int priority);
 // Can not be in any queues or running
 void destroy_thread(struct thread *thread);
 void thread_trampoline(void);
 
+// Queue
+// Sets the thread->priority
+void init_queues(void);
+void schedule_thread(struct thread *thread, int priority);
+// Get the next thread
+struct thread *pop_thread(void);
+void queue_thread(struct thread *thread, struct thread_queue *queue,
+                  int priority);
+struct thread *dequeue_thread(struct thread_queue *queue);
+
 // Util
 struct thread *get_cur_thread(void);
+
+// Set current thread priority
+#define THREAD_PRIORITY(n)                                                     \
+  do {                                                                         \
+    SASSERT((n) < PRIORITY_COUNT, "Invalid thread priority");                  \
+    get_cur_thread()->priority = n;                                            \
+  } while (0)
 
 #endif

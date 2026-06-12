@@ -17,18 +17,25 @@ static GHEAP_CACHE(thread_cache);
 
 void init_threading(void *stack) {
   BSP { gheap_cache_create(&thread_cache, sizeof(struct thread), ZONE_ANY); }
+  init_queues();
 
   struct thread *thread = gheap_cache_alloc(&thread_cache);
   thread->tid = GET_TID;
   thread->pages = __pages_null();
   thread->stack = stack;
   thread->state = THREAD_RUNNING;
+  thread->priority = THREAD_HIGH;
 
   struct thread **cur_thread = GET_CLS(cpu_thread);
   *cur_thread = thread;
 }
 
 void switch_threads(struct thread *old, struct thread *new) {
+  if (new == old) {
+    kprintf("Cannot switch to same thread: 0x%x\n", old->tid);
+    panic();
+  }
+
   disable_interrupts();
   RMEMB();
   struct thread **thread = GET_CLS(cpu_thread);
@@ -47,6 +54,7 @@ void switch_tail(void) {
   switch (old->state) {
   case THREAD_RUNNING:
     old->state = THREAD_READY;
+    schedule_thread(old, old->priority);
     break;
   case THREAD_READY:
     kprintf("Invalid thread readiness after running\n");
@@ -65,7 +73,7 @@ void switch_tail(void) {
   enable_interrupts();
 }
 
-struct thread *create_thread(void (*entry)(void *), void *param) {
+struct thread *create_thread(void (*entry)(void *), void *param, int priority) {
   struct thread *thread = gheap_cache_alloc(&thread_cache);
   if (!thread)
     return NULL;
@@ -77,6 +85,10 @@ struct thread *create_thread(void (*entry)(void *), void *param) {
   thread->stack = alloc_pages(STACK_ORDER, ZONE_ANY);
   thread->state = THREAD_READY;
   __create_context(thread);
+
+  thread->priority = priority;
+  if (priority != THREAD_NO_SCHED)
+    schedule_thread(thread, thread->priority);
 
   return thread;
 }

@@ -24,7 +24,7 @@
     - Thread lifecycle (done)
         - Destruction
         - States
-    - Thread queues
+    - Thread queues (done)
         - Priority
         - Global queue
     - terminate + schedule func

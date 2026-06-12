@@ -74,6 +74,7 @@ static NORETURN void kmain(void *stack) {
 
   do_calls(CALL_FINAL);
 
+  THREAD_PRIORITY(THREAD_IDLE);
   while (true) {
   }
 }

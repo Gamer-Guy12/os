@@ -5,4 +5,5 @@ kernel-src = kernel/console.c \
 	kernel/mem/mem.c \
 	kernel/mem/gheap.c \
 	kernel/mem/buddy.c \
-	kernel/threads/threads.c
+	kernel/threads/threads.c \
+	kernel/threads/queue.c
