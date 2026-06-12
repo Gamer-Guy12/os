@@ -4,6 +4,7 @@
 #include "kernel/gheap.h"
 #include "kernel/mem.h"
 #include "util.h"
+#include <stdint.h>
 
 // Holds the current thread for each core
 CLS(struct thread *, cpu_thread);
@@ -13,8 +14,16 @@ static tid_t cur_tid = 0;
 
 static GHEAP_CACHE(thread_cache);
 
-void init_threading(void) {
+void init_threading(void *stack) {
   BSP { gheap_cache_create(&thread_cache, sizeof(struct thread), ZONE_ANY); }
+
+  struct thread *thread = gheap_cache_alloc(&thread_cache);
+  thread->tid = GET_TID;
+  thread->pages = __pages_null();
+  thread->stack = stack;
+
+  struct thread **cur_thread = GET_CLS(cpu_thread);
+  *cur_thread = thread;
 }
 
 void switch_threads(struct thread *old, struct thread *new) {

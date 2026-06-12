@@ -19,7 +19,7 @@ LIMINE_SECTION(".limine_requests_start") static volatile uint64_t limine_request
 
 LIMINE_SECTION(".limine_requests_end") static volatile uint64_t limine_requests_end_marker[] = LIMINE_REQUESTS_END_MARKER;
 // clang-format on
-static NORETURN void kmain(void);
+static NORETURN void kmain(void *);
 // clang-format off
 NORETURN void kinit(void) {
   BSP {
@@ -44,13 +44,13 @@ NORETURN void kinit(void) {
   }
 
   AP { _kprintf("[INIT] Starting Core %u Initialization\n", get_core_id()); }
-  kmain();
+  __switch_stacks(kmain);
 
   while (true) {
   }
 }
 
-static NORETURN void kmain(void) {
+static NORETURN void kmain(void *stack) {
   init_cls();
   // Interrupts are disabled just so it is registered in core local storage and
   // so that they don't run enabled
@@ -60,7 +60,7 @@ static NORETURN void kmain(void) {
   // Up until here don't use nested interrupts
   do_calls(CALL_CLS);
 
-  init_threading();
+  init_threading(stack);
   kprintf("[INIT] Initialized Threading on core %u\n", get_core_id());
   do_calls(CALL_THREADS);
 

@@ -19,8 +19,14 @@
 - Create Threading
     - Thread switching (done)
     - Thread Creation (done)
-    - Running thread encapsulation
-        - Make your own stack
+    - Running thread encapsulation (done)
+        - Make your own stack (done)
+    - Thread lifecycle
+        - Destruction
+        - States
+    - Thread queues
+        - Priority
+        - Global queue
     - Automatic Thread switching
         - Use apic timer
     - Thread waiting

@@ -26,7 +26,7 @@ struct thread {
   pt_t pages;
 };
 
-void init_threading(void);
+void init_threading(void *stack);
 
 // Arch specific
 void __switch_context(struct context *old, struct context *new);
@@ -36,6 +36,7 @@ pt_t __pages_null(void);
 // Gets the current page tables
 pt_t __cur_pages(void);
 void __create_context(struct thread *thread);
+void __switch_stacks(void (*entry)(void *));
 
 // Switching
 void switch_threads(struct thread *old, struct thread *new);

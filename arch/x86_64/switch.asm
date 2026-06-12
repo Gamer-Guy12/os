@@ -44,3 +44,22 @@ global __cur_pages
 __cur_pages:
   mov rax, cr3
   ret
+
+; Switches to a new stack at the entry
+; extern void __do_stack_switch(void (*entry)(void *), void *stack, size_t stack_size);
+; RDI: new entry point
+; RSI: stack address
+; RDX: stack size
+global __do_stack_switch
+__do_stack_switch:
+  ; Shift some registers for more space
+  mov rax, rdi
+  mov rdi, rsi
+  ; Add the size to the address to get the rsp value
+  add rsi, rdx
+  mov rsp, rsi
+  ; Set the beginning of the stack frame
+  push 0
+  ; Go to the entry point
+  jmp rax
+

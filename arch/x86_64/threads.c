@@ -1,6 +1,7 @@
 #include "kernel/threads.h"
 #include "arch/threads.h"
 #include "kernel/mem.h"
+#include <stddef.h>
 #include <stdint.h>
 
 void __create_context(struct thread *thread) {
@@ -26,4 +27,12 @@ void __create_context(struct thread *thread) {
   *(--rsp) = 0x202;
 
   context->rsp = rsp;
+}
+
+extern void __do_stack_switch(void (*entry)(void *), void *stack,
+                              size_t stack_size);
+
+void __switch_stacks(void (*entry)(void *)) {
+  __do_stack_switch(entry, _alloc_pages(STACK_ORDER, ZONE_ANY),
+                    (1 << STACK_ORDER) * PAGE_SIZE);
 }
