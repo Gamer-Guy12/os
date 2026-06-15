@@ -1,4 +1,4 @@
-CFLAGS += -mno-sse -mno-avx -mno-mmx -mno-red-zone
+CFLAGS += -mno-sse -mno-avx -mno-mmx -mno-red-zone -fno-omit-frame-pointer
 
 kernel-mods += x86_64.o
 
@@ -13,7 +13,8 @@ x86_64-src = arch/x86_64/cores.c \
 	arch/x86_64/apic.c \
 	arch/x86_64/panic.c \
 	arch/x86_64/switch.asm \
-	arch/x86_64/threads.c
+	arch/x86_64/threads.c \
+	arch/x86_64/stack.c
 
 build/obj/arch/x86_64/idt.asm.o: arch/x86_64/idt.asm
 	@mkdir -p $(dir $@)

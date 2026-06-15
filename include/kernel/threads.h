@@ -43,6 +43,7 @@ struct thread {
   pt_t pages;
   int state;
   int priority;
+  int exit_code;
 };
 
 struct thread_queue {
@@ -81,6 +82,10 @@ struct thread *pop_thread(void);
 void queue_thread(struct thread *thread, struct thread_queue *queue,
                   int priority);
 struct thread *dequeue_thread(struct thread_queue *queue);
+
+// Scheduling
+void terminate(int code);
+void schedule(void);
 
 // Util
 struct thread *get_cur_thread(void);

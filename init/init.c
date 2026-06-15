@@ -50,6 +50,11 @@ NORETURN void kinit(void) {
   }
 }
 
+void test(void *_) {
+  kprintf("Creator: %u, Current: %u, Thread: 0x%x\n", (uint64_t)_,
+          get_core_id(), get_cur_thread()->tid);
+}
+
 static NORETURN void kmain(void *stack) {
   init_cls();
   // Interrupts are disabled just so it is registered in core local storage and
@@ -72,9 +77,12 @@ static NORETURN void kmain(void *stack) {
   do_calls(CALL_LATE);
   enable_interrupts();
 
+  create_thread(test, (void *)(uint64_t)get_core_id(), THREAD_NORMAL);
+
   do_calls(CALL_FINAL);
 
   THREAD_PRIORITY(THREAD_IDLE);
   while (true) {
+    schedule();
   }
 }

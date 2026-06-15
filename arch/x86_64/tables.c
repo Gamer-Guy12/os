@@ -1,8 +1,12 @@
 #include "gdt.h"
 #include "idt.h"
+#include "interrupts.h"
 #include "kernel/cores.h"
+#include "kernel/kprintf.h"
 #include "kernel/mem.h"
+#include "stack.h"
 #include "util.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 #define ENTRY_COUNT 7
@@ -95,8 +99,41 @@ static void init_gdt(void) {
                        : "rax", "memory");
 }
 
+static void page_fault_handler(struct int_context *context) {
+  kprintf("Page Fault Detected at: %p on core: %u\n", context->rip,
+          get_core_id());
+  kprintf("P: %x, W: %x, U: %x, I: %x\n",
+          context->error_code & (1 << 0) ? 1 : 0,
+          context->error_code & (1 << 1) ? 1 : 0,
+          context->error_code & (1 << 2) ? 1 : 0,
+          context->error_code & (1 << 4) ? 1 : 0);
+  uint64_t cr2;
+  __asm__ volatile("mov %%cr2, %0" : "=r"(cr2));
+  kprintf("Page Fault Address: 0x%x\n", cr2);
+
+  // Print callstack
+  kprintf("Call Stack:\n");
+  struct callstack_context ctxt;
+  ctxt.rbp = (uint64_t *)context->rbp;
+
+  size_t index = 0;
+  while (true) {
+    void *addr = get_func(&ctxt);
+    if (addr == NULL)
+      break;
+    kprintf("Function %u: %p\n", index, addr);
+    index++;
+  }
+  kprintf("Printed %u functions\n", index);
+
+  panic();
+}
+
 static void init_tables(void) {
   init_gdt();
   init_idt();
+
+  // Create page fault handler
+  register_interrupt((void (*)(void *))page_fault_handler, 14);
 }
 INITFUNC(init_tables, CALL_CLS);

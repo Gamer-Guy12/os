@@ -27,7 +27,7 @@
     - Thread queues (done)
         - Priority
         - Global queue
-    - terminate + schedule func
+    - terminate + schedule func (done)
     - Automatic Thread switching
         - Use apic timer
     - Thread waiting

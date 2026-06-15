@@ -103,6 +103,7 @@ void thread_trampoline(void) {
   switch_tail();
   struct thread *thread = get_cur_thread();
   thread->entry(thread->param);
+  terminate(0);
 }
 
 struct thread *get_cur_thread(void) {

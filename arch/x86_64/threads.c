@@ -1,6 +1,7 @@
 #include "kernel/threads.h"
 #include "arch/threads.h"
 #include "kernel/mem.h"
+#include "util.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -9,6 +10,11 @@ void __create_context(struct thread *thread) {
   uint64_t *rsp =
       (uint64_t *)((uintptr_t)thread->stack + (1 << STACK_ORDER) * PAGE_SIZE);
 
+  // Fake RIP
+  //
+  // This is here because it is supposed to imitate the rip that will be pushed
+  // on by the call function so that functions get the alignment they want
+  *(--rsp) = 0;
   // RIP
   *(--rsp) = (uint64_t)thread_trampoline;
   // RBX
