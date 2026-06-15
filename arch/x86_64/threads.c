@@ -1,7 +1,6 @@
 #include "kernel/threads.h"
 #include "arch/threads.h"
 #include "kernel/mem.h"
-#include "util.h"
 #include <stddef.h>
 #include <stdint.h>
 

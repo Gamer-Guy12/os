@@ -2,7 +2,7 @@
 #define _KERNEL_THREADS_H_
 
 #include "arch/threads.h"
-#include "lib/list.h"
+#include "lib/queue.h"
 #include "util.h"
 #include <stdint.h>
 
@@ -27,11 +27,16 @@ enum thread_priority {
   THREAD_NO_SCHED
 };
 
-enum thread_state { THREAD_RUNNING, THREAD_READY, THREAD_TERMINATED };
+enum thread_state {
+  THREAD_RUNNING,
+  THREAD_READY,
+  THREAD_TERMINATED,
+  THREAD_WAITING
+};
 
 struct thread {
   struct context context;
-  struct list_node node;
+  struct queue_node node;
   tid_t tid;
   struct thread *prev;
   void (*entry)(void *);
@@ -47,7 +52,7 @@ struct thread {
 };
 
 struct thread_queue {
-  struct list_node queues[PRIORITY_COUNT];
+  struct queue queues[PRIORITY_COUNT];
 };
 
 void init_threading(void *stack);
@@ -82,6 +87,8 @@ struct thread *pop_thread(void);
 void queue_thread(struct thread *thread, struct thread_queue *queue,
                   int priority);
 struct thread *dequeue_thread(struct thread_queue *queue);
+
+// Waiting
 
 // Scheduling
 void terminate(int code);

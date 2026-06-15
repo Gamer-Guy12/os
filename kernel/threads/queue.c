@@ -1,6 +1,6 @@
+#include "lib/queue.h"
 #include "kernel/kprintf.h"
 #include "kernel/threads.h"
-#include "lib/list.h"
 #include "lib/spinlock.h"
 #include "util.h"
 #include <stdbool.h>
@@ -13,7 +13,7 @@ static struct thread_queue queue;
 void init_queues(void) {
   BSP {
     for (int i = 0; i < PRIORITY_COUNT; i++) {
-      LIST_INIT(&queue.queues[i]);
+      QUEUE_INIT(&queue.queues[i]);
     }
   }
 }
@@ -37,13 +37,10 @@ static struct thread *__do_dequeue(struct thread_queue *queue,
       return NULL;
     }
 
-    // Check if there are any threads in the queue
-    if (LIST_EMPTY(&queue->queues[i]))
-      continue;
-
     // Pop
-    struct list_node *node = queue->queues[i].next;
-    list_remove(node);
+    struct queue_node *node = queue_dequeue(&queue->queues[i]);
+    if (!node)
+      continue;
 
     uintptr_t ptr = (uintptr_t)node - offsetof(struct thread, node);
     spinlock_release(&thread_queue_lock);
@@ -90,7 +87,7 @@ void queue_thread(struct thread *thread, struct thread_queue *queue,
   }
 
   spinlock_acquire(&thread_queue_lock);
-  list_insert(&queue->queues[priority], &thread->node);
+  queue_enqueue(&queue->queues[priority], &thread->node);
   spinlock_release(&thread_queue_lock);
 }
 
