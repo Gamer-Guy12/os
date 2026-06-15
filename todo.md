@@ -34,6 +34,8 @@
         - Maybe create secondary versions of things that can then utilize this
     - Events
     - Work Queues
+    - Thread Sleeping
+        - abs_time
 - Start utilizing hardware
     - PS/2
     - HPET

@@ -90,6 +90,14 @@ void schedule(void);
 // Util
 struct thread *get_cur_thread(void);
 
+// Preemption
+// Counted in milliseconds
+#define THREAD_QUANTUM 4
+// Implemented on each architecture
+void enable_preemption(void);
+// Must be called by a timer (which is different on each arch, it is the apic timer on x86_64)
+void preempt(void);
+
 // Set current thread priority
 #define THREAD_PRIORITY(n)                                                     \
   do {                                                                         \

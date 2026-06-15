@@ -17,3 +17,4 @@ void schedule(void) {
   }
 }
 
+void preempt(void) { schedule(); }
