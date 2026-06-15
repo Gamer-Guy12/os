@@ -5,7 +5,6 @@
 #include "kernel/mem.h"
 #include "kernel/threads.h"
 #include "limine.h"
-#include "pit.h"
 #include "util.h"
 #include <stdbool.h>
 #include <stddef.h>
@@ -72,14 +71,7 @@ static NORETURN void kmain(void *stack) {
 
   do_calls(CALL_LATE);
 
-  BSP {
-    kprintf("starting\n");
-    pit_prep(1000);
-    pit_count();
-    kprintf("Done\n");
-  }
-
-  // enable_preemption();
+  do_preemption();
   enable_interrupts();
   do_calls(CALL_FINAL);
 

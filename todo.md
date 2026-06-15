@@ -28,7 +28,7 @@
         - Priority
         - Global queue
     - terminate + schedule func (done)
-    - Automatic Thread switching
+    - Automatic Thread switching (done)
         - Use apic timer
     - Thread waiting
         - Maybe create secondary versions of things that can then utilize this

@@ -12,6 +12,7 @@ void terminate(int code) {
 void schedule(void) {
   struct thread *next = pop_thread();
   struct thread *cur = get_cur_thread();
+  do_preemption();
   if (next != cur && next != NULL) {
     switch_threads(cur, next);
   }

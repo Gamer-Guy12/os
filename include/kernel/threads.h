@@ -94,8 +94,11 @@ struct thread *get_cur_thread(void);
 // Counted in milliseconds
 #define THREAD_QUANTUM 4
 // Implemented on each architecture
-void enable_preemption(void);
-// Must be called by a timer (which is different on each arch, it is the apic timer on x86_64)
+// Enables preemption and also resets it (called durings scheduling) to make
+// sure that threads get total time slice
+void do_preemption(void);
+// Must be called by a timer (which is different on each arch, it is the apic
+// timer on x86_64)
 void preempt(void);
 
 // Set current thread priority

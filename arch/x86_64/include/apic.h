@@ -51,6 +51,23 @@
 // Self IPI
 #define LAPIC_SELF_IPI_REG 0x3F
 
+#define LVT_VECTOR(vector) (vector & 0xFF)
+#define LVT_PENDING (1 << 12)
+#define LVT_MASK (1 << 16)
+
+#define LAPIC_TIMER_ONESHOT (0 << 17)
+#define LAPIC_TIMER_PERIODIC (1 << 17)
+#define LAPIC_TIMER_TSC (2 << 17)
+
+#define LAPIC_DIV_2 0x0
+#define LAPIC_DIV_4 0x1
+#define LAPIC_DIV_8 0x2
+#define LAPIC_DIV_16 0x3
+#define LAPIC_DIV_32 0x8
+#define LAPIC_DIV_64 0x9
+#define LAPIC_DIV_128 0xA
+#define LAPIC_DIV_1 0xB
+
 enum ipi_type {
   // Sends it to the target
   IPI_NORMAL,
