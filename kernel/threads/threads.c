@@ -63,6 +63,9 @@ void switch_tail(void) {
     // Handle death
     destroy_thread(old);
     break;
+  case THREAD_WAITING:
+    __do_wait(old);
+    break;
   default:
     kprintf("Invalid thread state: 0x%x\n", old->state);
     panic();

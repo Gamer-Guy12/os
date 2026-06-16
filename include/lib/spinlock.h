@@ -1,7 +1,6 @@
 #ifndef _LIB_SPINLOCK_H_
 #define _LIB_SPINLOCK_H_
 
-#include "lib/atomic.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

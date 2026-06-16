@@ -68,6 +68,9 @@ static struct thread *__dequeue_thread(struct thread_queue *queue,
     case THREAD_TERMINATED:
       destroy_thread(thread);
       break;
+    case THREAD_WAITING:
+      __do_wait(thread);
+      break;
     default:
       kprintf("Invalid thread state: 0x%x, tid: 0x%x\n", thread->state,
               thread->tid);

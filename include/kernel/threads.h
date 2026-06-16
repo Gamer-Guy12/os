@@ -2,8 +2,11 @@
 #define _KERNEL_THREADS_H_
 
 #include "arch/threads.h"
+#include "lib/list.h"
 #include "lib/queue.h"
+#include "lib/spinlock.h"
 #include "util.h"
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef _x86_64_
@@ -37,6 +40,8 @@ enum thread_state {
 struct thread {
   struct context context;
   struct queue_node node;
+  struct list_node wait_node;
+  struct waitqueue *waitqueue;
   tid_t tid;
   struct thread *prev;
   void (*entry)(void *);
@@ -53,6 +58,18 @@ struct thread {
 
 struct thread_queue {
   struct queue queues[PRIORITY_COUNT];
+};
+
+struct waitqueue {
+  struct list_node threads;
+  // the void * is an arbitrary parameter
+  //
+  // Return value
+  // bit 0 says whether the check is true or not
+  // bit 1 says whether to continue or stop checking
+  int (*check_thread)(struct thread *, void *);
+  size_t thread_count;
+  spinlock_t lock;
 };
 
 void init_threading(void *stack);
@@ -89,6 +106,17 @@ void queue_thread(struct thread *thread, struct thread_queue *queue,
 struct thread *dequeue_thread(struct thread_queue *queue);
 
 // Waiting
+void waitqueue_create(struct waitqueue *queue,
+                      int (*check_thread)(struct thread *, void *));
+void waitqueue_wait(struct waitqueue *queue);
+void waitqueue_awaken(struct waitqueue *queue, void *param);
+// Force will awaken all threads but if it is false then the destruction will
+// fail
+//
+// 0 Failure
+// 1 Success
+int waitqueue_destroy(struct waitqueue *queue, bool force);
+void __do_wait(struct thread *thread);
 
 // Scheduling
 void terminate(int code);
